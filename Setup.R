@@ -1,14 +1,13 @@
 ##CLEAR ALL
 rm(list = ls(all = TRUE)) 
 
-## install required packages
 # Package names
 packages <- c("tidyverse", "xtable", "stargazer", "gsynth", "purrr", "callr")
 
 # load packages
 invisible(lapply(packages, library, character.only = TRUE))
 
-# Run main scripts
+# Run Main Scripts
 rscript("Data_Setup.R")
 rscript("Functions.R")
 rscript("Analysis.R")
