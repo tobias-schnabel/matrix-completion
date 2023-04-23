@@ -1,0 +1,1 @@
+# This script copies all figures and tables into Overleaf
