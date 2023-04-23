@@ -19,5 +19,6 @@ invisible(lapply(packages, library, character.only = TRUE))
 # On my machine only, export figures and tables into Overleaf
 if (Sys.info()[7] == "ts") {
   setwd("/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis")
-  source("Export.R")
+  source("~/Git/matrix-completion/Export.R")
+  setwd("~/Git/matrix-completion")
 }
