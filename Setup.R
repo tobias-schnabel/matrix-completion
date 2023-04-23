@@ -3,7 +3,7 @@ rm(list = ls(all = TRUE))
 
 ## install required packages
 # Package names
-packages <- c("tidyverse", "xtable", "stargazer", "gsynth", "purrr")
+packages <- c("tidyverse", "xtable", "stargazer", "gsynth", "purrr", "callr")
 
 # load packages
 invisible(lapply(packages, library, character.only = TRUE))
@@ -18,7 +18,6 @@ invisible(lapply(packages, library, character.only = TRUE))
 
 # On my machine only, export figures and tables into Overleaf
 if (Sys.info()[7] == "ts") {
-  setwd("/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis")
-  source("~/Git/matrix-completion/Export.R")
+  rscript("Export.R", show = F)
   setwd("~/Git/matrix-completion")
 }
