@@ -2,18 +2,18 @@
 rm(list = ls(all = TRUE)) 
 
 # Package names
-packages <- c("tidyverse", "xtable", "stargazer", "purrr", "callr",
+packages <- c("tidyverse", "xtable", "stargazer", "purrr", "callr", "ggplot2",
               "gsynth", "did2s", "DIDmultiplegt", "fixest", "DRDID", "staggered")
 
 # comment in and execute to install oackages
 # install.packages(packages[!installed_packages])
 
 # load packages
-invisible(lapply(packages, library, character.only = TRUE))
+invisible(lapply(packages, library, character.only = T))
 
 # Run Main Scripts
-rscript("Data_Setup.R")
 rscript("Functions.R")
+rscript("Data_Setup.R")
 rscript("Analysis.R")
 
 # Make Figures
