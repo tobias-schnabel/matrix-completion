@@ -2,7 +2,11 @@
 rm(list = ls(all = TRUE)) 
 
 # Package names
-packages <- c("tidyverse", "xtable", "stargazer", "gsynth", "purrr", "callr")
+packages <- c("tidyverse", "xtable", "stargazer", "purrr", "callr",
+              "gsynth", "did2s", "DIDmultiplegt", "fixest", "DRDID", "staggered")
+
+# comment in and execute to install oackages
+# install.packages(packages[!installed_packages])
 
 # load packages
 invisible(lapply(packages, library, character.only = TRUE))
