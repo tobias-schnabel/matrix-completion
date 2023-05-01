@@ -1,5 +1,5 @@
 # This script loads and installs all packages
-CRAN_packages = c("tidyverse", "xtable", "stargazer", "purrr", 
+CRAN_packages = c("renv", "tidyverse", "xtable", "stargazer", "purrr", 
               "callr", "ggplot2", "panelView", "devtools", 
               "latex2exp",  "gsynth", "did2s", "DIDmultiplegt",
               "fixest", "DRDID", "staggered")
@@ -21,6 +21,7 @@ available on CRAN? These versions might differ from those provided in
 } else {
   # There are more efficient ways of loading these, but the manual library
   # statements are required for renv
+  suppressMessages(suppressWarnings(require(renv)))
   suppressMessages(suppressWarnings(library(tidyverse)))
   suppressMessages(suppressWarnings(library(xtable)))
   suppressMessages(suppressWarnings(library(stargazer)))
@@ -55,6 +56,14 @@ available on GitHub? These versions might differ from those provided in
   writeLines("All required GitHub packages are loaded")
 }
 
+projectstatus = renv::status()$synchronized
+
+if (projectstatus == T) {
+  writeLines("Package Versions match renv lockfile")
+} else {
+  writeLines("Package Versions DO NOT MATCH renv lockfile")
+}
+
 #Clean up global environment
-remove(CRAN_packages, github_packages, installed_packages_cran,
-       installed_packages_gh)
+base:: remove(CRAN_packages, github_packages, installed_packages_cran,
+              installed_packages_gh, projectstatus)
