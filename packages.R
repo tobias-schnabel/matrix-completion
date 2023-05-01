@@ -1,4 +1,4 @@
-# This script lists and installs all packages
+# This script loads and installs all packages
 CRAN_packages = c("tidyverse", "xtable", "stargazer", "purrr", 
               "callr", "ggplot2", "panelView", "devtools", 
               "latex2exp",  "gsynth", "did2s", "DIDmultiplegt",
