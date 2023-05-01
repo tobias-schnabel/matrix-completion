@@ -1,10 +1,25 @@
 # This script loads and installs all packages
+# Check package status and versions
+if (renv::status()$synchronized == T) {
+  writeLines("Loading ...")
+} else {
+  writeLines("Package Versions DO NOT MATCH renv lockfile")
+  renv_bool = utils::menu(c("No (not recommended, installs latest versions)", 
+                            "Yes (recommended)"), 
+                          title = "Use renv to restore correct versions?" )
+  if (renv_bool == 2) {
+    renv::restore()
+  } else {
+    writeLines("Locked versions ignored, installing latest versions")
+  }
+
 CRAN_packages = c("renv", "tidyverse", "xtable", "stargazer", "purrr", 
               "callr", "ggplot2", "panelView", "devtools", 
               "latex2exp",  "gsynth", "did2s", "DIDmultiplegt",
               "fixest", "DRDID", "staggered")
 
 github_packages = c("MCPanel", "synthdid") # not available on CRAN
+
 installed_packages_cran = CRAN_packages %in% rownames(installed.packages())
 installed_packages_gh = github_packages %in% rownames(installed.packages())
 
@@ -18,7 +33,26 @@ available on CRAN? These versions might differ from those provided in
   if (cran_bool == 2) {
     install.packages(CRAN_packages[!installed_packages_cran])  
   }
-} else {
+}  
+
+# Check installation status of GitHub packages
+if (length(github_packages) > length(installed_packages_gh)) {
+  warn2 = writeLines("Would you like to install the current versions of all packages 
+available on GitHub? These versions might differ from those provided in 
+'renv.lock' (see readme for details) [y/N]:")
+  
+  gh_bool = utils::menu(c("No (recommended)", "Yes"), title = warn2)
+  if (gh_bool == 2) {
+    devtools::install_github(github_packages[!installed_packages_gh])
+  }
+}
+
+#Clean up global environment
+base::remove(CRAN_packages, github_packages, installed_packages_cran,
+             installed_packages_gh)
+} 
+
+## Load packages 
   # There are more efficient ways of loading these, but the manual library
   # statements are required for renv
   suppressMessages(suppressWarnings(require(renv)))
@@ -38,32 +72,8 @@ available on CRAN? These versions might differ from those provided in
   suppressMessages(suppressWarnings(library(DRDID)))
   suppressMessages(suppressWarnings(library(staggered)))
   writeLines("All required CRAN packages are loaded")
-}
 
-# Check installation status of CRAN packages
-if (length(github_packages) > length(installed_packages_gh)) {
-  warn2 = writeLines("Would you like to install the current versions of all packages 
-available on GitHub? These versions might differ from those provided in 
-'renv.lock' (see readme for details) [y/N]:")
-  
-  gh_bool = utils::menu(c("No (recommended)", "Yes"), title = warn2)
-  if (gh_bool == 2) {
-    devtools::install_github(github_packages[!installed_packages_gh])
-  }
-} else {
   library(MCPanel)
   library(synthdid)
   writeLines("All required GitHub packages are loaded")
-}
-
-projectstatus = renv::status()$synchronized
-
-if (projectstatus == T) {
-  writeLines("Package Versions match renv lockfile")
-} else {
-  writeLines("Package Versions DO NOT MATCH renv lockfile")
-}
-
-#Clean up global environment
-base:: remove(CRAN_packages, github_packages, installed_packages_cran,
-              installed_packages_gh, projectstatus)
+  writeLines("Ready")
