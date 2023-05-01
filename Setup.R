@@ -1,6 +1,6 @@
-##CLEAR ALL
+## CLEAR ALL
 rm(list = ls(all = TRUE)) 
-# load packages
+## load packages
 source("packages.R")
 
 # Run Main Scripts
