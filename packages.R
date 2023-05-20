@@ -71,6 +71,8 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(fixest)))
   suppressMessages(suppressWarnings(library(DRDID)))
   suppressMessages(suppressWarnings(library(staggered)))
+  suppressMessages(suppressWarnings(library(modelsummary)))
+  suppressMessages(suppressWarnings(library(kableExtra)))
   writeLines("All required CRAN packages are loaded")
 
   library(MCPanel)
