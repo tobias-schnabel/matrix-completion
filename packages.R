@@ -13,10 +13,10 @@ if (renv::status()$synchronized == T) {
     writeLines("Locked versions ignored, installing latest versions")
   }
 
-CRAN_packages = c("renv", "tidyverse", "xtable", "stargazer", "purrr", 
+CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", 
               "callr", "ggplot2", "panelView", "devtools", 
               "latex2exp",  "gsynth", "did2s", "DIDmultiplegt",
-              "fixest", "DRDID", "staggered")
+              "fixest", "DRDID", "staggered", "modelsummary")
 
 github_packages = c("MCPanel", "synthdid") # not available on CRAN
 
