@@ -18,7 +18,8 @@ CRAN_packages = c("renv", "tidyverse", "xtable", "purrr",
               "latex2exp",  "gsynth", "did2s", "DIDmultiplegt",
               "fixest", "DRDID", "staggered", "modelsummary")
 
-github_packages = c("MCPanel", "synthdid") # not available on CRAN
+github_packages = c("MCPanel", "synthdid", "MarcusSantAnna2020") # not available on CRAN
+github_repos = c("susanathey/MCPanel", "synth-inference/synthdid", "pedrohcgs/MarcusSantAnna2020")
 
 installed_packages_cran = CRAN_packages %in% rownames(installed.packages())
 installed_packages_gh = github_packages %in% rownames(installed.packages())
@@ -43,7 +44,7 @@ available on GitHub? These versions might differ from those provided in
   
   gh_bool = utils::menu(c("No (recommended)", "Yes"), title = warn2)
   if (gh_bool == 2) {
-    devtools::install_github(github_packages[!installed_packages_gh])
+    devtools::install_github(github_repos[!installed_packages_gh])
   }
 }
 
