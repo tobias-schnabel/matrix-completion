@@ -992,6 +992,31 @@
       "Repository": "CRAN",
       "Hash": "f7736a18de97dea803bde0a2daaafb27"
     },
+    "fect": {
+      "Package": "fect",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "GGally",
+        "MASS",
+        "R",
+        "Rcpp",
+        "RcppArmadillo",
+        "abind",
+        "doParallel",
+        "doRNG",
+        "fixest",
+        "foreach",
+        "future",
+        "ggplot2",
+        "grid",
+        "gridExtra",
+        "mvtnorm",
+        "panelView"
+      ],
+      "Hash": "f8d8d482c59b81a5cc0e0833a99b2073"
+    },
     "fixest": {
       "Package": "fixest",
       "Version": "0.11.1",
