@@ -1382,6 +1382,22 @@
       ],
       "Hash": "fd7b97bd862a14297b0bb7ed28a3dada"
     },
+    "grateful": {
+      "Package": "grateful",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "knitr",
+        "remotes",
+        "renv",
+        "rmarkdown",
+        "rstudioapi",
+        "utils"
+      ],
+      "Hash": "ea8943696bc3ceeb30fb3026f4d953ca"
+    },
     "gridExtra": {
       "Package": "gridExtra",
       "Version": "2.3",
