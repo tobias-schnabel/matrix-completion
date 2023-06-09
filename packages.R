@@ -13,7 +13,7 @@ if (renv::status()$synchronized == T) {
     writeLines("Locked versions ignored, installing latest versions")
   }
 
-CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", "knitr",
+CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", "knitr", "withr",
               "callr", "ggplot2", "panelView", "devtools","fect", "didimputation",
               "latex2exp",  "gsynth", "did2s", "DIDmultiplegt", "grateful",
               "fixest", "DRDID", "staggered", "modelsummary")
@@ -55,7 +55,7 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
 
 ## Load packages 
   # There are more efficient ways of loading these, but the manual library
-  # statements are required for renv
+  # statements are required for renv to detect each package
   suppressMessages(suppressWarnings(require(renv)))
   suppressMessages(suppressWarnings(library(tidyverse)))
   suppressMessages(suppressWarnings(library(xtable)))
@@ -78,6 +78,7 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(knitr)))
   suppressMessages(suppressWarnings(library(grateful)))
   suppressMessages(suppressWarnings(library(didimputation)))
+  suppressMessages(suppressWarnings(library(withr)))
   writeLines("All required CRAN packages are loaded")
 
   library(MCPanel)
