@@ -18,4 +18,5 @@ rscript("Tables.R", show = F)
 if (Sys.info()[7] == "ts") {
   rscript("Export.R", show = F)
   setwd("~/Git/matrix-completion")
+  
 }
