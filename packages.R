@@ -13,10 +13,10 @@ if (renv::status()$synchronized == T) {
     writeLines("Locked versions ignored, installing latest versions")
   }
 
-CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", 
+CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", "knitr",
               "callr", "ggplot2", "panelView", "devtools","fect",
               "latex2exp",  "gsynth", "did2s", "DIDmultiplegt",
-              "fixest", "DRDID", "staggered", "modelsummary")
+              "fixest", "DRDID", "staggered", "modelsummary", "roxygen2")
 
 github_packages = c("MCPanel", "synthdid", "MarcusSantAnna2020") # not available on CRAN
 github_repos = c("susanathey/MCPanel", "synth-inference/synthdid", "pedrohcgs/MarcusSantAnna2020")
@@ -75,6 +75,8 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(modelsummary)))
   suppressMessages(suppressWarnings(library(kableExtra)))
   suppressMessages(suppressWarnings(library(fect)))
+  suppressMessages(suppressWarnings(library(knitr)))
+  suppressMessages(suppressWarnings(library(roxygen2)))
   writeLines("All required CRAN packages are loaded")
 
   library(MCPanel)
