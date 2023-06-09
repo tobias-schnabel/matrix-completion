@@ -14,7 +14,7 @@ if (renv::status()$synchronized == T) {
   }
 
 CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", "knitr",
-              "callr", "ggplot2", "panelView", "devtools","fect",
+              "callr", "ggplot2", "panelView", "devtools","fect", "didimputation",
               "latex2exp",  "gsynth", "did2s", "DIDmultiplegt", "grateful",
               "fixest", "DRDID", "staggered", "modelsummary")
 
@@ -77,6 +77,7 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(fect)))
   suppressMessages(suppressWarnings(library(knitr)))
   suppressMessages(suppressWarnings(library(grateful)))
+  suppressMessages(suppressWarnings(library(didimputation)))
   writeLines("All required CRAN packages are loaded")
 
   library(MCPanel)

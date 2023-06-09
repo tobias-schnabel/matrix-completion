@@ -16,6 +16,8 @@ rscript("Tables.R", show = F)
 
 # On my machine only, export figures and tables into Overleaf
 if (Sys.info()[7] == "ts") {
-  rscript("Export.R", show = F)
+  grateful::scan_packages()
+  # rscript("Export.R", show = F)
+  source("Export.R")
   setwd("~/Git/matrix-completion")
 }

@@ -11,10 +11,11 @@ setwd("/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Tables")
 
 
 ### Export Package References
+setwd("~/Git/matrix-completion")
 bib_path = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Tex/"
 
 # Write the package references to a BibTeX file
-cite_packages(output = "file",
+grateful::cite_packages(output = "file",
               out.dir = bib_path,
               omit = NULL,
               cite.tidyverse = T,
