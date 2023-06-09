@@ -26,13 +26,13 @@ grateful::cite_packages(output = "file",
 # Write the package info to HTML file on github
 grateful::cite_packages(output = "file",
                         out.dir = "~/Git/matrix-completion",
-                        out.format = "html",
+                        out.format = "pdf",
                         omit = NULL,
                         cite.tidyverse = T,
                         dependencies = T,
                         include.RStudio = T)
 file.remove("grateful-refs.bib") # cleanup
-file.rename("grateful-report.html", "Packages.html")
+file.rename("grateful-report.pdf", "Packages.pdf")
 
 ## Modify all entries to have type "Manual"
 # Read file
