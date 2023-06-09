@@ -1287,21 +1287,25 @@
     },
     "glmnet": {
       "Package": "glmnet",
-      "Version": "4.1-7",
-      "Source": "Repository",
+      "Version": "4.1-1",
+      "Source": "GitHub",
       "Repository": "CRAN",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "glmnet",
+      "RemoteUsername": "cran",
+      "RemoteRef": "f4fc95ab49efaad9b6e1728a7c840bc6159501dc",
+      "RemoteSha": "f4fc95ab49efaad9b6e1728a7c840bc6159501dc",
       "Requirements": [
         "Matrix",
         "R",
-        "Rcpp",
-        "RcppEigen",
         "foreach",
         "methods",
         "shape",
         "survival",
         "utils"
       ],
-      "Hash": "06f12f72ce94e533751a041cef8b71bc"
+      "Hash": "4d7e58027c7150889efe1cc36f85fba4"
     },
     "globals": {
       "Package": "globals",
