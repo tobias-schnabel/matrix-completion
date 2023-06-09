@@ -81,5 +81,6 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
 
   library(MCPanel)
   library(synthdid)
+  library(MarcusSantAnna2020)
   writeLines("All required GitHub packages are loaded")
   writeLines("Ready")
