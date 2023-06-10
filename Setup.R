@@ -3,6 +3,10 @@ rm(list = ls(all = TRUE))
 ## load packages
 source("packages.R")
 
+### Set RNG parameters
+globalseed  = 12345 # All simulations will use a global seed of 12345
+set.seed(globalseed)
+
 # Run Main Scripts
 rscript("Functions.R")
 rscript("Data_Setup.R")
