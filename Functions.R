@@ -14,13 +14,15 @@ pure_sample <- function(..., seed=globalseed){
 
 ## DGP 1 One Treatment Group, Time-Invariant Treatment Effects
 dgp_1_sim <- function(nobs = 1000, 
-                  nperiods = 100,
-                  nobsgroups = 50,
-                  treated.period = 50) {
+                      nperiods = 100,
+                      nobsgroups = 50,
+                      treated.period = 50) {
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
-    obsgroup = sample(1:nobsgroups, nobs, replace = T)
+    obsgroup = sample(1:nobsgroups, nobs, replace = T),
+    # sample from Normal Dist. with group-spec. mean and SD=0.5
+    unit_fe = pure_rnorm(nobs, 0, 0.5),
   )
   
   # Shuffle obsgroup and assign treatment status
@@ -29,8 +31,6 @@ dgp_1_sim <- function(nobs = 1000,
   
   unit <- unit %>%
     mutate(
-      # sample from Normal Dist. with group-spec. mean and SD=1
-      unit_fe = pure_rnorm(nobs, obsgroup/5, 1),
       
       # gen treatment and control groups
       group = case_when(
@@ -42,7 +42,7 @@ dgp_1_sim <- function(nobs = 1000,
       
       # avg yearly treatment effects by group
       avg.te = case_when(
-        group == 2 ~ 0.5,
+        group == 2 ~ 1,
         TRUE ~ 0
       )) %>%
     # gen unit-specific yearly treatment effects 
@@ -54,14 +54,14 @@ dgp_1_sim <- function(nobs = 1000,
   # generate Time FE
   period <- tibble(
     period = 1:nperiods,
-    # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 1)
+    # Sample from Standard Normal with SD = 0.5
+    period_fe = pure_rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
   crossing(unit, period) %>% 
-    # generate additive N(0,1) error
-    mutate(error = pure_rnorm(nrow(.), 0, 1)) %>% 
+    # generate additive N(0,0.5) error
+    mutate(error = pure_rnorm(nrow(.), 0, 0.5)) %>% 
     # generate treatment dummy
     mutate(treat = ifelse(evertreated == 1 & period > treated.period, 1, 0)) %>%
     # generate treatment effect
@@ -71,6 +71,8 @@ dgp_1_sim <- function(nobs = 1000,
     # change column order
     select(unit, period, obsgroup, te, evertreated, everything())
 }
+
+
 
 ## DGP 2 One Treatment Group, Time-Varying Treatment Effects
 dgp_2_sim <- function(nobs = 1000, 
@@ -84,7 +86,7 @@ dgp_2_sim <- function(nobs = 1000,
     # create observation groups similar to US states
     obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, obsgroup/5, 1),
+    unit_fe = pure_rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%2) ~ 1,
@@ -140,21 +142,21 @@ dgp_3_sim <- function(nobs = 1000,
     # create observation groups similar to US states
     obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, obsgroup/5, 1),
+    unit_fe = pure_rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
-      group == treatgroups[1] ~ 0.5,
-      group == treatgroups[2] ~ 0.5,
-      group == treatgroups[3] ~ 0.5,
-      group == treatgroups[4] ~ 0.5,
+      group == treatgroups[1] ~ 1,
+      group == treatgroups[2] ~ 1,
+      group == treatgroups[3] ~ 1,
+      group == treatgroups[4] ~ 1,
       TRUE ~ 0
     )) %>%
     # gen unit-specific yearly treatment effects 
@@ -167,7 +169,7 @@ dgp_3_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 1)
+    period_fe = pure_rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
@@ -196,21 +198,21 @@ dgp_4_sim <- function(nobs = 1000,
     # create observation groups similar to US states
     obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, obsgroup/5, 1),
+    unit_fe = pure_rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
-      group == treatgroups[1] ~ 0.5,
-      group == treatgroups[2] ~ (1/3),
-      group == treatgroups[3] ~ 0.2,
-      group == treatgroups[4] ~ 0.1,
+      group == treatgroups[1] ~ 1.5,
+      group == treatgroups[2] ~ 1,
+      group == treatgroups[3] ~ 0.5,
+      group == treatgroups[4] ~ 0.25,
       TRUE ~ 0
     )) %>%
     # gen unit-specific yearly treatment effects 
@@ -223,7 +225,7 @@ dgp_4_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 1)
+    period_fe = pure_rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
@@ -252,18 +254,18 @@ dgp_5_sim <- function(nobs = 1000,
     # create observation groups similar to US states
     obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, obsgroup/5, 1),
+    unit_fe = pure_rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
-      group != nperiods + 1 ~ .3,
+      group != nperiods ~ .05,
       TRUE ~ 0
     )) %>%
     # gen unit-specific yearly treatment effects 
@@ -276,7 +278,7 @@ dgp_5_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 1)
+    period_fe = pure_rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
@@ -308,26 +310,26 @@ dgp_6_sim <- function(nobs = 1000,
     # create observation groups similar to US states
     obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, obsgroup/5, 1),
+    unit_fe = pure_rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
-      group == treatgroups[1] ~ 0.5, # 0.5
-      group == treatgroups[2] ~ (1/3),  #(1/3)
-      group == treatgroups[3] ~ 0.2, #0.2
-      group == treatgroups[4] ~ 0.1, #0.1
+      group == treatgroups[1] ~ .005,
+      group == treatgroups[2] ~ .025,
+      group == treatgroups[3] ~ .075,
+      group == treatgroups[4] ~ .2,
       TRUE ~ 0
     )) %>%
     # gen unit-specific yearly treatment effects 
     rowwise() %>% 
-    mutate(te = pure_rnorm(1, avg.te, .2)) %>% 
+    mutate(te = pure_rnorm(1, avg.te, .2), 0) %>% 
     ungroup()
   
   
@@ -335,7 +337,7 @@ dgp_6_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 1)
+    period_fe = pure_rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
@@ -455,6 +457,118 @@ theme_set(theme_clean() + theme(plot.background = element_blank(),
 # Get colors
 plotcol <- tableau_color_pal()(6)  
 
+# Helper function to get unique treatment start times
+get_treat_times <- function(df) {
+  unique(df$group)
+}
 
 
+plotdgp_basic <- function(df){
+  df %>% 
+    ggplot(aes(x = period, y = y, group = unit)) + 
+    geom_line(alpha = .1, color = "grey") + 
+    geom_line(data = df %>% 
+                group_by(group, period) %>% 
+                summarize(dep_var = mean(y)),
+              aes(x = period, y = dep_var, group = factor(group),
+                  color = factor(group)),
+              size = 0.5) + 
+    labs(x = "", y = "Value", color = "Treatment group   ") + 
+    theme(legend.position = 'bottom',
+          #legend.title = element_blank(), 
+          axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12))  +
+    ggtitle("Outcome Data from Simulation")+
+    theme(plot.title = element_text(hjust = 0.5, size=12))
+}
 
+
+dgp_plot <- function(df, subtitle = ""){
+  # get treatment times and remove the control group
+  treat_times <- get_treat_times(df)
+  treat_times <- treat_times[treat_times != max(treat_times)]
+  # relabel the control group
+  control_label <- as.character(max(df$period)) # max period considered as control group
+  
+  # create a vector with the color palette
+  color_vector <- tableau_color_pal()(length(unique(df$group)))
+  
+  # assign color to each group
+  unique_groups <- sort(unique(df$group))
+  names(color_vector) <- as.character(unique_groups)
+  
+  p <- df %>% 
+    ggplot(aes(x = period, y = y, group = unit)) + 
+    geom_line(alpha = .1, color = "grey") + 
+    geom_line(data = df %>% 
+                group_by(group, period) %>% 
+                summarize(dep_var = mean(y), .groups = "drop"),
+              aes(x = period, y = dep_var, group = factor(group),
+                  color = factor(group)),
+              size = 0.5) + 
+    labs(x = "", y = "", color = "Treatment Groups") + 
+    theme(legend.position = 'bottom',
+          axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12),
+          plot.title = element_text(hjust = 0.5, size=12),
+          plot.subtitle = element_text(hjust = 0.5),
+          legend.title = element_text(size = 12, hjust = 0.5)) +
+    guides(color = guide_legend(title.position = "top")) +
+    ggtitle("Outcome Data from Simulation") +
+    labs(subtitle = subtitle)
+  
+  # Add vertical lines for each treatment group
+  vlines <- data.frame(xintercept = treat_times, color = treat_times)
+  p <- p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(color)), 
+                      size = 0.5, show.legend = F) +
+  scale_color_manual(values = color_vector) +
+  scale_color_discrete(labels = function(x) ifelse(x == control_label, "Control", x)) 
+  
+  p
+}
+
+dgp_plot <- function(df, subtitle = ""){
+  suppressWarnings({
+    # get treatment times and remove the control group
+    treat_times <- get_treat_times(df)
+    treat_times <- treat_times[treat_times != max(treat_times)]
+    # relabel the control group
+    control_label <- as.character(max(df$period)) # max period considered as control group
+    
+    # create a vector with the color palette
+    color_vector <- tableau_color_pal()(length(unique(df$group)))
+    
+    # assign color to each group
+    unique_groups <- sort(unique(df$group))
+    names(color_vector) <- as.character(unique_groups)
+    
+    p <- df %>% 
+      ggplot(aes(x = period, y = y, group = unit)) + 
+      geom_line(alpha = .1, color = "grey") + 
+      geom_line(data = df %>% 
+                  group_by(group, period) %>% 
+                  summarize(dep_var = mean(y), .groups = "drop"),
+                aes(x = period, y = dep_var, group = factor(group),
+                    color = factor(group)),
+                size = 0.5) + 
+      labs(x = "Period", y = "y", color = "Treatment Groups") + 
+      theme(legend.position = 'bottom',
+            axis.title = element_text(size = 14),
+            axis.text = element_text(size = 12),
+            plot.title = element_text(hjust = 0.5, size=12),
+            plot.subtitle = element_text(hjust = 0.5),
+            legend.title = element_text(size = 12, hjust = 0.5)) +
+      guides(color = guide_legend(title.position = "top")) +
+      ggtitle("Outcome Data from Simulation") +
+      labs(subtitle = subtitle)
+    
+    # Add vertical lines for each treatment group
+    vlines <- data.frame(xintercept = treat_times, color = treat_times)
+    p <- p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(color)), 
+                        size = 0.5, show.legend = FALSE) +
+      scale_color_manual(values = color_vector) +
+      scale_color_discrete(labels = function(x) ifelse(x == control_label, "Control", x)) 
+    
+    p
+  })
+}
