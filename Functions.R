@@ -355,6 +355,106 @@ dgp_6_sim <- function(nobs = 1000,
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
 
+## Diagnostics for simulations
+
+dgp_verify <- function(df) {
+  
+  # Check number of observations
+  num_obs <- nrow(df)
+  cat("Number of observations:", num_obs, "\n")
+  
+  # Check number of periods
+  num_periods <- length(unique(df$period))
+  cat("Number of periods:", num_periods, "\n")
+  
+  # Check number of units
+  num_units <- length(unique(df$unit))
+  cat("Number of Units:", num_units, "\n")
+  
+  # Check number of nonempty observation groups
+  num_nonempty_obs_groups <- length(unique(df$obsgroup))
+  cat("Number of nonempty observation groups:", num_nonempty_obs_groups, "\n")
+  
+  # Check in how many different periods units change treatment status for the first time
+  first_treatment_change <- df %>% 
+    group_by(unit) %>% 
+    mutate(treatment_change = lag(treat) == 0 & treat == 1) %>% 
+    ungroup() %>% 
+    filter(treatment_change) %>% 
+    summarise(num_distinct_periods = n_distinct(period))
+  
+  cat("Number of distinct treatment adoption periods:", first_treatment_change$num_distinct_periods, "\n")
+  
+  # Check the percentage of units that are never treated
+  never_treated <- df %>% 
+    group_by(unit) %>% 
+    summarise(treated = max(treat)) %>% 
+    summarise(never_treated = mean(treated == 0)) %>% 
+    pull(never_treated) * 100
+  
+  cat("Percentage of units never treated:", never_treated, "%", "\n")
+  
+  # Check if there is overlap between observation groups
+  obsgroup_overlap <- df %>% 
+    group_by(unit) %>% 
+    summarise(n_obsgroups = n_distinct(obsgroup)) %>% 
+    summarise(overlap = mean(n_obsgroups > 1)) %>% 
+    pull(overlap) * 100
+  
+  cat("Individual units contained in multiple observation groups:", obsgroup_overlap, "%", "\n")
+  
+  # Check if there is overlap between treatment groups
+  treatgroup_overlap <- df %>% 
+    group_by(unit) %>% 
+    summarise(n_treatgroups = n_distinct(group)) %>% 
+    summarise(overlap = mean(n_treatgroups > 1)) %>% 
+    pull(overlap) * 100
+  
+  cat("Individual units contained in multiple treatment groups:", treatgroup_overlap, "%", "\n")
+  
+  # Check if the treatment effect is the same across periods for each unit
+  treatment_effect_column <- if ("cum.t.eff" %in% names(df)) "cum.t.eff" else "t.eff"
+  
+  varying_treatment_effect_units <- df %>%
+    filter(!!sym(treatment_effect_column) != 0) %>%
+    group_by(unit) %>%
+    summarise(var_treat_effect = length(unique(!!sym(treatment_effect_column)))) %>%
+    summarise(num = sum(var_treat_effect > 1)) %>%
+    pull(num) * 100 / num_units
+  
+  cat("Percentage of units with varying treatment effects over time:", varying_treatment_effect_units, "%", "\n")
+  
+  # Check if treatment effect is the same across units
+  unique_treatment_effects <- df %>%
+    filter(treat == 1) %>%
+    group_by(group) %>%
+    summarise(n_distinct_te = n_distinct(t.eff)) %>%
+    ungroup() %>%
+    summarise(total = sum(n_distinct_te)) %>%
+    pull(total)
+  
+  cat("Number of distinct treatment effects across all treatment groups:", unique_treatment_effects, "\n")
+  
+  # Return a list with all diagnostics
+  invisible(list(num_obs = num_obs, 
+                 num_periods = num_periods, 
+                 num_nonempty_obs_groups = num_nonempty_obs_groups, 
+                 first_treatment_change = first_treatment_change,
+                 never_treated = never_treated,
+                 obsgroup_overlap = obsgroup_overlap,
+                 treatgroup_overlap = treatgroup_overlap,
+                 unique_treatment_effects = unique_treatment_effects,
+                 varying_treatment_effect_units = varying_treatment_effect_units))
+}
+
+
+### Data Plotting Functions
+# Set Theme
+theme_set(theme_clean() + theme(plot.background = element_blank(),
+                                legend.background = element_blank()))
+# Get colors
+plotcol <- tableau_color_pal()(6)  
+
 
 
 
