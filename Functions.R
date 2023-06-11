@@ -319,10 +319,10 @@ dgp_6_sim <- function(nobs = 1000,
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
-      group == treatgroups[1] ~ 5, # 0.5
-      group == treatgroups[2] ~ 4,  #(1/3)
-      group == treatgroups[3] ~ 2, #0.2
-      group == treatgroups[4] ~ 1, #0.1
+      group == treatgroups[1] ~ 0.5, # 0.5
+      group == treatgroups[2] ~ (1/3),  #(1/3)
+      group == treatgroups[3] ~ 0.2, #0.2
+      group == treatgroups[4] ~ 0.1, #0.1
       TRUE ~ 0
     )) %>%
     # gen unit-specific yearly treatment effects 
