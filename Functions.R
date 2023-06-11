@@ -12,7 +12,7 @@ pure_sample <- function(..., seed=globalseed){
 
 ### DGP functions
 
-## DGP 1
+## DGP 1 One Treatment Group, Time-Invariant Treatment Effects
 dgp_1_sim <- function(nobs = 1000, 
                   nperiods = 100,
                   nobsgroups = 50,
@@ -42,7 +42,7 @@ dgp_1_sim <- function(nobs = 1000,
       
       # avg yearly treatment effects by group
       avg.te = case_when(
-        group == 2 ~ 2,
+        group == 2 ~ 0.5,
         TRUE ~ 0
       )) %>%
     # gen unit-specific yearly treatment effects 
@@ -72,7 +72,7 @@ dgp_1_sim <- function(nobs = 1000,
     select(unit, period, obsgroup, te, evertreated, everything())
 }
 
-## DGP 2
+## DGP 2 One Treatment Group, Time-Varying Treatment Effects
 dgp_2_sim <- function(nobs = 1000, 
                   nperiods = 100,
                   nobsgroups = 50,
@@ -94,7 +94,7 @@ dgp_2_sim <- function(nobs = 1000,
     evertreated = ifelse(group == 2, 1, 0),
     # avg yearly treatment effects by group
     avg.te = case_when(
-      group == 2 ~ .3,
+      group == 2 ~ .05,
       TRUE ~ 0
     )) %>%
     # gen unit-specific yearly treatment effects 
@@ -126,6 +126,64 @@ dgp_2_sim <- function(nobs = 1000,
     # change column order
     select(unit, period, obsgroup, te, evertreated, treat, cum.t.eff, everything())
 }
+
+## DGP 3 Multiple Treatment Groups, Time-Invariant Homogeneous Treatment Effects
+
+dgp_3_sim <- function(nobs = 1000, 
+                      nperiods = 100,
+                      nobsgroups = 50,
+                      treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
+  
+  # Unit Fixed Effects
+  unit <- tibble(
+    unit = 1:nobs,
+    # create observation groups similar to US states
+    obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
+    # sample from Normal Dist. with group-spec. mean and SD=1
+    unit_fe = pure_rnorm(nobs, obsgroup/5, 1),
+    # gen treatment and control groups
+    group = case_when(
+      obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
+      obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
+      obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
+      obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
+    ),
+    # avg yearly treatment effects by group
+    avg.te = case_when(
+      group == treatgroups[1] ~ 0.5,
+      group == treatgroups[2] ~ 0.5,
+      group == treatgroups[3] ~ 0.5,
+      group == treatgroups[4] ~ 0.5,
+      TRUE ~ 0
+    )) %>%
+    # gen unit-specific yearly treatment effects 
+    rowwise() %>% 
+    mutate(te = pure_rnorm(1, avg.te, .2)) %>% 
+    ungroup()
+  
+  
+  # generate Time FE
+  period <- tibble(
+    period = 1:nperiods,
+    # Sample from Standard Normal
+    period_fe = pure_rnorm(nperiods, 0, 1)
+  )
+  
+  # interact unit and period FE
+  crossing(unit, period) %>% 
+    # generate additive N(0,1) error
+    mutate(error = pure_rnorm(nrow(.), 0, 1)) %>% 
+    # generate treatment dummy
+    mutate(treat = ifelse(period >= group, 1, 0)) %>%
+    # generate treatment effect
+    mutate(t.eff = ifelse(treat == 1, te, 0)) %>%
+    # add everything to get outcome
+    mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    # change column order
+    select(unit, period, obsgroup, te, group, treat, everything())
+}
+
 
 
 
