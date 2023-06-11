@@ -14,9 +14,9 @@ if (renv::status()$synchronized == T) {
   }
 
 CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", "knitr", "withr",
-              "callr", "ggplot2", "panelView", "devtools","fect", "didimputation",
+              "callr", "ggplot2", "scales", "panelView", "devtools","fect", "didimputation",
               "latex2exp",  "gsynth", "did2s", "DIDmultiplegt", "grateful",
-              "fixest", "DRDID", "staggered", "modelsummary")
+              "fixest", "DRDID", "staggered", "modelsummary", "ggthemes")
 
 github_packages = c("MCPanel", "synthdid", "MarcusSantAnna2020") # not available on CRAN
 github_repos = c("susanathey/MCPanel", "synth-inference/synthdid", "pedrohcgs/MarcusSantAnna2020")
@@ -79,6 +79,8 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(grateful)))
   suppressMessages(suppressWarnings(library(didimputation)))
   suppressMessages(suppressWarnings(library(withr)))
+  suppressMessages(suppressWarnings(library(scales)))
+  suppressMessages(suppressWarnings(library(ggthemes)))
   writeLines("All required CRAN packages are loaded")
 
   library(MCPanel)
