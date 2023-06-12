@@ -34,15 +34,15 @@ dgp_1_sim <- function(nobs = 1000,
       
       # gen treatment and control groups
       group = case_when(
-        obsgroup %in% shuffled_groups[1:half] ~ 1,
-        obsgroup %in% shuffled_groups[(half + 1):length(shuffled_groups)] ~ 2
+        obsgroup %in% shuffled_groups[1:half] ~ treated.period,
+        obsgroup %in% shuffled_groups[(half + 1):length(shuffled_groups)] ~ nperiods
       ),
       # Mark Control as never treated
-      evertreated = ifelse(group == 2, 1, 0),
+      evertreated = ifelse(group == treated.period, 1, 0),
       
       # avg yearly treatment effects by group
       avg.te = case_when(
-        group == 2 ~ 1,
+        group == treated.period ~ 1,
         TRUE ~ 0
       )) %>%
     # gen unit-specific yearly treatment effects 
@@ -89,11 +89,11 @@ dgp_2_sim <- function(nobs = 1000,
     unit_fe = pure_rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
-      obsgroup %in% 1:(nobsgroups%/%2) ~ 1,
-      obsgroup %in% (nobsgroups%/%2 + 1):nobsgroups ~ 2
+      obsgroup %in% 1:(nobsgroups%/%2) ~ treated.period,
+      obsgroup %in% (nobsgroups%/%2 + 1):nobsgroups ~ nperiods
     ),
     # Mark Control as never treated
-    evertreated = ifelse(group == 2, 1, 0),
+    evertreated = ifelse(group == treated.period, 1, 0),
     # avg yearly treatment effects by group
     avg.te = case_when(
       group == 2 ~ .05,
@@ -457,13 +457,30 @@ theme_set(theme_clean() + theme(plot.background = element_blank(),
 # Get colors
 plotcol <- tableau_color_pal()(6)  
 
+set_ggplot_colors <- function() {
+  # Define the color palette
+  my_palette <- c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F")
+  
+  # Change the default ggplot colors for discrete scales
+  scale_color_discrete <- function(...) scale_color_manual(values = my_palette, ...)
+  scale_fill_discrete <- function(...) scale_fill_manual(values = my_palette, ...)
+  
+  # Change the default ggplot colors for continuous scales
+  scale_color_continuous <- function(...) scale_color_gradientn(colors = my_palette, ...)
+  scale_fill_continuous <- function(...) scale_fill_gradientn(colors = my_palette, ...)
+}
+
+# To apply the function:
+set_ggplot_colors()
+
+
 # Helper function to get unique treatment start times
 get_treat_times <- function(df) {
   unique(df$group)
 }
 
 
-plotdgp_basic <- function(df){
+dgp_plot_basic <- function(df){
   df %>% 
     ggplot(aes(x = period, y = y, group = unit)) + 
     geom_line(alpha = .1, color = "grey") + 
@@ -483,64 +500,18 @@ plotdgp_basic <- function(df){
 }
 
 
-dgp_plot <- function(df, subtitle = ""){
-  # get treatment times and remove the control group
-  treat_times <- get_treat_times(df)
-  treat_times <- treat_times[treat_times != max(treat_times)]
-  # relabel the control group
-  control_label <- as.character(max(df$period)) # max period considered as control group
-  
-  # create a vector with the color palette
-  color_vector <- tableau_color_pal()(length(unique(df$group)))
-  
-  # assign color to each group
-  unique_groups <- sort(unique(df$group))
-  names(color_vector) <- as.character(unique_groups)
-  
-  p <- df %>% 
-    ggplot(aes(x = period, y = y, group = unit)) + 
-    geom_line(alpha = .1, color = "grey") + 
-    geom_line(data = df %>% 
-                group_by(group, period) %>% 
-                summarize(dep_var = mean(y), .groups = "drop"),
-              aes(x = period, y = dep_var, group = factor(group),
-                  color = factor(group)),
-              size = 0.5) + 
-    labs(x = "", y = "", color = "Treatment Groups") + 
-    theme(legend.position = 'bottom',
-          axis.title = element_text(size = 14),
-          axis.text = element_text(size = 12),
-          plot.title = element_text(hjust = 0.5, size=12),
-          plot.subtitle = element_text(hjust = 0.5),
-          legend.title = element_text(size = 12, hjust = 0.5)) +
-    guides(color = guide_legend(title.position = "top")) +
-    ggtitle("Outcome Data from Simulation") +
-    labs(subtitle = subtitle)
-  
-  # Add vertical lines for each treatment group
-  vlines <- data.frame(xintercept = treat_times, color = treat_times)
-  p <- p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(color)), 
-                      size = 0.5, show.legend = F) +
-  scale_color_manual(values = color_vector) +
-  scale_color_discrete(labels = function(x) ifelse(x == control_label, "Control", x)) 
-  
-  p
-}
 
 dgp_plot <- function(df, subtitle = ""){
+  # Define your color palette
+  my_palette <- c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F")
+  
   suppressWarnings({
     # get treatment times and remove the control group
     treat_times <- get_treat_times(df)
     treat_times <- treat_times[treat_times != max(treat_times)]
+    
     # relabel the control group
     control_label <- as.character(max(df$period)) # max period considered as control group
-    
-    # create a vector with the color palette
-    color_vector <- tableau_color_pal()(length(unique(df$group)))
-    
-    # assign color to each group
-    unique_groups <- sort(unique(df$group))
-    names(color_vector) <- as.character(unique_groups)
     
     p <- df %>% 
       ggplot(aes(x = period, y = y, group = unit)) + 
@@ -563,12 +534,19 @@ dgp_plot <- function(df, subtitle = ""){
       labs(subtitle = subtitle)
     
     # Add vertical lines for each treatment group
-    vlines <- data.frame(xintercept = treat_times, color = treat_times)
-    p <- p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(color)), 
-                        size = 0.5, show.legend = FALSE) +
-      scale_color_manual(values = color_vector) +
-      scale_color_discrete(labels = function(x) ifelse(x == control_label, "Control", x)) 
+    vlines <- data.frame(xintercept = treat_times, group = treat_times)
+    p <- p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(group)), 
+                        size = 0.5, show.legend = FALSE)
+    
+    # Set color scale and replace treatment group 100 with "Control" in legend
+    p <- p + scale_color_manual(values = my_palette,
+                                labels = function(x) ifelse(x == control_label, "Control", x))
     
     p
   })
 }
+
+
+
+
+
