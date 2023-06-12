@@ -8,7 +8,7 @@ globalseed  = 12345 # All simulations will use a global seed of 12345
 set.seed(globalseed)
 
 # Run Main Scripts
-rscript("Functions.R")
+source("Functions.R")
 rscript("Data_Setup.R")
 rscript("Analysis.R")
 
