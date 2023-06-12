@@ -22,11 +22,11 @@ dgp_1_sim <- function(nobs = 1000,
     # create observation groups similar to US states
     obsgroup = sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=0.5
-    unit_fe = pure_rnorm(nobs, 0, 0.5),
+    unit_fe = rnorm(nobs, 0, 0.5),
   )
   
   # Shuffle obsgroup and assign treatment status
-  shuffled_groups <- pure_sample(unique(unit$obsgroup))
+  shuffled_groups <- sample(unique(unit$obsgroup))
   half <- length(shuffled_groups) %/% 2
   
   unit <- unit %>%
@@ -55,12 +55,12 @@ dgp_1_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal with SD = 0.5
-    period_fe = pure_rnorm(nperiods, 0, 0.5)
+    period_fe = rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
   crossing(unit, period) %>% 
-    mutate(error = pure_rnorm(nrow(.), 0, 0.5)) %>% 
+    mutate(error = rnorm(nrow(.), 0, 0.5)) %>% 
     mutate(treat = ifelse(evertreated == 1 & period > treated.period, 1, 0)) %>%
     mutate(t.eff = ifelse(treat == 1, te, 0)) %>%
     group_by(unit) %>%
@@ -82,9 +82,9 @@ dgp_2_sim <- function(nobs = 1000,
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
-    obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
+    obsgroup = sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, 0, 0.5),
+    unit_fe = rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%2) ~ treated.period,
@@ -99,7 +99,7 @@ dgp_2_sim <- function(nobs = 1000,
     )) %>%
     # gen unit-specific yearly treatment effects 
     rowwise() %>% 
-    mutate(te = pure_rnorm(1, avg.te, .2)) %>% 
+    mutate(te = rnorm(1, avg.te, .025)) %>% 
     ungroup()
   
   
@@ -107,13 +107,13 @@ dgp_2_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 1)
+    period_fe = rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
   crossing(unit, period) %>% 
     # generate additive N(0,1) error
-    mutate(error = pure_rnorm(nrow(.), 0, 1)) %>% 
+    mutate(error = rnorm(nrow(.), 0, 0.5)) %>% 
     # generate treatment dummy
     mutate(treat = ifelse(evertreated == 1 & period > treated.period, 1, 0)) %>%
     # generate treatment effect
@@ -139,9 +139,9 @@ dgp_3_sim <- function(nobs = 1000,
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
-    obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
+    obsgroup = sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, 0, 0.5),
+    unit_fe = rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
@@ -160,7 +160,7 @@ dgp_3_sim <- function(nobs = 1000,
     )) %>%
     # gen unit-specific yearly treatment effects 
     rowwise() %>% 
-    mutate(te = pure_rnorm(1, avg.te, .2)) %>% 
+    mutate(te = rnorm(1, avg.te, .2)) %>% 
     ungroup()
   
   
@@ -168,13 +168,13 @@ dgp_3_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 0.5)
+    period_fe = rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
   crossing(unit, period) %>% 
     # generate additive N(0,1) error
-    mutate(error = pure_rnorm(nrow(.), 0, 1)) %>% 
+    mutate(error = rnorm(nrow(.), 0, 1)) %>% 
     # generate treatment dummy
     mutate(treat = ifelse(period >= group, 1, 0)) %>%
     # generate treatment effect
@@ -199,9 +199,9 @@ dgp_4_sim <- function(nobs = 1000,
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
-    obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
+    obsgroup = sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, 0, 0.5),
+    unit_fe = rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
@@ -220,7 +220,7 @@ dgp_4_sim <- function(nobs = 1000,
     )) %>%
     # gen unit-specific yearly treatment effects 
     rowwise() %>% 
-    mutate(te = pure_rnorm(1, avg.te, .2)) %>% 
+    mutate(te = rnorm(1, avg.te, .2)) %>% 
     ungroup()
   
   
@@ -228,13 +228,13 @@ dgp_4_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 0.5)
+    period_fe = rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
   crossing(unit, period) %>% 
     # generate additive N(0,1) error
-    mutate(error = pure_rnorm(nrow(.), 0, 1)) %>% 
+    mutate(error = rnorm(nrow(.), 0, 1)) %>% 
     # generate treatment dummy
     mutate(treat = ifelse(period >= group, 1, 0)) %>%
     # generate treatment effect
@@ -259,9 +259,9 @@ dgp_5_sim <- function(nobs = 1000,
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
-    obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
+    obsgroup = sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, 0, 0.5),
+    unit_fe = rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
@@ -277,7 +277,7 @@ dgp_5_sim <- function(nobs = 1000,
     )) %>%
     # gen unit-specific yearly treatment effects 
     rowwise() %>% 
-    mutate(te = pure_rnorm(1, avg.te, .2)) %>% 
+    mutate(te = rnorm(1, avg.te, .025)) %>% 
     ungroup()
   
   
@@ -285,13 +285,13 @@ dgp_5_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 0.5)
+    period_fe = rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
   crossing(unit, period) %>% 
     # generate additive N(0,1) error
-    mutate(error = pure_rnorm(nrow(.), 0, 1)) %>% 
+    mutate(error = rnorm(nrow(.), 0, 1)) %>% 
     # generate treatment dummy
     mutate(treat = ifelse(period >= group, 1, 0)) %>%
     # generate treatment effect
@@ -315,9 +315,9 @@ dgp_6_sim <- function(nobs = 1000,
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
-    obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
+    obsgroup = sample(1:nobsgroups, nobs, replace = T),
     # sample from Normal Dist. with group-spec. mean and SD=1
-    unit_fe = pure_rnorm(nobs, 0, 0.5),
+    unit_fe = rnorm(nobs, 0, 0.5),
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
@@ -328,15 +328,15 @@ dgp_6_sim <- function(nobs = 1000,
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
-      group == treatgroups[1] ~ .005,
-      group == treatgroups[2] ~ .025,
-      group == treatgroups[3] ~ .075,
+      group == treatgroups[1] ~ .05,
+      group == treatgroups[2] ~ .075,
+      group == treatgroups[3] ~ .1,
       group == treatgroups[4] ~ .2,
       TRUE ~ 0
     )) %>%
     # gen unit-specific yearly treatment effects 
     rowwise() %>% 
-    mutate(te = pure_rnorm(1, avg.te, .2)) %>% 
+    mutate(te = rnorm(1, avg.te, .025)) %>% 
     ungroup()
   
   
@@ -344,13 +344,13 @@ dgp_6_sim <- function(nobs = 1000,
   period <- tibble(
     period = 1:nperiods,
     # Sample from Standard Normal
-    period_fe = pure_rnorm(nperiods, 0, 0.5)
+    period_fe = rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit and period FE
   crossing(unit, period) %>% 
     # generate additive N(0,1) error
-    mutate(error = pure_rnorm(nrow(.), 0, 1)) %>% 
+    mutate(error = rnorm(nrow(.), 0, 0.5)) %>% 
     # generate treatment dummy
     mutate(treat = ifelse(period >= group, 1, 0)) %>%
     # generate treatment effect
@@ -373,8 +373,8 @@ dgp_7_sim <- function(nobs = 1000,
   # Unit Fixed Effects
   unit <- tibble(
     unit = 1:nobs,
-    obsgroup = pure_sample(1:nobsgroups, nobs, replace = T),
-    unit_fe = pure_rnorm(nobs, 0, 0.5),
+    obsgroup = sample(1:nobsgroups, nobs, replace = T),
+    unit_fe = rnorm(nobs, 0, 0.5),
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%5) ~ treatgroups[1],
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
@@ -383,27 +383,27 @@ dgp_7_sim <- function(nobs = 1000,
       obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
     ),
     avg.te = case_when(
-      group == treatgroups[1] ~ .08,
-      group == treatgroups[2] ~ .095,
-      group == treatgroups[3] ~ .125,
+      group == treatgroups[1] ~ .05,
+      group == treatgroups[2] ~ .075,
+      group == treatgroups[3] ~ .1,
       group == treatgroups[4] ~ .2,
       TRUE ~ 0
     )) %>%
     rowwise() %>% 
-    mutate(te = pure_rnorm(1, avg.te, .2)) %>% 
+    mutate(te = rnorm(1, avg.te, .045)) %>% 
     ungroup()
   
   # generate Time FE
   period <- tibble(
     period = 1:nperiods,
-    period_fe = pure_rnorm(nperiods, 0, 0.5)
+    period_fe = rnorm(nperiods, 0, 0.5)
   )
   
   # interact unit, period, and nuisance parameter that breaks common trends
   crossing(unit, period) %>%
     mutate(
-      nuisance = 0.002 * period * obsgroup + pure_rnorm(n(), 0, 0.02),
-      error = pure_rnorm(n(), 0, 1),
+      nuisance = 0.0002 * period * group + rnorm(n(), 0, 0.02),
+      error = rnorm(n(), 0, 0.5),
       treat = ifelse(period >= group, 1, 0),
       t.eff = ifelse(treat == 1, te, 0),
       cum.t.eff = ave(t.eff, unit, FUN = cumsum),
