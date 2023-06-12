@@ -60,16 +60,14 @@ dgp_1_sim <- function(nobs = 1000,
   
   # interact unit and period FE
   crossing(unit, period) %>% 
-    # generate additive N(0,0.5) error
     mutate(error = pure_rnorm(nrow(.), 0, 0.5)) %>% 
-    # generate treatment dummy
     mutate(treat = ifelse(evertreated == 1 & period > treated.period, 1, 0)) %>%
-    # generate treatment effect
     mutate(t.eff = ifelse(treat == 1, te, 0)) %>%
-    # add everything to get outcome
+    group_by(unit) %>%
+    mutate(cum.t.eff = cumsum(t.eff)) %>%
+    ungroup() %>%
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
-    # change column order
-    select(unit, period, obsgroup, te, evertreated, everything())
+    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
 
 
@@ -126,7 +124,7 @@ dgp_2_sim <- function(nobs = 1000,
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
     ungroup() %>% 
     # change column order
-    select(unit, period, obsgroup, te, evertreated, treat, cum.t.eff, everything())
+    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
 
 ## DGP 3 Multiple Treatment Groups, Time-Invariant Homogeneous Treatment Effects
