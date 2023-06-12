@@ -2,13 +2,11 @@
 rm(list = ls(all = TRUE)) 
 ## load packages
 source("packages.R")
+## load custom functions
+source("Functions.R")
 
-### Set RNG parameters
-globalseed  = 12345 # All simulations will use a global seed of 12345
-set.seed(globalseed)
 
 # Run Main Scripts
-source("Functions.R")
 rscript("Data_Setup.R")
 rscript("Analysis.R")
 

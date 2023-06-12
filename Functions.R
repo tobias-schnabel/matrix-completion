@@ -1,5 +1,5 @@
 #### This script holds all custom functions
-
+writeLines("Loading custom functions...")
 # Create Pure Functions dependent on RNG generation to guarantee reproducibility
 pure_rnorm <- function(..., seed=globalseed){
   with_seed(seed, rnorm(...))
@@ -302,7 +302,8 @@ dgp_5_sim <- function(nobs = 1000,
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
     # change column order
-    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
+    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything()) %>% 
+    ungroup()
 }
 
 ## DGP 6  Multiple Treatment Groups, Time-Varying Heterogeneous Treatment Effects
@@ -361,7 +362,8 @@ dgp_6_sim <- function(nobs = 1000,
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
     # change column order
-    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
+    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything()) %>% 
+    ungroup()
 }
 
 ## DGP 7  Multiple Treatment Groups, Time-Varying Heterogeneous TE, NO PARALLEL TRENDS
@@ -418,53 +420,33 @@ dgp_7_sim <- function(nobs = 1000,
 # Set Theme
 theme_set(theme_clean() + theme(plot.background = element_blank(),
                                 legend.background = element_blank()))
-# Get colors
-plotcol <- tableau_color_pal()(6)  
-
-set_ggplot_colors <- function() {
-  # Define the color palette
-  my_palette <- c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F")
-  
-  # Change the default ggplot colors for discrete scales
-  scale_color_discrete <- function(...) scale_color_manual(values = my_palette, ...)
-  scale_fill_discrete <- function(...) scale_fill_manual(values = my_palette, ...)
-  
-  # Change the default ggplot colors for continuous scales
-  scale_color_continuous <- function(...) scale_color_gradientn(colors = my_palette, ...)
-  scale_fill_continuous <- function(...) scale_fill_gradientn(colors = my_palette, ...)
-}
-
-# To apply the function:
-set_ggplot_colors()
-
 
 # Helper function to get unique treatment start times
 get_treat_times <- function(df) {
   unique(df$group)
 }
 
-
-dgp_plot_basic <- function(df){
-  df %>% 
-    ggplot(aes(x = period, y = y, group = unit)) + 
-    geom_line(alpha = .1, color = "grey") + 
-    geom_line(data = df %>% 
-                group_by(group, period) %>% 
-                summarize(dep_var = mean(y)),
+# Basic plotting function
+dgp_plot_basic <- function(df) {
+  df %>%
+    ggplot(aes(x = period, y = y, group = unit)) +
+    geom_line(alpha = 0.1, color = "grey") +
+    geom_line(data = df %>%
+                group_by(group, period) %>%
+                summarize(dep_var = mean(y), .groups = 'drop'), # Add .groups = 'drop'
               aes(x = period, y = dep_var, group = factor(group),
                   color = factor(group)),
-              size = 0.5) + 
-    labs(x = "", y = "Value", color = "Treatment group   ") + 
+              size = 0.5) +
+    labs(x = "", y = "Value", color = "Treatment group   ") +
     theme(legend.position = 'bottom',
-          #legend.title = element_blank(), 
           axis.title = element_text(size = 14),
-          axis.text = element_text(size = 12))  +
-    ggtitle("Outcome Data from Simulation")+
-    theme(plot.title = element_text(hjust = 0.5, size=12))
+          axis.text = element_text(size = 12)) +
+    ggtitle("Outcome Data from Simulation") +
+    theme(plot.title = element_text(hjust = 0.5, size = 12))
 }
 
 
-
+# More elaborate plotting function
 dgp_plot <- function(df, subtitle = ""){
   # Define your color palette
   my_palette <- c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F")
@@ -513,4 +495,4 @@ dgp_plot <- function(df, subtitle = ""){
 
 
 
-
+writeLines("Ready")
