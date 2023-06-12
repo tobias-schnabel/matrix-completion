@@ -67,7 +67,7 @@ dgp_1_sim <- function(nobs = 1000,
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     ungroup() %>%
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
-    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
+    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything(), -evertreated)
 }
 
 
@@ -94,7 +94,7 @@ dgp_2_sim <- function(nobs = 1000,
     evertreated = ifelse(group == treated.period, 1, 0),
     # avg yearly treatment effects by group
     avg.te = case_when(
-      group == 2 ~ .05,
+      group == treated.period ~ .05,
       TRUE ~ 0
     )) %>%
     # gen unit-specific yearly treatment effects 
@@ -120,11 +120,12 @@ dgp_2_sim <- function(nobs = 1000,
     mutate(t.eff = ifelse(treat == 1, te, 0)) %>%
     # add everything to get outcome
     group_by(unit) %>% 
+    # Cumulative TE
     mutate(cum.t.eff = cumsum(t.eff)) %>% 
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
     ungroup() %>% 
     # change column order
-    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
+    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything(), -evertreated)
 }
 
 ## DGP 3 Multiple Treatment Groups, Time-Invariant Homogeneous Treatment Effects
@@ -178,10 +179,14 @@ dgp_3_sim <- function(nobs = 1000,
     mutate(treat = ifelse(period >= group, 1, 0)) %>%
     # generate treatment effect
     mutate(t.eff = ifelse(treat == 1, te, 0)) %>%
+    group_by(unit) %>%
+    # Cumulative TE
+    mutate(cum.t.eff = cumsum(t.eff)) %>%
+    ungroup() %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
     # change column order
-    select(unit, period, obsgroup, te, group, treat, everything())
+    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
 
 ## DGP 4 Multiple Treatment Groups,Time-Invariant Heterogeneous Treatment Effects
@@ -234,10 +239,14 @@ dgp_4_sim <- function(nobs = 1000,
     mutate(treat = ifelse(period >= group, 1, 0)) %>%
     # generate treatment effect
     mutate(t.eff = ifelse(treat == 1, te, 0)) %>%
+    group_by(unit) %>%
+    # Cumulative TE
+    mutate(cum.t.eff = cumsum(t.eff)) %>%
+    ungroup() %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
     # change column order
-    select(unit, period, obsgroup, te, group, treat, everything())
+    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
 
 ## DGP 5 Multiple Treatment Groups, Time-Varying Homogeneous Treatment Effects
@@ -327,7 +336,7 @@ dgp_6_sim <- function(nobs = 1000,
     )) %>%
     # gen unit-specific yearly treatment effects 
     rowwise() %>% 
-    mutate(te = pure_rnorm(1, avg.te, .2), 0) %>% 
+    mutate(te = pure_rnorm(1, avg.te, .2)) %>% 
     ungroup()
   
   
@@ -354,6 +363,9 @@ dgp_6_sim <- function(nobs = 1000,
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
+
+## DGP 7  Multiple Treatment Groups, Time-Varying Heterogeneous TE, NO PARALLEL TRENDS
+
 
 ## Diagnostics for simulations
 
