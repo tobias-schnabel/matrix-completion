@@ -587,7 +587,8 @@ est_canonical <- function(esdat, iteration = 1){
   tidy_model$se = tidy_model$std.error
   static_out = list(est = tidy_model$estimate, se = tidy_model$se)
   
-  dynamic = fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, esdat)
+  dynamic = suppressMessages(
+    fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, esdat))
   # aggregate to ATT dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
   
   dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
