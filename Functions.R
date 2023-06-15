@@ -404,7 +404,7 @@ dgp_7_sim <- function(nobs = 1000,
   # interact unit, period, and nuisance parameter that breaks common trends
   crossing(unit, period) %>%
     mutate(
-      nuisance = 0.0002 * period * group + rnorm(n(), 0, 0.02),
+      nuisance = 0.005 * period * group + rnorm(n(), 0, 0.02),
       error = rnorm(n(), 0, 0.5),
       treat = ifelse(period >= group, 1, 0),
       t.eff = ifelse(treat == 1, te, 0),
@@ -491,6 +491,32 @@ dgp_plot <- function(df, subtitle = ""){
     p
   })
 }
+
+#### Estimator wrappers
+# helper
+timer <- function(fun) {
+  start_time <- Sys.time()
+  fun()
+  end_time <- Sys.time()
+  cat("Execution Time:", (end_time - start_time), "seconds\n")
+}
+
+## Canonical DiD, using lfe::felm
+
+est_canonical <- function(data){
+  model = lfe::felm(y ~ treat | unit + period | 0 | obsgroup, data = data)
+  tidy_model = broom::tidy(model, conf.int = TRUE)
+  tidy_model$se = tidy_model$std.error
+  canonical_output = select(tidy_model, estimate, se, conf.low, conf.high)
+  
+  return(canonical_output)
+}
+
+
+
+
+
+
 
 
 
