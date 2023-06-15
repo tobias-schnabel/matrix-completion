@@ -1049,6 +1049,19 @@
       "Repository": "CRAN",
       "Hash": "8106d78941f34855c440ddb946b8f7a5"
     },
+    "fastDummies": {
+      "Package": "fastDummies",
+      "Version": "1.6.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "data.table",
+        "stringr",
+        "tibble"
+      ],
+      "Hash": "15fcf98f57d734f967370f36f4533219"
+    },
     "fastmap": {
       "Package": "fastmap",
       "Version": "1.1.1",
