@@ -503,24 +503,6 @@ timer <- function(func, ...){
 globalcores = parallel::detectCores()
 
 
-## Canonical DiD, using fixest:::feols
-est_canonical <- function(esdat, iteration = 1){
-  static = fixest::feols(y ~ treat | unit + period, cluster = ~obsgroup, data = esdat)
-  tidy_model = broom::tidy(static, conf.int = F) %>% mutate(iter = iteration)
-  tidy_model$se = tidy_model$std.error
-  static_out = list(est = tidy_model$estimate, se = tidy_model$se)
-  
-  dynamic = fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, esdat)
-  # aggregate to ATT dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
-  
-  dyn_out = list(cum_est = sum(dynamic$coefficients), cum_se = sum(dynamic$se))
-  out = c(static_out, dyn_out)
-  out$iter = iteration
-  
-  return(out)
-}
-
-
 ## MC-NNM using fect (gsynth fails when no covariates for some reason)
 # helper
 get_cohorts <- function(data) {
@@ -598,6 +580,24 @@ prep_es <- function(data){
     ungroup()
 }
 
+## Canonical DiD, using fixest:::feols
+est_canonical <- function(esdat, iteration = 1){
+  static = fixest::feols(y ~ treat | unit + period, cluster = ~obsgroup, data = esdat)
+  tidy_model = broom::tidy(static, conf.int = F) %>% mutate(iter = iteration)
+  tidy_model$se = tidy_model$std.error
+  static_out = list(est = tidy_model$estimate, se = tidy_model$se)
+  
+  dynamic = fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, esdat)
+  # aggregate to ATT dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
+  
+  dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
+                 cum_se = sum(dynamic$se[-length(dynamic$se)]))
+  out = c(static_out, dyn_out)
+  out$iter = iteration
+  
+  return(out)
+}
+
 ## Callaway-Sant'Anna
 est_cs <- function(data, iteration =1){
   mod = did::att_gt(yname = "y",
@@ -611,7 +611,8 @@ est_cs <- function(data, iteration =1){
   
   dynamic = did::aggte(mod, type = "calendar", cband = F)
   cs_output = list(est = dynamic$overall.att, se = dynamic$overall.se, 
-                   cum_est = sum(dynamic$att.egt), cum_se = sum(dynamic$se.egt), 
+                   cum_est = sum(dynamic$att.egt[-length(dynamic$att.egt)]), 
+                   cum_se = sum(dynamic$se.egt[-length(dynamic$se.egt)]), 
                    iter = iteration)
   return(cs_output)
 }
