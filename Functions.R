@@ -493,29 +493,78 @@ dgp_plot <- function(df, subtitle = ""){
 }
 
 #### Estimator wrappers
-# helper
+# helpers
 timer <- function(fun) {
   start_time <- Sys.time()
   fun()
   end_time <- Sys.time()
-  cat("Execution Time:", (end_time - start_time), "seconds\n")
+  
 }
 
-## Canonical DiD, using lfe::felm
+timer <- function(func, ...){
+  start_time = Sys.time()  # Record the start time
+  do.call(func, list(...)) # Run the function
+  end_time = Sys.time() # Record the end time
+  cat("Execution Time:", (end_time - start_time), "seconds\n") # Print runtime
+}
 
-est_canonical <- function(data){
+# set number of cores
+globalcores = parallel::detectCores()
+
+
+## Canonical DiD, using lfe::felm
+est_canonical <- function(data, iteration = 1){
   model = lfe::felm(y ~ treat | unit + period | 0 | obsgroup, data = data)
-  tidy_model = broom::tidy(model, conf.int = TRUE)
+  tidy_model = broom::tidy(model, conf.int = F) %>% mutate(iter = iteration)
   tidy_model$se = tidy_model$std.error
-  canonical_output = select(tidy_model, estimate, se, conf.low, conf.high)
+  canonical_output = select(tidy_model, estimate, se, iter)
   
   return(canonical_output)
 }
 
+## MC-NNM using fect (gsynth fails when no covariates for some reason)
+# Full object
+est_mc <- function(data, iteration = 1, b_iter = 100, k = 2, n_lam = 4){
+  dt = data %>% select(unit, period, y, treat) %>% setDT(.)
+  model = fect::fect(y ~ treat, data = dt, 
+                     method = "mc", index = c("unit","period"), 
+                     se = T, force = "two-way", r = 0, 
+                     CV = T,  cores = globalcores, parallel = T,
+                     nboots = b_iter,
+                     nlambda = n_lam, k = k)
+  out = unname(model$est.avg[,1:2])
+  ########## WORK NEEDED HERE (for dyn es-type effect)
+  mc_output = list(est = out[1], se = out[2],iter = iteration, lambda = model$lambda.cv)
+  return(mc_output)
+}
 
+# Point estimate only (no bootstrap, takes around 6 seconds)
+est_mc_point <- function(data, iteration = 1){
+  dt = data %>% select(unit, period, y, treat) %>% setDT(.)
+  model = fect::fect(y ~ treat, data = dt, 
+                     method = "mc", index = c("unit","period"), 
+                     se = F, force = "two-way", r = 0, 
+                     CV = T,  cores = globalcores,
+                     nlambda = 4, k = 2)
+  
+  mc_output = list(est = model$att.avg, iter = iteration, lambda = model$lambda.cv)
+  return(mc_output)
+}
 
-
-
+# Estimates Bootstrap SE (takes around 45 seconds each run)
+est_mc_se <- function(data, boot_iter = 1000, lambda){
+  dt = data %>% select(unit, period, y, treat) %>% setDT(.)
+  model = fect::fect(y ~ treat, data = dt, 
+               method = "mc", index = c("unit","period"), 
+               se = T, nboots = boot_iter, r = 0, 
+               CV = F, force = "two-way", lambda = lambda,
+               parallel = TRUE, cores = globalcores,
+               nlambda = 4, k = 2)
+  
+  out = unname(model$est.avg[,1:2])
+  mc_output = list(se = out[2])
+  return(mc_output)
+}
 
 
 
