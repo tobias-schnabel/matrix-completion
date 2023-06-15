@@ -70,8 +70,6 @@ dgp_1_sim <- function(nobs = 1000,
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything(), -evertreated)
 }
 
-
-
 ## DGP 2 One Treatment Group, Time-Varying Treatment Effects
 dgp_2_sim <- function(nobs = 1000, 
                   nperiods = 100,
@@ -512,33 +510,61 @@ timer <- function(func, ...){
 globalcores = parallel::detectCores()
 
 
-## Canonical DiD, using lfe::felm
-est_canonical <- function(data, iteration = 1){
-  model = lfe::felm(y ~ treat | unit + period | 0 | obsgroup, data = data)
-  tidy_model = broom::tidy(model, conf.int = F) %>% mutate(iter = iteration)
+## Canonical DiD, using fixest:::feols
+est_canonical <- function(esdat, iteration = 1){
+  static = fixest::feols(y ~ treat | unit + period, cluster = ~obsgroup, data = esdat)
+  tidy_model = broom::tidy(static, conf.int = F) %>% mutate(iter = iteration)
   tidy_model$se = tidy_model$std.error
-  canonical_output = select(tidy_model, estimate, se, iter)
+  static_out = list(est = tidy_model$estimate, se = tidy_model$se)
   
-  return(canonical_output)
+  dynamic = fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, esdat)
+  # aggregate to ATT
+  dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
+  # with(esdat, mean(te[rel_period >= 0])) ?
+  dyn_out = list(es_est = dyn[1], es_se = dyn[2])
+  out = c(static_out, dyn_out)
+  out$iter = iteration
+  
+  return(out)
 }
+
 
 ## MC-NNM using fect (gsynth fails when no covariates for some reason)
-# Full object
-est_mc <- function(data, iteration = 1, b_iter = 100, k = 2, n_lam = 4){
-  dt = data %>% select(unit, period, y, treat) %>% setDT(.)
-  model = fect::fect(y ~ treat, data = dt, 
-                     method = "mc", index = c("unit","period"), 
-                     se = T, force = "two-way", r = 0, 
-                     CV = T,  cores = globalcores, parallel = T,
-                     nboots = b_iter,
-                     nlambda = n_lam, k = k)
-  out = unname(model$est.avg[,1:2])
-  ########## WORK NEEDED HERE (for dyn es-type effect)
-  mc_output = list(est = out[1], se = out[2],iter = iteration, lambda = model$lambda.cv)
-  return(mc_output)
+# helper
+get_cohorts <- function(data) {
+  df = data %>% select(unit, period, y, treat, group) %>% as.data.frame()
+  cohorts = get.cohort(df, "treat", index = c("unit", "period"))
+  cohorts$FirstTreat[cohorts$Cohort == "Cohort:100"] = NA
+  cohorts$Time_to_Treatment[cohorts$Cohort == "Cohort:100"] = NA
+  cohorts$Cohort[cohorts$Cohort == "Cohort:100"] = "Control"
+  
+  return(cohorts)
 }
 
-# Point estimate only (no bootstrap, takes around 6 seconds)
+# Estimate Full object
+est_mc <- function(data, iteration = 1, b_iter = 100, k = 2, n_lam = 4){
+  cohorts = get_cohorts(data)
+  model = suppressMessages(fect::fect(y ~ treat, data = cohorts, 
+                                      method = "mc", index = c("unit","period"), 
+                                      se = T, force = "two-way", r = 0, 
+                                      CV = T,  cores = globalcores, parallel = T,
+                                      nboots = b_iter, group = 'Cohort',
+                                      nlambda = n_lam, k = k))
+  static = unname(model$est.avg[,1:2])
+  static_output = list(est = static[1], se = static[2], iter = iteration)
+  # Sum over all period-specific ATETs
+  dynamic = unname(c(sum(model$est.eff.calendar[,1], na.rm = TRUE), 
+                     sum(model$est.eff.calendar[,2], na.rm = TRUE)))
+  dynamic_output = list(est = dynamic[1], se = dynamic[2])
+  
+  mc_output = c(static_output, dynamic_output, iter = iteration)
+  return(mc_output)
+}
+mct = est_mc(t6)
+suppressMessages(mct <- est_mc(t6))
+
+# (deprecated)
+# Point estimate only (no bootstrap, takes around 6 seconds) 
 est_mc_point <- function(data, iteration = 1){
   dt = data %>% select(unit, period, y, treat) %>% setDT(.)
   model = fect::fect(y ~ treat, data = dt, 
@@ -551,7 +577,8 @@ est_mc_point <- function(data, iteration = 1){
   return(mc_output)
 }
 
-# Estimates Bootstrap SE (takes around 45 seconds each run)
+# (deprecated)
+# Estimates Bootstrap SE (takes around 45 seconds each run) 
 est_mc_se <- function(data, boot_iter = 1000, lambda){
   dt = data %>% select(unit, period, y, treat) %>% setDT(.)
   model = fect::fect(y ~ treat, data = dt, 
@@ -576,6 +603,17 @@ prep_es <- function(data){
   # Prepare data
   esdat <- data %>%
     mutate(rel_period = period - group) %>% # relative time to treatment
+    mutate(evertreated = ifelse(group == get_num_periods(data), 0, 1)) %>% 
+    mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
+    dplyr::arrange(group, unit, period) %>% 
+    ungroup()
+}
+
+prep_es_did <- function(data){
+  # Prepare data
+  esdat <- data %>%
+    mutate(rel_period = period - group) %>% # relative time to treatment
+    dummy_cols(select_columns = rel_period) %>% 
     mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
     dplyr::arrange(group, unit, period) %>% 
     ungroup()
