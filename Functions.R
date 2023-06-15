@@ -492,18 +492,11 @@ dgp_plot <- function(df, subtitle = ""){
 
 #### Estimator wrappers
 # helpers
-timer <- function(fun) {
-  start_time <- Sys.time()
-  fun()
-  end_time <- Sys.time()
-  
-}
-
 timer <- function(func, ...){
   start_time = Sys.time()  # Record the start time
   do.call(func, list(...)) # Run the function
   end_time = Sys.time() # Record the end time
-  cat("Execution Time:", (end_time - start_time), "seconds\n") # Print runtime
+  cat("Execution Time:", round((end_time - start_time), digits = 2), "seconds\n")
 }
 
 # set number of cores
@@ -518,10 +511,9 @@ est_canonical <- function(esdat, iteration = 1){
   static_out = list(est = tidy_model$estimate, se = tidy_model$se)
   
   dynamic = fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, esdat)
-  # aggregate to ATT
-  dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
-  # with(esdat, mean(te[rel_period >= 0])) ?
-  dyn_out = list(es_est = dyn[1], es_se = dyn[2])
+  # aggregate to ATT dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
+  
+  dyn_out = list(cum_est = sum(dynamic$coefficients), cum_se = sum(dynamic$se))
   out = c(static_out, dyn_out)
   out$iter = iteration
   
@@ -550,18 +542,15 @@ est_mc <- function(data, iteration = 1, b_iter = 100, k = 2, n_lam = 4){
                                       CV = T,  cores = globalcores, parallel = T,
                                       nboots = b_iter, group = 'Cohort',
                                       nlambda = n_lam, k = k))
-  static = unname(model$est.avg[,1:2])
-  static_output = list(est = static[1], se = static[2], iter = iteration)
-  # Sum over all period-specific ATETs
-  dynamic = unname(c(sum(model$est.eff.calendar[,1], na.rm = TRUE), 
-                     sum(model$est.eff.calendar[,2], na.rm = TRUE)))
-  dynamic_output = list(est = dynamic[1], se = dynamic[2])
   
-  mc_output = c(static_output, dynamic_output, iter = iteration)
+  est_avg = unname(model$est.avg[,1:2]) #get static effect
+  est_eff_calendar = model$est.eff.calendar #get dynamic effect
+  mc_output = list(est = est_avg[1], se = est_avg[2],
+                   cum_est = sum(est_eff_calendar[,1], na.rm = TRUE), 
+                   cum_se = sum(est_eff_calendar[,2], na.rm = TRUE),
+                   iter = iteration)
   return(mc_output)
 }
-mct = est_mc(t6)
-suppressMessages(mct <- est_mc(t6))
 
 # (deprecated)
 # Point estimate only (no bootstrap, takes around 6 seconds) 
@@ -609,7 +598,6 @@ prep_es <- function(data){
     ungroup()
 }
 
-
 ## Callaway-Sant'Anna
 est_cs <- function(data, iteration =1){
   mod = did::att_gt(yname = "y",
@@ -623,8 +611,8 @@ est_cs <- function(data, iteration =1){
   
   dynamic = did::aggte(mod, type = "calendar", cband = F)
   cs_output = list(est = dynamic$overall.att, se = dynamic$overall.se, 
-                   cum_est = sum(dynamic$att.egt), es_se = sum(dynamic$se.egt), 
-                   iteration = iteration)
+                   cum_est = sum(dynamic$att.egt), cum_se = sum(dynamic$se.egt), 
+                   iter = iteration)
   return(cs_output)
 }
 
