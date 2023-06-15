@@ -609,15 +609,6 @@ prep_es <- function(data){
     ungroup()
 }
 
-prep_es_did <- function(data){
-  # Prepare data
-  esdat <- data %>%
-    mutate(rel_period = period - group) %>% # relative time to treatment
-    dummy_cols(select_columns = rel_period) %>% 
-    mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
-    dplyr::arrange(group, unit, period) %>% 
-    ungroup()
-}
 
 ## Callaway-Sant'Anna
 est_cs <- function(data, iteration =1){
@@ -630,10 +621,9 @@ est_cs <- function(data, iteration =1){
                     data = data,
                     print_details = F)
   
-  static = did::aggte(mod, type = "simple")
-  dynamic = did::aggte(mod, type = "dynamic", cband = F)
-  cs_output = list(est = static$overall.att, se = static$overall.se, 
-                   es_est = dynamic$overall.att, es_se = dynamic$overall.se, 
+  dynamic = did::aggte(mod, type = "calendar", cband = F)
+  cs_output = list(est = dynamic$overall.att, se = dynamic$overall.se, 
+                   cum_est = sum(dynamic$att.egt), es_se = sum(dynamic$se.egt), 
                    iteration = iteration)
   return(cs_output)
 }
