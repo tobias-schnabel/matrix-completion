@@ -760,7 +760,11 @@ run_all_estimators <- function(iteration, dgp, ...) {
   return(results_df)
 }
 
-run_sim <- function(i, fun) {
+run_sim <- function(i, fun, quiet = T) {
+  # print progress
+  if (quiet == F & i %/% 50 ==0) {
+    cat("Iteration ", i, "\n")
+  }
   # make data from function
   dt = fun()
   # make event study data
@@ -797,6 +801,21 @@ run_parallel_sim <- function(iterations, sim_function) {
   # Use mclapply() to run the simulations in parallel
   out = mclapply(
     iterations, function(i) run_sim(i, sim_function), mc.cores = globalcores)
+  
+  # Bind all the output data frames into a single data frame
+  out_df <- do.call(rbind, out)
+  
+  # Return the combined data frame
+  return(tibble(out_df))
+}
+
+run_parallel_sim_pretty <- function(iterations, sim_function) {
+  cat("Simulating ", deparse(substitute(sim_function)), ":\n")
+  # Use mclapply() to run the simulations in parallel
+  out = suppressWarnings(
+    mclapply(
+      iterations, function(i) run_sim(i, sim_function, quiet = T), mc.cores = globalcores)
+  )
   
   # Bind all the output data frames into a single data frame
   out_df <- do.call(rbind, out)
