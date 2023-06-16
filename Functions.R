@@ -665,7 +665,24 @@ est_dcdh <- function(data, iteration = 0){
   return(dcdh_output)
 }
 
-
-
+## Borusyak Jaravek Spiess using didimputation
+est_bjs <- function(data, iteration = 0){
+  # change data because didimputation does not work when depvar is called "y"
+  imput_dat = relabel_control_0(data) %>% 
+    select(unit, period, dep_var = y, group) %>% as.data.table()
+  
+  stat = didimputation::did_imputation(
+    data = imput_dat, yname = "dep_var", gname = "group", 
+    tname = "period", idname = "unit")
+  
+  dyn = didimputation::did_imputation(
+    data = imput_dat, yname = "dep_var", gname = "group", 
+    tname = "period", idname = "unit", horizon = T)
+  
+  bjs_output = list(est = stat$estimate, se = stat$std.error,
+                    cum_est = sum(dyn[1:(nrow(dyn)-1),3]), 
+                    cum_se = sum(dyn[1:(nrow(dyn)-1),4]),
+                    iter = iteration)
+}
 
 writeLines("Ready")
