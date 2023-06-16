@@ -7,7 +7,7 @@ source("Functions.R")
 
 
 # Run Main Scripts
-rscript("Get_Results.R")
+source("Get_Results.R")
 
 # Make Figures
 rscript("Figures.R", show = T)
