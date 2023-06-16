@@ -580,15 +580,25 @@ prep_es <- function(data){
     ungroup()
 }
 
+prep_es_dt <- function(data){ #same as above but return data.table object
+  # Prepare data
+  esdat <- data %>%
+    mutate(rel_period = period - group) %>% # relative time to treatment
+    mutate(evertreated = ifelse(group == get_num_periods(data), 0, 1)) %>% 
+    mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
+    dplyr::arrange(group, unit, period) %>% 
+    ungroup() %>% setDT(.)
+}
+
 ## Canonical DiD, using fixest:::feols
-est_canonical <- function(esdat, iteration = 1){
-  static = fixest::feols(y ~ treat | unit + period, cluster = ~obsgroup, data = esdat)
+est_canonical <- function(es_data, iteration = 1){
+  static = fixest::feols(y ~ treat | unit + period, cluster = ~obsgroup, data = es_data)
   tidy_model = broom::tidy(static, conf.int = F) %>% mutate(iter = iteration)
   tidy_model$se = tidy_model$std.error
   static_out = list(est = tidy_model$estimate, se = tidy_model$se)
   
   dynamic = suppressMessages(
-    fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, esdat))
+    fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, es_data))
   # aggregate to ATT dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
   
   dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
@@ -600,14 +610,14 @@ est_canonical <- function(esdat, iteration = 1){
 }
 
 ## Callaway-Sant'Anna
-est_cs <- function(data, iteration =1){
+est_cs <- function(es_data, iteration = 1){
   mod = did::att_gt(yname = "y",
                     tname = "period",
                     idname = "unit",
                     gname = "group",
                     control_group = "nevertreated",
                     bstrap = F,
-                    data = data,
+                    data = es_data,
                     print_details = F)
   
   dynamic = did::aggte(mod, type = "calendar", cband = F)
@@ -618,8 +628,18 @@ est_cs <- function(data, iteration =1){
   return(cs_output)
 }
 
-## Sun and Abraham
-
+## Sun and Abraham using fixest
+est_sa <- function(es_data, iteration = 1){
+  mod = fixest::feols(y ~ sunab(group, period) | unit + period, es_data)
+  static = aggregate(mod, agg = "att")
+  dyn = aggregate(mod, agg = "period")
+  sa_output = list(est = static[1], se = static[2],
+                   cum_est = sum(dyn[1:(nrow(dyn)-1),1], na.rm = TRUE), 
+                   cum_se = sum(dyn[1:(nrow(dyn)-1),2], na.rm = TRUE), 
+                   iter = iteration)
+  
+  return(sa_output)
+}
 
 
 writeLines("Ready")
