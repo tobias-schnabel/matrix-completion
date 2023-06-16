@@ -783,7 +783,19 @@ verify_sim_results <- function(input_tibble) {
   return(clean_tibble)
 }
 
-save_sim_results <- function(df, file_name = dgp_1) {
+verify_iteration_counts <- function(input_tibble) {
+  iteration_counts <- table(input_tibble$iteration)
+  incorrect_iterations <- iteration_counts[iteration_counts != 6]
+  
+  if (length(incorrect_iterations) == 0) {
+    cat("All iterations appear exactly 6 times.\n")
+  } else {
+    cat("Incorrect iteration counts:\n")
+    print(incorrect_iterations)
+  }
+}
+
+save_sim_results <- function(input_tibble, file_name = dgp_1) {
 
   # get the current date and time
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
@@ -793,7 +805,7 @@ save_sim_results <- function(df, file_name = dgp_1) {
   
   cwd = getwd() # get current WD
   setwd('SimResults') 
-  save(df, file = full_file_name) # save tibble as RData file
+  save(input_tibble, file = full_file_name) # save tibble as RData file
   setwd(cwd) # reset current WD
   
   # print confirmation
