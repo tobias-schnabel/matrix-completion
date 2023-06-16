@@ -546,7 +546,7 @@ est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
   mc_output = list(est = est_avg[1], se = est_avg[2],
                    cum_est = sum(est_eff_calendar[,1], na.rm = TRUE), 
                    cum_se = sum(est_eff_calendar[,2], na.rm = TRUE),
-                   iter = iteration)
+                   iter = iteration, estimator = "MC-NNM")
   return(mc_output)
 }
 
@@ -617,6 +617,7 @@ est_canonical <- function(es_data, iteration = 0){
                  cum_se = sum(dynamic$se[-length(dynamic$se)]))
   out = c(static_out, dyn_out)
   out$iter = iteration
+  out$estimator = "DiD"
   
   return(out)
 }
@@ -636,7 +637,7 @@ est_cs <- function(es_data, iteration = 0){
   cs_output = list(est = dynamic$overall.att, se = dynamic$overall.se, 
                    cum_est = sum(dynamic$att.egt[-length(dynamic$att.egt)]), 
                    cum_se = sum(dynamic$se.egt[-length(dynamic$se.egt)]), 
-                   iter = iteration)
+                   iter = iteration, estimator = "CS")
   return(cs_output)
 }
 
@@ -648,7 +649,7 @@ est_sa <- function(es_data, iteration = 0){
   sa_output = list(est = static[1], se = static[2],
                    cum_est = sum(dyn[1:(nrow(dyn)-1),1], na.rm = TRUE), 
                    cum_se = sum(dyn[1:(nrow(dyn)-1),2], na.rm = TRUE), 
-                   iter = iteration)
+                   iter = iteration, estimator = "SA")
   
   return(sa_output)
 }
@@ -660,7 +661,7 @@ est_dcdh <- function(data, iteration = 0){
       "treat", dynamic = 0, average_effect = "simple")
   
   dcdh_output = list(est = mod$effect, se = NA, cum_est = NA, cum_se = NA, 
-                     iter = iteration)
+                     iter = iteration, estimator = "dCdH")
   
   return(dcdh_output)
 }
@@ -682,7 +683,79 @@ est_bjs <- function(data, iteration = 0){
   bjs_output = list(est = stat$estimate, se = stat$std.error,
                     cum_est = sum(dyn[1:(nrow(dyn)-1),3]), 
                     cum_se = sum(dyn[1:(nrow(dyn)-1),4]),
-                    iter = iteration)
+                    iter = iteration, estimator = "BJS")
+}
+
+timer <- function(func, ...){
+  start_time = Sys.time()  # Record the start time
+  do.call(func, list(...)) # Run the function
+  end_time = Sys.time() # Record the end time
+  cat("Execution Time:", round((end_time - start_time), digits = 2), "seconds\n")
+}
+
+estimate <- function(iter_range = 1:5, dgp, ...){
+  dat = dgp(...)
+  est_canonical(dat)
+}
+
+### Functions to run simulations
+run_all_estimators <- function(iteration, dgp, ...) {
+  dat_i <- dgp(...)
+  es_data_i <- prep_es(dat_i)
+  # es_data_dt <- prep_es_dt(dat_i)
+  
+  est_mc_out <- est_mc(dat_i, iteration)
+  est_canonical_out <- est_canonical(es_data_i, iteration)
+  est_cs_out <- est_cs(es_data_i, iteration)
+  est_sa_out <- est_sa(es_data_i, iteration)
+  est_dcdh_out <- est_dcdh(dat_i, iteration)
+  est_bjs_out <- est_bjs(dat_i, iteration)
+  
+  results_list <- list(est_mc_out, est_canonical_out, est_cs_out, est_sa_out, est_dcdh_out, est_bjs_out)
+  names(results_list) <- c('est_mc', 'est_canonical', 'est_cs', 'est_sa', 'est_dcdh', 'est_bjs')
+  
+  # convert list to a data frame in long format
+  results_df <- data.frame(
+    iteration = iteration,
+    estimator = names(results_list),
+    est = sapply(results_list, function(x) x$est),
+    se = sapply(results_list, function(x) x$se),
+    cum_est = sapply(results_list, function(x) x$cum_est),
+    cum_se = sapply(results_list, function(x) x$cum_se)
+  )
+  
+  return(results_df)
+}
+
+run_sim <- function(i, fun) {
+  # make data from function
+  dt = fun()
+  # make event study data
+  es = prep_es(dt)
+  
+  #estimate
+  mc = est_mc(dt, i)
+  did = est_canonical(es, i)
+  cs = est_cs(es, i)
+  sa = est_sa(es, i)
+  dcdh = est_dcdh(dt, i)
+  bjs = est_bjs(dt, i)
+  
+  results_list <- list(mc, did, cs, sa, dcdh, bjs)
+  names(results_list) <- c('MC-NNM', 'DiD', 'CS', 'SA', 'dCdH', 'BJS')
+  
+  # convert list to long tibble
+  results_df <- tibble(
+    iteration = i,
+    estimator = names(results_list),
+    est = vapply(results_list, function(x) x$est, numeric(1)),
+    se = vapply(results_list, function(x) x$se, numeric(1)),
+    cum_est = vapply(results_list, function(x) x$cum_est, numeric(1)),
+    cum_se = vapply(results_list, function(x) x$cum_se, numeric(1))
+  )
+  
+  return(results_df)
+  
 }
 
 writeLines("Ready")
