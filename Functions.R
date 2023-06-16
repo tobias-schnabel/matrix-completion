@@ -641,5 +641,17 @@ est_sa <- function(es_data, iteration = 1){
   return(sa_output)
 }
 
+## de Chaisemartin & D’Haultfœuille using DIDmultiplegt
+est_dcdh <- function(data, iteration = 1){
+  mod = DIDmultiplegt::did_multiplegt(
+      data, "y", "group", "period", 
+      "treat", dynamic = 0, average_effect = "simple")
+  
+  dcdh_output = list(est = mod$effect, se = NA, cum_est = NA, cum_se = NA, 
+                     iter = iteration)
+  
+  return(dcdh_output)
+}
+
 
 writeLines("Ready")
