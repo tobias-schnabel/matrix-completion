@@ -772,6 +772,17 @@ run_parallel_sim <- function(iterations, sim_function) {
 
 
 ### Utilities for simulating
+# parallelization leads to errors, which leads to entire iterations missing
+# this helper counts and removes those rows
+verify_sim_results <- function(input_tibble) {
+  error_count <- sum(grepl("error|Error", input_tibble$iteration)) 
+  
+  clean_tibble <- input_tibble[!(grepl("error|Error", input_tibble$iteration, ignore.case = TRUE)), ]
+  
+  cat("Number of corrupted rows:", error_count, "\n")
+  return(clean_tibble)
+}
+
 save_sim_results <- function(df, file_name = dgp_1) {
 
   # get the current date and time
