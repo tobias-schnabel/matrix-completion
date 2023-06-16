@@ -823,7 +823,7 @@ verify_iteration_counts <- function(input_tibble) {
   incorrect_iterations <- iteration_counts[iteration_counts != 7]
   
   if (length(incorrect_iterations) == 0) {
-    cat("All iterations appear exactly 6 times.\n")
+    cat("All iterations appear exactly 7 times.\n")
   } else {
     cat("Incorrect iteration counts:\n")
     print(incorrect_iterations)
