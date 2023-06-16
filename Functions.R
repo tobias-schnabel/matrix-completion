@@ -499,6 +499,22 @@ timer <- function(func, ...){
   cat("Execution Time:", round((end_time - start_time), digits = 2), "seconds\n")
 }
 
+get_num_periods <- function(df) {
+  length(unique(df$period))
+}
+
+get_num_units <- function(df) {
+  length(unique(df$unit))
+}
+
+get_num_groups <- function(df) {
+  length(unique(df$group))
+}
+
+relabel_control_0 <- function(df){
+  df %>% mutate(group = ifelse(group == 100, 0, group))
+}
+
 # set number of cores
 globalcores = parallel::detectCores()
 
@@ -516,7 +532,7 @@ get_cohorts <- function(data) {
 }
 
 # Estimate Full object
-est_mc <- function(data, iteration = 1, b_iter = 100, k = 2, n_lam = 4){
+est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
   cohorts = get_cohorts(data)
   model = suppressMessages(fect::fect(y ~ treat, data = cohorts, 
                                       method = "mc", index = c("unit","period"), 
@@ -536,7 +552,7 @@ est_mc <- function(data, iteration = 1, b_iter = 100, k = 2, n_lam = 4){
 
 # (deprecated)
 # Point estimate only (no bootstrap, takes around 6 seconds) 
-est_mc_point <- function(data, iteration = 1){
+est_mc_point <- function(data, iteration = 0){
   dt = data %>% select(unit, period, y, treat) %>% setDT(.)
   model = fect::fect(y ~ treat, data = dt, 
                      method = "mc", index = c("unit","period"), 
@@ -565,10 +581,6 @@ est_mc_se <- function(data, boot_iter = 1000, lambda){
 }
 
 ### Helpers to set up event study
-# Helper function to get unique treatment start times
-get_num_periods <- function(df) {
-  length(unique(df$period))
-}
 
 prep_es <- function(data){
   # Prepare data
@@ -591,7 +603,7 @@ prep_es_dt <- function(data){ #same as above but return data.table object
 }
 
 ## Canonical DiD, using fixest:::feols
-est_canonical <- function(es_data, iteration = 1){
+est_canonical <- function(es_data, iteration = 0){
   static = fixest::feols(y ~ treat | unit + period, cluster = ~obsgroup, data = es_data)
   tidy_model = broom::tidy(static, conf.int = F) %>% mutate(iter = iteration)
   tidy_model$se = tidy_model$std.error
@@ -610,7 +622,7 @@ est_canonical <- function(es_data, iteration = 1){
 }
 
 ## Callaway-Sant'Anna
-est_cs <- function(es_data, iteration = 1){
+est_cs <- function(es_data, iteration = 0){
   mod = did::att_gt(yname = "y",
                     tname = "period",
                     idname = "unit",
@@ -629,7 +641,7 @@ est_cs <- function(es_data, iteration = 1){
 }
 
 ## Sun and Abraham using fixest
-est_sa <- function(es_data, iteration = 1){
+est_sa <- function(es_data, iteration = 0){
   mod = fixest::feols(y ~ sunab(group, period) | unit + period, es_data)
   static = aggregate(mod, agg = "att")
   dyn = aggregate(mod, agg = "period")
@@ -642,7 +654,7 @@ est_sa <- function(es_data, iteration = 1){
 }
 
 ## de Chaisemartin & D’Haultfœuille using DIDmultiplegt
-est_dcdh <- function(data, iteration = 1){
+est_dcdh <- function(data, iteration = 0){
   mod = DIDmultiplegt::did_multiplegt(
       data, "y", "group", "period", 
       "treat", dynamic = 0, average_effect = "simple")
@@ -652,6 +664,8 @@ est_dcdh <- function(data, iteration = 1){
   
   return(dcdh_output)
 }
+
+
 
 
 writeLines("Ready")
