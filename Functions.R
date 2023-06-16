@@ -414,6 +414,31 @@ dgp_7_sim <- function(nobs = 1000,
     select(-nuisance)
 }
 
+
+### Function to extract true ATET and cumulative ATET from simulated data
+get_true_values <- function(data){
+  units = get_num_units(data)
+  periods = get_num_periods(data)
+  treat_times <- sort(get_treat_times(data)) 
+  tgroups <- treat_times[-length(treat_times)]
+  
+  # Get the sample share of each treatment group
+  group_share <- data %>%
+    filter(group %in% tgroups) %>%
+    group_by(group) %>%
+    summarise(share = n() / nrow(data))
+  
+  # Calculate the true treatment effects, static and cumulative
+  group_data <- data %>%
+    filter(group %in% tgroups) %>%
+    left_join(group_share, by = "group") %>%
+    group_by(group) %>%
+    summarise(est = mean(avg.te), 
+              cum_est = mean(cum.t.eff[period == max(period)]), share = mean(share))
+  
+  return(group_data)
+}
+
 ### Data Plotting Functions
 # Set Theme
 theme_set(theme_clean() + theme(plot.background = element_blank(),
@@ -518,6 +543,16 @@ relabel_control_0 <- function(df){
 # set number of cores
 globalcores = parallel::detectCores()
 
+## True values from data
+est_true <- function(data, iteration = 0) {
+  vals = get_true_values(data)
+  weighted_est <- sum(vals$est * vals$share) / sum(vals$share)
+  weighted_cum_est <- sum(vals$cum_est * vals$share) / sum(vals$share)
+  
+  out = list(est = weighted_est, se = 0, cum_est = weighted_cum_est,
+             cum_se = 0, iter = iteration, estimator = "TRUE")
+  
+}
 
 ## MC-NNM using fect (gsynth fails when no covariates for some reason)
 # helper
@@ -605,9 +640,7 @@ prep_es_dt <- function(data){ #same as above but return data.table object
 ## Canonical DiD, using fixest:::feols
 est_canonical <- function(es_data, iteration = 0){
   static = fixest::feols(y ~ treat | unit + period, cluster = ~obsgroup, data = es_data)
-  tidy_model = broom::tidy(static, conf.int = F) %>% mutate(iter = iteration)
-  tidy_model$se = tidy_model$std.error
-  static_out = list(est = tidy_model$estimate, se = tidy_model$se)
+  stat_out = list(est = unname(static$coefficients), se = unname(static$se[1]))
   
   dynamic = suppressMessages(
     fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, es_data))
@@ -615,7 +648,7 @@ est_canonical <- function(es_data, iteration = 0){
   
   dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
                  cum_se = sum(dynamic$se[-length(dynamic$se)]))
-  out = c(static_out, dyn_out)
+  out = c(stat_out, dyn_out)
   out$iter = iteration
   out$estimator = "DiD"
   
@@ -733,6 +766,8 @@ run_sim <- function(i, fun) {
   # make event study data
   es = prep_es(dt)
   
+  #true values
+  true = est_true(dt, i)
   #estimate
   mc = est_mc(dt, i)
   did = est_canonical(es, i)
@@ -741,8 +776,8 @@ run_sim <- function(i, fun) {
   dcdh = est_dcdh(dt, i)
   bjs = est_bjs(dt, i)
   
-  results_list <- list(mc, did, cs, sa, dcdh, bjs)
-  names(results_list) <- c('MC-NNM', 'DiD', 'CS', 'SA', 'dCdH', 'BJS')
+  results_list <- list(true, mc, did, cs, sa, dcdh, bjs)
+  names(results_list) <- c('TRUE', 'MC-NNM', 'DiD', 'CS', 'SA', 'dCdH', 'BJS')
   
   # convert list to long tibble
   results_df <- tibble(
@@ -785,7 +820,7 @@ verify_sim_results <- function(input_tibble) {
 
 verify_iteration_counts <- function(input_tibble) {
   iteration_counts <- table(input_tibble$iteration)
-  incorrect_iterations <- iteration_counts[iteration_counts != 6]
+  incorrect_iterations <- iteration_counts[iteration_counts != 7]
   
   if (length(incorrect_iterations) == 0) {
     cat("All iterations appear exactly 6 times.\n")
