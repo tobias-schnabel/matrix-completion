@@ -7,8 +7,7 @@ source("Functions.R")
 
 
 # Run Main Scripts
-rscript("Data_Setup.R")
-rscript("Analysis.R")
+rscript("Get_Results.R")
 
 # Make Figures
 rscript("Figures.R", show = T)
