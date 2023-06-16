@@ -795,7 +795,7 @@ verify_iteration_counts <- function(input_tibble) {
   }
 }
 
-save_sim_results <- function(input_tibble, file_name = dgp_1) {
+save_sim_results <- function(input_tibble, file_name = "dgp_1") {
 
   # get the current date and time
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
