@@ -764,12 +764,29 @@ run_parallel_sim <- function(iterations, sim_function) {
     iterations, function(i) run_sim(i, sim_function), mc.cores = globalcores)
   
   # Bind all the output data frames into a single data frame
-  out_df <- dplyr::bind_rows(out)
+  out_df <- do.call(rbind, out)
   
   # Return the combined data frame
-  return(out_df)
+  return(tibble(out_df))
 }
 
 
+### Utilities for simulating
+save_sim_results <- function(df, file_name = dgp_1) {
+
+  # get the current date and time
+  current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+  
+  # create the file name with the custom name and current date and time
+  full_file_name <- paste0(file_name, "_", current_time, ".RData")
+  
+  cwd = getwd() # get current WD
+  setwd('SimResults') 
+  save(df, file = full_file_name) # save tibble as RData file
+  setwd(cwd) # reset current WD
+  
+  # print confirmation
+  cat("Tibble saved as:", full_file_name, "\n")
+}
 
 writeLines("Ready")
