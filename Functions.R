@@ -758,5 +758,18 @@ run_sim <- function(i, fun) {
   
 }
 
+run_parallel_sim <- function(iterations, sim_function) {
+  # Use mclapply() to run the simulations in parallel
+  out = mclapply(
+    iterations, function(i) run_sim(i, sim_function), mc.cores = globalcores)
+  
+  # Bind all the output data frames into a single data frame
+  out_df <- dplyr::bind_rows(out)
+  
+  # Return the combined data frame
+  return(out_df)
+}
+
+
 
 writeLines("Ready")
