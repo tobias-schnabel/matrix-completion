@@ -732,34 +732,9 @@ estimate <- function(iter_range = 1:5, dgp, ...){
 }
 
 ### Functions to run simulations
-run_all_estimators <- function(iteration, dgp, ...) {
-  dat_i <- dgp(...)
-  es_data_i <- prep_es(dat_i)
-  # es_data_dt <- prep_es_dt(dat_i)
-  
-  est_mc_out <- est_mc(dat_i, iteration)
-  est_canonical_out <- est_canonical(es_data_i, iteration)
-  est_cs_out <- est_cs(es_data_i, iteration)
-  est_sa_out <- est_sa(es_data_i, iteration)
-  est_dcdh_out <- est_dcdh(dat_i, iteration)
-  est_bjs_out <- est_bjs(dat_i, iteration)
-  
-  results_list <- list(est_mc_out, est_canonical_out, est_cs_out, est_sa_out, est_dcdh_out, est_bjs_out)
-  names(results_list) <- c('est_mc', 'est_canonical', 'est_cs', 'est_sa', 'est_dcdh', 'est_bjs')
-  
-  # convert list to a data frame in long format
-  results_df <- data.frame(
-    iteration = iteration,
-    estimator = names(results_list),
-    est = sapply(results_list, function(x) x$est),
-    se = sapply(results_list, function(x) x$se),
-    cum_est = sapply(results_list, function(x) x$cum_est),
-    cum_se = sapply(results_list, function(x) x$cum_se)
-  )
-  
-  return(results_df)
-}
+set.seed(1234)
 
+## Function to compare estimators in an iteration
 run_sim <- function(i, fun, quiet = T) {
   # print progress
   if (quiet == F & i %/% 50 ==0) {
@@ -796,25 +771,68 @@ run_sim <- function(i, fun, quiet = T) {
   return(results_df)
   
 }
-
-run_parallel_sim <- function(iterations, sim_function) {
-  # Use mclapply() to run the simulations in parallel
-  out = mclapply(
-    iterations, function(i) run_sim(i, sim_function), mc.cores = globalcores)
-  
-  # Bind all the output data frames into a single data frame
-  out_df <- do.call(rbind, out)
+## Function to execute the simulation, not parallelized
+run_parallel_sim_mapdf <- function(iterations, sim_function) {
+  # Use map_df() to run the simulations 
+  out_df <- map_df(iterations, ~run_sim(.x, sim_function, quiet = F))
   
   # Return the combined data frame
-  return(tibble(out_df))
+  return(out_df)
 }
 
-run_parallel_sim_pretty <- function(iterations, sim_function) {
+library(future)
+#plan(multiprocess)
+
+run_sim_future <- function(i, fun, quiet = T) {
+  # create a future with seed = TRUE
+  f <- future(seed = TRUE, {
+    # print progress
+    if (quiet == F & i %/% 50 ==0) {
+      cat("Iteration ", i, "\n")
+    }
+    # make data from function
+    dt = fun()
+    # make event study data
+    es = prep_es(dt)
+    
+    #true values
+    true = est_true(dt, i)
+    #estimate
+    mc = est_mc(dt, i)
+    did = est_canonical(es, i)
+    cs = est_cs(es, i)
+    sa = est_sa(es, i)
+    dcdh = est_dcdh(dt, i)
+    bjs = est_bjs(dt, i)
+    
+    results_list <- list(true, mc, did, cs, sa, dcdh, bjs)
+    names(results_list) <- c('TRUE', 'MC-NNM', 'DiD', 'CS', 'SA', 'dCdH', 'BJS')
+    
+    # convert list to long tibble
+    results_df <- tibble(
+      iteration = i,
+      estimator = names(results_list),
+      est = vapply(results_list, function(x) x$est, numeric(1)),
+      se = vapply(results_list, function(x) x$se, numeric(1)),
+      cum_est = vapply(results_list, function(x) x$cum_est, numeric(1)),
+      cum_se = vapply(results_list, function(x) x$cum_se, numeric(1))
+    )
+    
+    return(results_df)
+  })
+  
+  # get the value from the future
+  value(f)
+}
+
+
+## Function to execute the simulation, parallelized using mclapply
+run_parallel_sim_mclapply <- function(iterations, sim_function) {
   cat("Simulating ", deparse(substitute(sim_function)), ":\n")
   # Use mclapply() to run the simulations in parallel
   out = suppressWarnings(
     mclapply(
-      iterations, function(i) run_sim(i, sim_function, quiet = T), mc.cores = globalcores)
+      iterations, function(i) run_sim(i, sim_function, quiet = F), mc.cores = globalcores)
   )
   
   # Bind all the output data frames into a single data frame
@@ -823,6 +841,20 @@ run_parallel_sim_pretty <- function(iterations, sim_function) {
   # Return the combined data frame
   return(tibble(out_df))
 }
+
+## Function to execute the simulation, parallelized using furrr
+RNGkind("L'Ecuyer-CMRG") # Setup RNG for future
+plan(cluster) # set up future
+
+run_parallel_sim_furrr <- function(iterations, sim_function) {
+  # Use future_map_dfr() to run the simulations in parallel
+  out_df <- future_map_dfr(iterations, 
+                           function(i) run_sim_future(i, sim_function, quiet = F))
+  
+  # Return the combined data frame
+  return(out_df)
+}
+
 
 
 ### Utilities for simulating
@@ -857,10 +889,10 @@ save_sim_results <- function(input_tibble, file_name = "dgp_1") {
   # create the file name with the custom name and current date and time
   full_file_name <- paste0(file_name, "_", current_time, ".RData")
   
-  cwd = getwd() # get current WD
-  setwd('SimResults') 
+  # cwd = getwd() # get current WD
+  # setwd('SimResults') 
   save(input_tibble, file = full_file_name) # save tibble as RData file
-  setwd(cwd) # reset current WD
+  # setwd(cwd) # reset current WD
   
   # print confirmation
   cat("Tibble saved as:", full_file_name, "\n")
