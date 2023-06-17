@@ -686,7 +686,7 @@ timer <- function(func, ...){
 ## Function to compare estimators in an iteration
 run_sim <- function(i, fun, quiet = T) {
   # print progress
-  if (quiet == F & i %/% 50 ==0) {
+  if (quiet == F) {
     cat("Iteration ", i, "\n")
   }
   # make data from function
@@ -718,15 +718,21 @@ run_sim <- function(i, fun, quiet = T) {
   )
   
   return(results_df)
-  
 }
+
 ## Function to execute the simulation, not parallelized
 run_sim_map <- function(iterations, sim_function) {
-  # Use map() to run the simulations 
-  out_list <- purrr::map(iterations, ~run_sim(.x, sim_function, quiet = FALSE))
+  cat("Simulating ", deparse(substitute(sim_function)), ", ",
+      length(iterations), "Iterations\n")
+  # Use purrr:map() to run simulations 
+  start_time = Sys.time()
+  out_list <- purrr::map(iterations, ~run_sim(.x, sim_function, quiet = F))
   
   # Combine the list of data frames into a single data frame
   out_df <- dplyr::bind_rows(out_list)
+  end_time = Sys.time()
+  cat("Elapsed time: ", round(end_time - start_time, digits = 1), "\n")
+  cat("Simulation of  ", deparse(substitute(sim_function)), " complete \n")
   
   # Return the combined data frame
   return(out_df)
@@ -735,8 +741,10 @@ run_sim_map <- function(iterations, sim_function) {
 
 ## Function to execute the simulation, parallelized using mclapply
 run_sim_parallel <- function(iterations, sim_function) {
-  cat("Simulating ", deparse(substitute(sim_function)), ":\n")
-  # Use mclapply() to run the simulations in parallel
+  cat("Simulating ", deparse(substitute(sim_function)), ", ",
+      length(iterations), "Iterations:\n")
+  # Use mclapply() to run simulations in parallel
+  start_time = Sys.time()
   out = suppressWarnings(
     mclapply(
       iterations, function(i) run_sim(i, sim_function, quiet = F), mc.cores = globalcores)
@@ -744,7 +752,9 @@ run_sim_parallel <- function(iterations, sim_function) {
   
   # Bind all the output data frames into a single data frame
   out_df <- do.call(rbind, out)
-  
+    end_time = Sys.time()
+    cat("Elapsed time: ", round(end_time - start_time, digits = 1), "\n")
+    cat("Simulation of  ", deparse(substitute(sim_function)), " complete \n")
   # Return the combined data frame
   return(tibble(out_df))
 }
