@@ -1,15 +1,8 @@
 #### This script holds all custom functions
 writeLines("Loading custom functions...")
-# Create Pure Functions dependent on RNG generation to guarantee reproducibility
-pure_rnorm <- function(..., seed=globalseed){
-  with_seed(seed, rnorm(...))
-}
 
-pure_sample <- function(..., seed=globalseed){
-  with_seed(seed, sample(...))
-}
-
-
+set.seed(1234)
+writeLines("Seed set : 1234")
 ### DGP functions
 
 ## DGP 1 One Treatment Group, Time-Invariant Treatment Effects
@@ -566,7 +559,7 @@ get_cohorts <- function(data) {
   return(cohorts)
 }
 
-# Estimate Full object
+# Estimate Full MC-NNM object
 est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
   cohorts = get_cohorts(data)
   model = suppressMessages(fect::fect(y ~ treat, data = cohorts, 
@@ -585,35 +578,7 @@ est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
   return(mc_output)
 }
 
-# (deprecated)
-# Point estimate only (no bootstrap, takes around 6 seconds) 
-est_mc_point <- function(data, iteration = 0){
-  dt = data %>% select(unit, period, y, treat) %>% setDT(.)
-  model = fect::fect(y ~ treat, data = dt, 
-                     method = "mc", index = c("unit","period"), 
-                     se = F, force = "two-way", r = 0, 
-                     CV = T,  cores = globalcores,
-                     nlambda = 4, k = 2)
-  
-  mc_output = list(est = model$att.avg, iter = iteration, lambda = model$lambda.cv)
-  return(mc_output)
-}
 
-# (deprecated)
-# Estimates Bootstrap SE (takes around 45 seconds each run) 
-est_mc_se <- function(data, boot_iter = 1000, lambda){
-  dt = data %>% select(unit, period, y, treat) %>% setDT(.)
-  model = fect::fect(y ~ treat, data = dt, 
-               method = "mc", index = c("unit","period"), 
-               se = T, nboots = boot_iter, r = 0, 
-               CV = F, force = "two-way", lambda = lambda,
-               parallel = TRUE, cores = globalcores,
-               nlambda = 4, k = 2)
-  
-  out = unname(model$est.avg[,1:2])
-  mc_output = list(se = out[2])
-  return(mc_output)
-}
 
 ### Helpers to set up event study
 
@@ -625,16 +590,6 @@ prep_es <- function(data){
     mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
     dplyr::arrange(group, unit, period) %>% 
     ungroup()
-}
-
-prep_es_dt <- function(data){ #same as above but return data.table object
-  # Prepare data
-  esdat <- data %>%
-    mutate(rel_period = period - group) %>% # relative time to treatment
-    mutate(evertreated = ifelse(group == get_num_periods(data), 0, 1)) %>% 
-    mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
-    dplyr::arrange(group, unit, period) %>% 
-    ungroup() %>% setDT(.)
 }
 
 ## Canonical DiD, using fixest:::feols
@@ -699,7 +654,7 @@ est_dcdh <- function(data, iteration = 0){
   return(dcdh_output)
 }
 
-## Borusyak Jaravek Spiess using didimputation
+## Borusyak Jaravel Spiess using didimputation
 est_bjs <- function(data, iteration = 0){
   # change data because didimputation does not work when depvar is called "y"
   imput_dat = relabel_control_0(data) %>% 
@@ -726,13 +681,7 @@ timer <- function(func, ...){
   cat("Execution Time:", round((end_time - start_time), digits = 2), "seconds\n")
 }
 
-estimate <- function(iter_range = 1:5, dgp, ...){
-  dat = dgp(...)
-  est_canonical(dat)
-}
-
 ### Functions to run simulations
-set.seed(1234)
 
 ## Function to compare estimators in an iteration
 run_sim <- function(i, fun, quiet = T) {
@@ -772,62 +721,20 @@ run_sim <- function(i, fun, quiet = T) {
   
 }
 ## Function to execute the simulation, not parallelized
-run_parallel_sim_mapdf <- function(iterations, sim_function) {
-  # Use map_df() to run the simulations 
-  out_df <- map_df(iterations, ~run_sim(.x, sim_function, quiet = F))
+run_sim_map <- function(iterations, sim_function) {
+  # Use map() to run the simulations 
+  out_list <- purrr::map(iterations, ~run_sim(.x, sim_function, quiet = FALSE))
+  
+  # Combine the list of data frames into a single data frame
+  out_df <- dplyr::bind_rows(out_list)
   
   # Return the combined data frame
   return(out_df)
 }
 
-library(future)
-#plan(multiprocess)
-
-run_sim_future <- function(i, fun, quiet = T) {
-  # create a future with seed = TRUE
-  f <- future(seed = TRUE, {
-    # print progress
-    if (quiet == F & i %/% 50 ==0) {
-      cat("Iteration ", i, "\n")
-    }
-    # make data from function
-    dt = fun()
-    # make event study data
-    es = prep_es(dt)
-    
-    #true values
-    true = est_true(dt, i)
-    #estimate
-    mc = est_mc(dt, i)
-    did = est_canonical(es, i)
-    cs = est_cs(es, i)
-    sa = est_sa(es, i)
-    dcdh = est_dcdh(dt, i)
-    bjs = est_bjs(dt, i)
-    
-    results_list <- list(true, mc, did, cs, sa, dcdh, bjs)
-    names(results_list) <- c('TRUE', 'MC-NNM', 'DiD', 'CS', 'SA', 'dCdH', 'BJS')
-    
-    # convert list to long tibble
-    results_df <- tibble(
-      iteration = i,
-      estimator = names(results_list),
-      est = vapply(results_list, function(x) x$est, numeric(1)),
-      se = vapply(results_list, function(x) x$se, numeric(1)),
-      cum_est = vapply(results_list, function(x) x$cum_est, numeric(1)),
-      cum_se = vapply(results_list, function(x) x$cum_se, numeric(1))
-    )
-    
-    return(results_df)
-  })
-  
-  # get the value from the future
-  value(f)
-}
-
 
 ## Function to execute the simulation, parallelized using mclapply
-run_parallel_sim_mclapply <- function(iterations, sim_function) {
+run_sim_parallel <- function(iterations, sim_function) {
   cat("Simulating ", deparse(substitute(sim_function)), ":\n")
   # Use mclapply() to run the simulations in parallel
   out = suppressWarnings(
@@ -841,21 +748,6 @@ run_parallel_sim_mclapply <- function(iterations, sim_function) {
   # Return the combined data frame
   return(tibble(out_df))
 }
-
-## Function to execute the simulation, parallelized using furrr
-RNGkind("L'Ecuyer-CMRG") # Setup RNG for future
-plan(cluster) # set up future
-
-run_parallel_sim_furrr <- function(iterations, sim_function) {
-  # Use future_map_dfr() to run the simulations in parallel
-  out_df <- future_map_dfr(iterations, 
-                           function(i) run_sim_future(i, sim_function, quiet = F))
-  
-  # Return the combined data frame
-  return(out_df)
-}
-
-
 
 ### Utilities for simulating
 # parallelization leads to errors, which leads to entire iterations missing
