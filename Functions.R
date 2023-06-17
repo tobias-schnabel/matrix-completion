@@ -773,21 +773,27 @@ verify_iteration_counts <- function(input_tibble) {
   }
 }
 
-save_sim_results <- function(input_tibble, file_name = "dgp_1") {
-
+save_sim_results <- function(input_tibble, file_name = "test") {
   # get the current date and time
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
   
   # create the file name with the custom name and current date and time
   full_file_name <- paste0(file_name, "_", current_time, ".RData")
   
-  # cwd = getwd() # get current WD
-  # setwd('SimResults') 
-  save(input_tibble, file = full_file_name) # save tibble as RData file
-  # setwd(cwd) # reset current WD
+  # construct the relative file path
+  file_path <- file.path('SimResults', full_file_name)
+  
+  # Check if 'SimResults' directory exists, if not create it
+  if (!dir.exists('SimResults')) {
+    dir.create('SimResults')
+  }
+  
+  # save tibble as RData file
+  save(input_tibble, file = file_path)
   
   # print confirmation
   cat("Tibble saved as:", full_file_name, "\n")
 }
+
 
 writeLines("Ready")
