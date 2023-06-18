@@ -894,6 +894,19 @@ analyze_sim_results <- function(sim_results) {
   return(final_summary)
 }
 
-
+# function to save results tables to latex
+save_table_results <- function(sumdata, 
+                               caption = "", 
+                               note = "", 
+                               file_name = "table.tex") {
+  align <- ifelse(sapply(data, is.numeric), "c", "l")
+  
+  sumdata %>%
+    kable(format = "latex", booktabs = T, caption = caption,
+          digits = 3, align = align) %>%
+    footnote(general = note, footnote_as_chunk = T) %>%
+    kable_styling(latex_options = c("hold_position")) %>% #"striped",
+    save_kable(file = file_name)
+}
 
 writeLines("Ready")
