@@ -783,12 +783,13 @@ verify_iteration_counts <- function(input_tibble) {
   }
 }
 
+# funciton to save sim results to RDS
 save_sim_results <- function(input_tibble, file_name = "test") {
   # get the current date and time
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
   
   # create the file name with the custom name and current date and time
-  full_file_name <- paste0(file_name, "_", current_time, ".RData")
+  full_file_name <- paste0(file_name, "_", current_time, ".rds")
   
   # construct the relative file path
   file_path <- file.path('SimResults', full_file_name)
@@ -798,12 +799,46 @@ save_sim_results <- function(input_tibble, file_name = "test") {
     dir.create('SimResults')
   }
   
-  # save tibble as RData file
-  save(input_tibble, file = file_path)
+  # save tibble as RDS file
+  saveRDS(input_tibble, file = file_path)
   
   # print confirmation
   cat("Tibble saved as:", full_file_name, "\n")
 }
+
+# function to load most recently saved version of each DGP results
+load_sim_results <- function(file_name = "test") {
+  # specify directory 
+  directory <- 'SimResults'
+  
+  # use a pattern match to filter 
+  pattern <- paste0('^', file_name, '.*\\.rds$')
+  
+  # list all files in dir that match the pattern
+  files <- list.files(path = directory, pattern = pattern)
+  
+  # if no file exists, handle error
+  if (length(files) == 0) {
+    cat("No files matching the pattern found\n")
+    return(NULL)
+  }
+  
+  # sort file names in descending order (most recent first)
+  sorted_files <- files[order(files, decreasing = TRUE)]
+  
+  # construct full path 
+  most_recent_file <- file.path(directory, sorted_files[1])
+  
+  loaded_data <- readRDS(most_recent_file) # load most recent file
+  
+  cat("Loaded file:", sorted_files[1], "\n") # print confirmation
+  
+  # return the loaded data
+  return(loaded_data)
+}
+
+
+
 
 
 writeLines("Ready")
