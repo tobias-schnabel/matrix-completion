@@ -687,7 +687,7 @@ timer <- function(func, ...){
 run_sim <- function(i, fun, quiet = T) {
   # print progress
   if (quiet == F) {
-    cat("Iteration ", i, "\n")
+    cat(" ", i, "...")
   }
   # make data from function
   dt = fun()
@@ -723,7 +723,7 @@ run_sim <- function(i, fun, quiet = T) {
 ## Function to execute the simulation, not parallelized
 run_sim_map <- function(iterations, sim_function) {
   cat("Simulating ", deparse(substitute(sim_function)), ", ",
-      length(iterations), "Iterations\n")
+      length(iterations), "Iterations\n", "Iteration: ")
   # Use purrr:map() to run simulations 
   start_time = Sys.time()
   out_list <- purrr::map(iterations, ~run_sim(.x, sim_function, quiet = F))
