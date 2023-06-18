@@ -783,7 +783,7 @@ verify_iteration_counts <- function(input_tibble) {
   }
 }
 
-# funciton to save sim results to RDS
+# function to save sim results to RDS
 save_sim_results <- function(input_tibble, file_name = "test") {
   # get the current date and time
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
@@ -837,7 +837,62 @@ load_sim_results <- function(file_name = "test") {
   return(loaded_data)
 }
 
+### Analyzing sim results
 
+# function to create summary tibble
+analyze_sim_results <- function(sim_results) {
+  # keep original order
+  sim_results$estimator = factor(sim_results$estimator, 
+                                 levels = unique(sim_results$estimator))
+  
+  # get true values for bias
+  true_values = filter(sim_results, estimator == "TRUE")
+  
+  # create 'TRUE' row for summary table
+  true_summary = true_values %>%
+    summarise(
+      estimator = "TRUE",
+      mean_est = mean(est, na.rm = TRUE),
+      mean_se = mean(se, na.rm = TRUE),
+      mean_cum_est = mean(cum_est, na.rm = TRUE),
+      mean_cum_se = mean(cum_se, na.rm = TRUE),
+      bias_est = 0,
+      bias_cum_est = 0,
+      rmse_est = 0,
+      rmse_cum_est = 0,
+      .groups = 'drop'
+    )
+  
+  est_summary = sim_results %>%
+    filter(estimator != "TRUE") %>%
+    group_by(estimator) %>%
+    summarise(
+      mean_est = mean(est, na.rm = F),
+      mean_se = mean(se, na.rm = F),
+      mean_cum_est = mean(cum_est, na.rm = F),
+      mean_cum_se = mean(cum_se, na.rm = F),
+      rmse_est = sqrt(mean((est - mean(true_values$est, 
+                                       na.rm = F))^2, na.rm = F)),
+      rmse_cum_est = sqrt(mean((cum_est - mean(true_values$cum_est, 
+                                               na.rm = F))^2, na.rm = F)),
+      .groups = 'drop'  # avoid the grouped_df class for the output
+    )
+  
+  summarized_results = est_summary %>%
+    mutate(
+      bias_est = mean_est - mean(true_values$est, na.rm = TRUE),
+      bias_cum_est = mean_cum_est - mean(true_values$cum_est, na.rm = TRUE)
+    )
+  
+  final_summary = bind_rows(true_summary, summarized_results) %>% 
+    select("Estimator | Mean:" = estimator, est = mean_est, 
+           se = mean_se, bias = bias_est, rmse = rmse_est, 
+           cum_est = mean_cum_est, c_se = mean_cum_se, 
+           c_bias = bias_cum_est, c_rmse = rmse_cum_est)
+  
+  
+  return(final_summary)
+}
 
 
 
