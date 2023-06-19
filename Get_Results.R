@@ -1,5 +1,6 @@
 #### This Script carries all simulations
 if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
+  library(pushoverr)
   set_pushover_user(user = "ugdgajneo6c1guze52pi8ew2jyon71")
   set_pushover_app(token = "awswexyruunh8f3gex8yyzk4guarie")
 }
