@@ -2,6 +2,7 @@
 if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
   set_pushover_user(user = "ugdgajneo6c1guze52pi8ew2jyon71")
   set_pushover_app(token = "awswexyruunh8f3gex8yyzk4guarie")
+}
 writeLines("Which simulation process should be used?")
 sim_bool = utils::menu(c("Single-core (takes around 6h per simulation)", 
                           "Parallelized (recommended, substantially faster but takes up 100% CPU)"), 
