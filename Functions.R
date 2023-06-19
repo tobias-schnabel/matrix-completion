@@ -906,7 +906,7 @@ save_sim_results <- function(input_tibble, file_name = "test") {
   saveRDS(input_tibble, file = file_path)
   
   # print confirmation
-  cat("Tibble saved as:", full_file_name, "\n")
+  cat("Tibble saved as:", full_file_name, "\n\n")
 }
 
 # function to load most recently saved version of each DGP results
