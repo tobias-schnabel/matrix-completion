@@ -60,6 +60,7 @@ dgp_1_sim <- function(nobs = 1000,
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     ungroup() %>%
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    mutate(use_cum_te = F, use_cov = F) %>% 
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything(), -evertreated)
 }
 
@@ -113,7 +114,8 @@ dgp_2_sim <- function(nobs = 1000,
     group_by(unit) %>% 
     # Cumulative TE
     mutate(cum.t.eff = cumsum(t.eff)) %>% 
-    mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
+    mutate(y = unit_fe + period_fe + cum.t.eff + error) %>%
+    mutate(use_cum_te = T, use_cov = F) %>% 
     ungroup() %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything(), -evertreated)
@@ -176,6 +178,7 @@ dgp_3_sim <- function(nobs = 1000,
     ungroup() %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    mutate(use_cum_te = F, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
@@ -236,6 +239,7 @@ dgp_4_sim <- function(nobs = 1000,
     ungroup() %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    mutate(use_cum_te = F, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
@@ -292,6 +296,7 @@ dgp_5_sim <- function(nobs = 1000,
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
+    mutate(use_cum_te = T, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything()) %>% 
     ungroup()
@@ -352,6 +357,7 @@ dgp_6_sim <- function(nobs = 1000,
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
+    mutate(use_cum_te = T, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything()) %>% 
     ungroup()
@@ -400,11 +406,12 @@ dgp_7_sim <- function(nobs = 1000,
       treat = ifelse(period >= group, 1, 0),
       t.eff = ifelse(treat == 1, te, 0),
       cum.t.eff = ave(t.eff, unit, FUN = cumsum),
-      y = unit_fe + period_fe + cum.t.eff + error + nuisance
-    ) %>% 
+      y = unit_fe + period_fe + cum.t.eff + error + nuisance,
+      use_cum_te = T,
+      use_cov = T) %>% 
     # change column order
-    select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything()) %>% 
-    select(-nuisance)
+    select(unit, period, obsgroup, te, group, treat, cum.t.eff, nuisance, everything())
+  
 }
 
 
@@ -415,22 +422,46 @@ get_true_values <- function(data){
   treat_times <- sort(get_treat_times(data)) 
   tgroups <- treat_times[-length(treat_times)]
   
-  # Get the sample share of each treatment group
+  # check whether DGP uses t.eff or cum.t.eff
+  use_cum_effect = as.logical(data$use_cum_te[1])
+  
+  # get number of treated units
+  
+  numtreated = data %>% filter(group %in% tgroups) %>%  get_num_units()
+  
+  # get share of each treatment group
   group_share <- data %>%
     filter(group %in% tgroups) %>%
     group_by(group) %>%
-    summarise(share = n() / nrow(data))
+    summarise(share = n() / numtreated)
   
-  # Calculate the true treatment effects, static and cumulative
+  # calculate true dynamic treatment effect
+  if (use_cum_effect) {
+    ce = data %>%  group_by(period) %>% 
+      filter(group %in% tgroups) %>% 
+      filter(treat == 1) %>% 
+      summarise(mce = mean(cum.t.eff)) %>% 
+      summarise(cum_est = sum(mce))
+  } else {
+    ce = data %>%  group_by(period) %>% 
+      filter(group %in% tgroups) %>% 
+      filter(treat == 1) %>% 
+      summarise(mce = mean(t.eff)) %>% 
+      summarise(cum_est = sum(mce))
+  }
+  
+  # calculate true static treatment effect
   group_data <- data %>%
     filter(group %in% tgroups) %>%
     left_join(group_share, by = "group") %>%
+    # left_join(ce, by = "period") %>%
     group_by(group) %>%
     summarise(est = mean(avg.te), 
-              cum_est = mean(cum.t.eff[period == max(period)]), share = mean(share))
+              cum_est = mean(as.numeric(ce)), share = mean(share))
   
   return(group_data)
 }
+
 
 ### Data Plotting Functions
 # Set Theme
@@ -540,17 +571,18 @@ globalcores = parallel::detectCores()
 est_true <- function(data, iteration = 0) {
   vals = get_true_values(data)
   weighted_est <- sum(vals$est * vals$share) / sum(vals$share)
-  weighted_cum_est <- sum(vals$cum_est * vals$share) / sum(vals$share)
+  ce = mean(vals$cum_est)
   
-  out = list(est = weighted_est, se = 0, cum_est = weighted_cum_est,
+  out = list(est = weighted_est, se = 0, cum_est = ce,
              cum_se = 0, iter = iteration, estimator = "TRUE")
   
+  return(out)
 }
 
 ## MC-NNM using fect (gsynth fails when no covariates for some reason)
 # helper
 get_cohorts <- function(data) {
-  df = data %>% select(unit, period, y, treat, group) %>% as.data.frame()
+  df = data  %>% as.data.frame()
   cohorts = get.cohort(df, "treat", index = c("unit", "period"))
   cohorts$FirstTreat[cohorts$Cohort == "Cohort:100"] = NA
   cohorts$Time_to_Treatment[cohorts$Cohort == "Cohort:100"] = NA
@@ -562,9 +594,20 @@ get_cohorts <- function(data) {
 # Estimate Full MC-NNM object
 est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
   cohorts = get_cohorts(data)
-  model = suppressMessages(fect::fect(y ~ treat, data = cohorts, 
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(data$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    form = y ~ treat + nuisance
+  } else {
+    form = y ~ treat
+  }
+  
+  
+  
+  model = suppressMessages(fect::fect(form, data = cohorts, 
                                       method = "mc", index = c("unit","period"), 
-                                      se = T, force = "two-way", r = 0, 
+                                      se = T, force = "two-way",
                                       CV = T,  cores = globalcores, parallel = T,
                                       nboots = b_iter, group = 'Cohort',
                                       nlambda = n_lam, k = k))
@@ -577,8 +620,6 @@ est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
                    iter = iteration, estimator = "MC-NNM")
   return(mc_output)
 }
-
-
 
 ### Helpers to set up event study
 
@@ -594,11 +635,26 @@ prep_es <- function(data){
 
 ## Canonical DiD, using fixest:::feols
 est_canonical <- function(es_data, iteration = 0){
-  static = fixest::feols(y ~ treat | unit + period, cluster = ~obsgroup, data = es_data)
-  stat_out = list(est = unname(static$coefficients), se = unname(static$se[1]))
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(es_data$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    form = y ~ treat + nuisance | unit + period
+    form_dyn = y ~ i(rel_period, ref=c(-1, Inf)) + nuisance | unit + period
+  } else {
+    form = y ~ treat | unit + period
+    form_dyn = y ~ i(rel_period, ref=c(-1, Inf)) | unit + period
+  }
+  
+  static = fixest::feols(form , cluster = ~obsgroup, data = es_data)
+  if (use_covariates) {
+    stat_out = list(est = unname(s$coefficients)[1], se = unname(static$se[1]))
+  } else {
+    stat_out = list(est = unname(static$coefficients), se = unname(static$se[1]))
+  }
   
   dynamic = suppressMessages(
-    fixest::feols(y ~ i(rel_period, ref=c(-1, Inf)) | unit + period, es_data))
+    fixest::feols(form_dyn, es_data))
   # aggregate to ATT dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
   
   dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
@@ -612,14 +668,31 @@ est_canonical <- function(es_data, iteration = 0){
 
 ## Callaway-Sant'Anna
 est_cs <- function(es_data, iteration = 0){
-  mod = did::att_gt(yname = "y",
-                    tname = "period",
-                    idname = "unit",
-                    gname = "group",
-                    control_group = "nevertreated",
-                    bstrap = F,
-                    data = es_data,
-                    print_details = F)
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(es_data$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    mod = suppressWarnings(did::att_gt(yname = "y",
+                                       tname = "period",
+                                       idname = "unit",
+                                       gname = "group",
+                                       xformla = ~ 0 + nuisance,
+                                       est_method = "dr",
+                                       control_group = "notyettreated",
+                                       bstrap = F,
+                                       data = es_data,
+                                       print_details = F))
+  } else {
+    mod = did::att_gt(yname = "y",
+                      tname = "period",
+                      idname = "unit",
+                      gname = "group",
+                      control_group = "notyettreated",
+                      bstrap = F,
+                      data = es_data,
+                      print_details = F)
+  }
+  
   
   dynamic = did::aggte(mod, type = "calendar", cband = F)
   cs_output = list(est = dynamic$overall.att, se = dynamic$overall.se, 
@@ -631,7 +704,16 @@ est_cs <- function(es_data, iteration = 0){
 
 ## Sun and Abraham using fixest
 est_sa <- function(es_data, iteration = 0){
-  mod = fixest::feols(y ~ sunab(group, period) | unit + period, es_data)
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(es_data$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    form = y ~ nuisance + sunab(group, period) | unit + period
+  } else {
+    form = y ~ sunab(group, period) | unit + period
+  }
+  
+  mod = fixest::feols(form, es_data)
   static = aggregate(mod, agg = "att")
   dyn = aggregate(mod, agg = "period")
   sa_output = list(est = static[1], se = static[2],
@@ -644,8 +726,17 @@ est_sa <- function(es_data, iteration = 0){
 
 ## de Chaisemartin & D’Haultfœuille using DIDmultiplegt
 est_dcdh <- function(data, iteration = 0){
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(data$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    control = "nuisance"
+  } else {
+    control = c()
+  }
+  
   mod = DIDmultiplegt::did_multiplegt(
-      data, "y", "group", "period", 
+      data, "y", "group", "period", controls = control,
       "treat", dynamic = 0, average_effect = "simple")
   
   dcdh_output = list(est = mod$effect, se = NA, cum_est = NA, cum_se = NA, 
@@ -658,20 +749,32 @@ est_dcdh <- function(data, iteration = 0){
 est_bjs <- function(data, iteration = 0){
   # change data because didimputation does not work when depvar is called "y"
   imput_dat = relabel_control_0(data) %>% 
-    select(unit, period, dep_var = y, group) %>% as.data.table()
+    rename(dep_var = y) %>% as.data.table()
+  
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(imput_dat$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    fs = ~ nuisance | unit + period
+  } else {
+    fs = ~ 0 | unit + period
+  }
   
   stat = didimputation::did_imputation(
-    data = imput_dat, yname = "dep_var", gname = "group", 
-    tname = "period", idname = "unit")
+    data = imput_dat, yname = "dep_var", gname = "group", first_stage = fs,
+    tname = "period", idname = "unit") #tname = "period", idname = "unit", 
   
   dyn = didimputation::did_imputation(
     data = imput_dat, yname = "dep_var", gname = "group", 
-    tname = "period", idname = "unit", horizon = T)
+    tname = "period", idname = "unit", first_stage = fs,
+    horizon = T)
   
   bjs_output = list(est = stat$estimate, se = stat$std.error,
                     cum_est = sum(dyn[1:(nrow(dyn)-1),3]), 
                     cum_se = sum(dyn[1:(nrow(dyn)-1),4]),
                     iter = iteration, estimator = "BJS")
+  
+  return(bjs_output)
 }
 
 timer <- function(func, ...){
