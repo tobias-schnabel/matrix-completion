@@ -1,4 +1,7 @@
 #### This Script carries all simulations
+if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
+  set_pushover_user(user = "ugdgajneo6c1guze52pi8ew2jyon71")
+  set_pushover_app(token = "awswexyruunh8f3gex8yyzk4guarie")
 writeLines("Which simulation process should be used?")
 sim_bool = utils::menu(c("Single-core (takes around 6h per simulation)", 
                           "Parallelized (recommended, substantially faster but takes up 100% CPU)"), 
@@ -51,6 +54,11 @@ if (sim_bool == 0) {
   sim7_par = verify_sim_results(sim7_par_out)
   verify_iteration_counts(sim7_par)
   save_sim_results(sim7_par, "Sim_7_par")
+  
+  if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
+    pushover("Single-core Simulations complete")
+  }
+  
 } else {
   ## Simulate using purrr:map 
   # slower but more reliable
@@ -97,4 +105,11 @@ if (sim_bool == 0) {
   sim7 = verify_sim_results(sim7_out)
   verify_iteration_counts(sim7)
   save_sim_results(sim7, "Sim_7")
+  
+  if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
+    pushover("Single-core Simulations complete")
+  }
+  
 }
+
+
