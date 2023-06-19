@@ -1,5 +1,8 @@
 #### This Script carries out the main analysis
-
+if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
+set_pushover_user(user = "ugdgajneo6c1guze52pi8ew2jyon71")
+set_pushover_app(token = "awswexyruunh8f3gex8yyzk4guarie")
+}
 ## Simulate using purrr:map (slower but more reliable in terms of corrupted 
 #iterations)
 
@@ -45,6 +48,9 @@ sim7 = verify_sim_results(sim7_out)
 verify_iteration_counts(sim7)
 save_sim_results(sim7, "Sim_7")
 
+if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
+  pushover("Simulations using Map complete")
+}
 
 ## Simulate using mclapply(substantially faster but less reliable in terms of corrupted 
 #iterations)
@@ -91,4 +97,6 @@ sim7_par = verify_sim_results(sim7_par_out)
 verify_iteration_counts(sim7_par)
 save_sim_results(sim7_par, "Sim_7_par")
 
-
+if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
+  pushover("Parallel Simulations complete")
+}
