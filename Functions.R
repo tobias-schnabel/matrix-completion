@@ -903,7 +903,7 @@ save_table_results <- function(sumdata,
   
   sumdata %>%
     kable(format = "latex", booktabs = T, caption = caption,
-          digits = 3, align = align) %>%
+          digits = 4, align = align) %>%
     footnote(general = note, footnote_as_chunk = T) %>%
     kable_styling(latex_options = c("hold_position")) %>% #"striped",
     save_kable(file = file_name)
