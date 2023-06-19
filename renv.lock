@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.3.0",
+    "Version": "4.3.1",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -138,8 +138,8 @@
       "Package": "MarcusSantAnna2020",
       "Version": "0.1.1",
       "Source": "GitHub",
-      "Remotes": "github::bcallaway11/did",
       "RemoteType": "github",
+      "Remotes": "github::bcallaway11/did",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "MarcusSantAnna2020",
       "RemoteUsername": "pedrohcgs",
@@ -2480,6 +2480,21 @@
         "vctrs"
       ],
       "Hash": "d71c815267c640f17ddbf7f16144b4bb"
+    },
+    "pushoverr": {
+      "Package": "pushoverr",
+      "Version": "1.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "checkmate",
+        "cli",
+        "glue",
+        "httr",
+        "rlang"
+      ],
+      "Hash": "426acf96920ea52d77f338820c126cac"
     },
     "quantreg": {
       "Package": "quantreg",
