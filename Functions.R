@@ -648,7 +648,7 @@ est_canonical <- function(es_data, iteration = 0){
   
   static = fixest::feols(form , cluster = ~obsgroup, data = es_data)
   if (use_covariates) {
-    stat_out = list(est = unname(s$coefficients)[1], se = unname(static$se[1]))
+    stat_out = list(est = unname(static$coefficients)[1], se = unname(static$se[1]))
   } else {
     stat_out = list(est = unname(static$coefficients), se = unname(static$se[1]))
   }
