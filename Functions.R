@@ -441,13 +441,13 @@ get_true_values <- function(data){
       filter(group %in% tgroups) %>% 
       filter(treat == 1) %>% 
       summarise(mce = mean(cum.t.eff)) %>% 
-      summarise(cum_est = sum(mce))
+      summarise(cum_est = sum(mce) / periods)
   } else {
     ce = data %>%  group_by(period) %>% 
       filter(group %in% tgroups) %>% 
       filter(treat == 1) %>% 
       summarise(mce = mean(t.eff)) %>% 
-      summarise(cum_est = sum(mce))
+      summarise(cum_est = sum(mce) / periods)
   }
   
   # calculate true static treatment effect
@@ -561,7 +561,7 @@ get_num_groups <- function(df) {
 }
 
 relabel_control_0 <- function(df){
-  df %>% mutate(group = ifelse(group == 100, 0, group))
+  df %>% mutate(group = ifelse(group == max(group), 0, group))
 }
 
 # set number of cores
@@ -603,8 +603,6 @@ est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
     form = y ~ treat
   }
   
-  
-  
   model = suppressMessages(fect::fect(form, data = cohorts, 
                                       method = "mc", index = c("unit","period"), 
                                       se = T, force = "two-way",
@@ -613,11 +611,16 @@ est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
                                       nlambda = n_lam, k = k))
   
   est_avg = unname(model$est.avg[,1:2]) #get static effect
-  est_eff_calendar = model$est.eff.calendar #get dynamic effect
+  est_eff_calendar = c(model$est.eff.calendar[,1],0) # get dynamic point estimate
+  est_eff_calendar[is.nan(est_eff_calendar)] = 0 # replace NaN with 0
+  est_cal_se = c(model$est.eff.calendar[,2],0) # get dynamic SE
+  est_cal_se[is.na(est_cal_se)] = 0 # replace NaN with 0
+  
   mc_output = list(est = est_avg[1], se = est_avg[2],
-                   cum_est = sum(est_eff_calendar[,1], na.rm = TRUE), 
-                   cum_se = sum(est_eff_calendar[,2], na.rm = TRUE),
+                   cum_est = mean(est_eff_calendar), 
+                   cum_se = mean(est_cal_se),
                    iter = iteration, estimator = "MC-NNM")
+  
   return(mc_output)
 }
 
@@ -626,17 +629,17 @@ est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
 prep_es <- function(data){
   # Prepare data
   esdat <- data %>%
+    mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
     mutate(rel_period = period - group) %>% # relative time to treatment
     mutate(evertreated = ifelse(group == get_num_periods(data), 0, 1)) %>% 
-    mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
     dplyr::arrange(group, unit, period) %>% 
     ungroup()
 }
 
 ## Canonical DiD, using fixest:::feols
-est_canonical <- function(es_data, iteration = 0){
+est_canonical <- function(data, iteration = 0){
   # check whether we should use covariates in estimation
-  use_covariates = as.logical(es_data$use_cov[1]) 
+  use_covariates = as.logical(data$use_cov[1]) 
   # adjust estimation formula to include covariates for dgp 7
   if (use_covariates) {
     form = y ~ treat + nuisance | unit + period
@@ -646,19 +649,29 @@ est_canonical <- function(es_data, iteration = 0){
     form_dyn = y ~ i(rel_period, ref=c(-1, Inf)) | unit + period
   }
   
-  static = fixest::feols(form , cluster = ~obsgroup, data = es_data)
+  static = fixest::feols(form , data = data)
   if (use_covariates) {
     stat_out = list(est = unname(static$coefficients)[1], se = unname(static$se[1]))
   } else {
     stat_out = list(est = unname(static$coefficients), se = unname(static$se[1]))
   }
   
-  dynamic = suppressMessages(
-    fixest::feols(form_dyn, es_data))
+  dyndat = relabel_control_0(data)
+  dynamic = suppressMessages(did2s::event_study(dyndat, "y", "unit", "group", 
+                                                "period", estimator = "TWFE"))
+  # dynamic = suppressMessages(
+  #   fixest::feols(form_dyn, es_data))
   # aggregate to ATT dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
   
-  dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
-                 cum_se = sum(dynamic$se[-length(dynamic$se)]))
+  # only keep 100 coefficients to make dynamic estimate comparable
+  dyn_est = dynamic$estimate[(length(dynamic$estimate)-99):length(dynamic$estimate)]
+  dyn_se = dynamic$std.error[(length(dynamic$std.error)-99):length(dynamic$std.error)]
+  
+  dyn_out = list(cum_est = mean(dyn_est), 
+                 cum_se = mean(dyn_se))
+  
+  # dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
+  #                cum_se = sum(dynamic$se[-length(dynamic$se)]))
   out = c(stat_out, dyn_out)
   out$iter = iteration
   out$estimator = "DiD"
@@ -695,10 +708,15 @@ est_cs <- function(es_data, iteration = 0){
   
   
   dynamic = did::aggte(mod, type = "calendar", cband = F)
+  
+  dyn_est = c(dynamic$att.egt, rep(0, 100 - length(dynamic$att.egt)))
+  dyn_se = c(dynamic$se.egt, rep(0, 100 - length(dynamic$se.egt)))
+  
   cs_output = list(est = dynamic$overall.att, se = dynamic$overall.se, 
-                   cum_est = sum(dynamic$att.egt[-length(dynamic$att.egt)]), 
-                   cum_se = sum(dynamic$se.egt[-length(dynamic$se.egt)]), 
+                   cum_est = mean(dyn_est), 
+                   cum_se = mean(dyn_se), 
                    iter = iteration, estimator = "CS")
+  
   return(cs_output)
 }
 
@@ -716,9 +734,21 @@ est_sa <- function(es_data, iteration = 0){
   mod = fixest::feols(form, es_data)
   static = aggregate(mod, agg = "att")
   dyn = aggregate(mod, agg = "period")
+  
+  de = dyn[1:(nrow(dyn)), 1] # get point estimates
+  dse = dyn[1:(nrow(dyn)), 2] # get SE
+  
+  if (length(de) < 100){ # make sure that only 100 periods
+    dyn_est = c(de, rep(0, 100 - length(de)))
+    dyn_se =  c(dse, rep(0, 100 - length(dse)))
+  } else {
+    dyn_est = de[(length(de)-99):length(de)]
+    dyn_se = dse[(length(dse)-99):length(dse)]
+  }
+  
   sa_output = list(est = static[1], se = static[2],
-                   cum_est = sum(dyn[1:(nrow(dyn)-1),1], na.rm = TRUE), 
-                   cum_se = sum(dyn[1:(nrow(dyn)-1),2], na.rm = TRUE), 
+                   cum_est = mean(de), 
+                   cum_se = mean(dse), 
                    iter = iteration, estimator = "SA")
   
   return(sa_output)
@@ -769,9 +799,12 @@ est_bjs <- function(data, iteration = 0){
     tname = "period", idname = "unit", first_stage = fs,
     horizon = T)
   
+  dyn_est = c(dyn$estimate, rep(0, 100 - length(dyn$estimate))) #dyn$std.error
+  dyn_se = c(dyn$std.error, rep(0, 100 - length(dyn$std.error)))
+  
   bjs_output = list(est = stat$estimate, se = stat$std.error,
-                    cum_est = sum(dyn[1:(nrow(dyn)-1),3]), 
-                    cum_se = sum(dyn[1:(nrow(dyn)-1),4]),
+                    cum_est = mean(dyn_est), 
+                    cum_se = mean(dyn_se),
                     iter = iteration, estimator = "BJS")
   
   return(bjs_output)
@@ -940,6 +973,23 @@ load_sim_results <- function(file_name = "test") {
   return(loaded_data)
 }
 
+# function to trim excess iterations
+keep_iterations <- function(sim_data, num_iterations = 500) {
+  
+  if (length(unique(sim_data$iteration)) == num_iterations) {
+    out = sim_data
+  } else if(length(unique(sim_data$iteration)) > num_iterations){
+    it = rep(1:500, each = 7, length.out = 7 * num_iterations)
+    out = sim_data[sim_data$iteration %in% it, ]
+  } else {
+    out = "Not enough complete iterations present"
+  }
+  
+  return(out)
+}
+
+
+
 ### Analyzing sim results
 
 # function to create summary tibble
@@ -1034,7 +1084,8 @@ analyze_sim_results <- function(results, type = "static") {
 summarize_sim_results <- function(results,
                                   caption = "", 
                                   note = "", 
-                                  file_name = "table.tex"){
+                                  file_name = "table.tex",
+                                  export = F){
   stat = analyze_sim_results(results, "static") 
   dyn = analyze_sim_results(results, "dynamic")
   
@@ -1044,13 +1095,16 @@ summarize_sim_results <- function(results,
   # dynamic_estimates <- s[, c("Min.1", "Mean.1", "Max.1", "MeanSE.1", "Bias.1", "RMSE.1")]
   align <- ifelse(sapply(data, is.numeric), "c", "l")
   
-  s %>%  kable(format = "latex", booktabs = T, caption = caption,
-               digits = 2, align = align) %>% 
-    add_header_above(c(" ", "Static Estimates"= 6, "Dynamic Estimates"= 6)) %>% 
-    kable_styling(latex_options = "hold_position") #%>% 
-    # save_kable(file = file_name)
+  if(export == F) {
+    return(s)
+  } else {
+    s %>%  kable(format = "latex", booktabs = T, caption = caption,
+                 digits = 2, align = align) %>% 
+      add_header_above(c(" ", "Static Estimates"= 6, "Dynamic Estimates"= 6)) %>% 
+      kable_styling(latex_options = "hold_position") %>% 
+      save_kable(file = file_name)
+  }
   
-  # return(summary)
 }
 
 # function to save results tables to latex
