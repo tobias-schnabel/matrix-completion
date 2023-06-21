@@ -10,6 +10,13 @@ sim_bool = utils::menu(c("Single-core (takes around 6h per simulation)",
                         title = "Press 0 to abort and load saved data" )
 if (sim_bool == 0) {
   writeLines("Loading saved data")
+  sim1 = load_sim_results("Sim_1")
+  sim2 = load_sim_results("Sim_2")
+  sim3 = load_sim_results("Sim_3")
+  sim4 = load_sim_results("Sim_4")
+  sim5 = load_sim_results("Sim_5")
+  sim6 = load_sim_results("Sim_6")
+  sim7 = load_sim_results("Sim_7")
 } else if (sim_bool == 2) {
   ## Simulate using mclapply
   # substantially faster
