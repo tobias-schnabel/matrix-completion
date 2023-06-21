@@ -943,58 +943,114 @@ load_sim_results <- function(file_name = "test") {
 ### Analyzing sim results
 
 # function to create summary tibble
-analyze_sim_results <- function(sim_results) {
+analyze_sim_results <- function(results, type = "static") {
+  
+  sim_results = results
+  # make sure numeric values are numeric
+  sim_results$iteration = as.numeric(results$iteration)
+  sim_results$est = as.numeric(results$est)
+  sim_results$se = as.numeric(results$se)
+  sim_results$cum_est = as.numeric(results$cum_est)
+  sim_results$cum_se = as.numeric(results$cum_se)
+  
   # keep original order
   sim_results$estimator = factor(sim_results$estimator, 
                                  levels = unique(sim_results$estimator))
+  
+
   
   # get true values for bias
   true_values = filter(sim_results, estimator == "TRUE")
   
   # create 'TRUE' row for summary table
-  true_summary = true_values %>%
+  true_summary_static = true_values %>%
     summarise(
       estimator = "TRUE",
-      mean_est = mean(est, na.rm = TRUE),
-      mean_se = mean(se, na.rm = TRUE),
-      mean_cum_est = mean(cum_est, na.rm = TRUE),
-      mean_cum_se = mean(cum_se, na.rm = TRUE),
-      bias_est = 0,
-      bias_cum_est = 0,
-      rmse_est = 0,
-      rmse_cum_est = 0,
+      min_est  = min(est),
+      mean_est = mean(est, na.rm = F),
+      max_est = max(est),
+      mean_se = 0,
+      bias = 0,
+      rmse = 0,
       .groups = 'drop'
     )
   
-  est_summary = sim_results %>%
+  true_summary_dynamic = true_values %>%
+    summarise(
+      estimator = "TRUE",
+      min_est  = min(cum_est),
+      mean_est = mean(cum_est, na.rm = F),
+      max_est = max(cum_est),
+      mean_se = 0,
+      bias = 0,
+      rmse = 0,
+      .groups = 'drop'
+    )
+  
+  static_summary = sim_results %>% # summary results for static-type estimate
     filter(estimator != "TRUE") %>%
     group_by(estimator) %>%
     summarise(
+      min_est  = min(est),
       mean_est = mean(est, na.rm = F),
+      max_est = max(est),
       mean_se = mean(se, na.rm = F),
-      mean_cum_est = mean(cum_est, na.rm = F),
-      mean_cum_se = mean(cum_se, na.rm = F),
-      rmse_est = sqrt(mean((est - mean(true_values$est, 
+      bias = mean(est) - mean(true_values$est, na.rm = F),
+      rmse = sqrt(mean((est - mean(true_values$est, 
                                        na.rm = F))^2, na.rm = F)),
-      rmse_cum_est = sqrt(mean((cum_est - mean(true_values$cum_est, 
-                                               na.rm = F))^2, na.rm = F)),
       .groups = 'drop'  # avoid the grouped_df class for the output
     )
   
-  summarized_results = est_summary %>%
-    mutate(
-      bias_est = mean_est - mean(true_values$est, na.rm = TRUE),
-      bias_cum_est = mean_cum_est - mean(true_values$cum_est, na.rm = TRUE)
+  dynamic_summary = sim_results %>% # summary results for dynamic-type estimate
+    filter(estimator != "TRUE") %>%
+    group_by(estimator) %>%
+    summarise(
+      min_est  = min(cum_est),
+      mean_est = mean(cum_est, na.rm = F),
+      max_est = max(cum_est),
+      mean_se = mean(cum_se, na.rm = F),
+      bias = mean(est) - mean(true_values$cum_est, na.rm = F),
+      rmse = sqrt(mean((cum_est - mean(true_values$cum_est, 
+                                       na.rm = F))^2, na.rm = F)),
+      .groups = 'drop'  # avoid the grouped_df class for the output
     )
   
-  final_summary = bind_rows(true_summary, summarized_results) %>% 
-    select("Estimator | Mean:" = estimator, est = mean_est, 
-           se = mean_se, bias = bias_est, rmse = rmse_est, 
-           cum_est = mean_cum_est, c_se = mean_cum_se, 
-           c_bias = bias_cum_est, c_rmse = rmse_cum_est)
-  
+  if (type == "static") {
+    final_summary = bind_rows(true_summary_static, static_summary) %>% 
+      select("Estimator" = estimator, 
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est,
+             "Mean SE" = mean_se, "Bias" = bias, "RMSE" = rmse)
+  } else if (type == "dynamic"){
+    final_summary = bind_rows(true_summary_dynamic, dynamic_summary) %>% 
+      select("Estimator" = estimator, 
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est,
+             "Mean SE" = mean_se, Bias = bias, "RMSE" = rmse)
+  }
   
   return(final_summary)
+}
+
+# Function to combine static and dynamic summaries into one large table
+summarize_sim_results <- function(results,
+                                  caption = "", 
+                                  note = "", 
+                                  file_name = "table.tex"){
+  stat = analyze_sim_results(results, "static") 
+  dyn = analyze_sim_results(results, "dynamic")
+  
+  s = cbind(stat, dyn[,-1])
+  
+  # static_estimates <- s[, c("Min", "Mean", "Max", "MeanSE", "Bias", "RMSE")]
+  # dynamic_estimates <- s[, c("Min.1", "Mean.1", "Max.1", "MeanSE.1", "Bias.1", "RMSE.1")]
+  align <- ifelse(sapply(data, is.numeric), "c", "l")
+  
+  s %>%  kable(format = "latex", booktabs = T, caption = caption,
+               digits = 2, align = align) %>% 
+    add_header_above(c(" ", "Static Estimates"= 6, "Dynamic Estimates"= 6)) %>% 
+    kable_styling(latex_options = "hold_position") #%>% 
+    # save_kable(file = file_name)
+  
+  # return(summary)
 }
 
 # function to save results tables to latex
@@ -1002,12 +1058,12 @@ save_table_results <- function(sumdata,
                                caption = "", 
                                note = "", 
                                file_name = "table.tex") {
-  align <- ifelse(sapply(data, is.numeric), "c", "l")
+  align <- ifelse(sapply(sumdata, is.numeric), "c", "l")
   
   sumdata %>%
     kable(format = "latex", booktabs = T, caption = caption,
-          digits = 4, align = align) %>%
-    footnote(general = note, footnote_as_chunk = T) %>%
+          digits = 2, align = align) %>%
+    footnote(general = note) %>%
     kable_styling(latex_options = c("hold_position")) %>% #"striped",
     save_kable(file = file_name)
 }
