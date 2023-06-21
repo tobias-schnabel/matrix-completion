@@ -15,11 +15,12 @@ if (renv::status()$synchronized == T) {
 
 CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", "knitr", "withr", "lfe",
               "callr", "ggplot2", "scales", "panelView", "devtools","fect", "didimputation",
-              "latex2exp",  "gsynth", "did2s", "DIDmultiplegt", "grateful", "parallel",
+              "latex2exp",  "gsynth", "did2s", "grateful", "parallel",
               "fixest", "DRDID", "staggered", "modelsummary", "ggthemes", "fastDummies")
 
-github_packages = c("MCPanel", "synthdid", "MarcusSantAnna2020") # not available on CRAN
-github_repos = c("susanathey/MCPanel", "synth-inference/synthdid", "pedrohcgs/MarcusSantAnna2020")
+github_packages = c("MCPanel", "synthdid", "MarcusSantAnna2020", "DIDmultiplegt") # not available on CRAN
+github_repos = c("susanathey/MCPanel", "synth-inference/synthdid", "pedrohcgs/MarcusSantAnna2020",
+                 "https://github.com/cran/DIDmultiplegt")
 
 installed_packages_cran = CRAN_packages %in% rownames(installed.packages())
 installed_packages_gh = github_packages %in% rownames(installed.packages())
@@ -66,9 +67,6 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(latex2exp)))
   suppressMessages(suppressWarnings(library(devtools)))
   suppressMessages(suppressWarnings(library(panelView)))
-  suppressMessages(suppressWarnings(library(gsynth)))
-  suppressMessages(suppressWarnings(library(did2s)))
-  suppressMessages(suppressWarnings(library(DIDmultiplegt)))
   suppressMessages(suppressWarnings(library(fixest)))
   suppressMessages(suppressWarnings(library(DRDID)))
   suppressMessages(suppressWarnings(library(staggered)))
@@ -81,13 +79,10 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(withr)))
   suppressMessages(suppressWarnings(library(scales)))
   suppressMessages(suppressWarnings(library(ggthemes)))
-  suppressMessages(suppressWarnings(library(lfe)))
   suppressMessages(suppressWarnings(library(parallel)))
   suppressMessages(suppressWarnings(library(fastDummies)))
   writeLines("All required CRAN packages are loaded")
 
-  library(MCPanel)
-  library(synthdid)
-  library(MarcusSantAnna2020)
+  suppressMessages(suppressWarnings(library(DIDmultiplegt)))
   writeLines("All required GitHub packages are loaded")
   writeLines("Ready")

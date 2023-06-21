@@ -1,0 +1,57 @@
+---
+title: "Preliminary Results"
+author: Tobias Schnabel
+date: June 18, 2023
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("packages.R")
+source("Functions.R")
+```
+
+
+DGP 1: One treatment group, TE is unit-and time- homogeneous
+
+```{r}
+print(analyze_sim_results(load_sim_results("Sim_1")))
+```
+
+DGP 2: One treatment group, TE is unit-homogeneous, time-varying
+
+```{r}
+print(analyze_sim_results(load_sim_results("Sim_2")))
+```
+
+DGP 3: Multiple Treatment Groups, Time-Invariant Homogeneous TE 
+
+```{r}
+print(analyze_sim_results(load_sim_results("Sim_3")))
+```
+
+DGP 4: Multiple Treatment Groups,Time-Invariant Heterogeneous TE
+
+```{r}
+print(analyze_sim_results(load_sim_results("Sim_4")))
+```
+
+DGP 5: Multiple Treatment Groups, Time-Varying Homogeneous TE 
+
+```{r}
+print(analyze_sim_results(load_sim_results("Sim_5")))
+```
+
+DGP 6: Multiple Treatment Groups, Time-Varying Heterogeneous TE 
+
+```{r}
+print(analyze_sim_results(load_sim_results("Sim_6")))
+```
+
+DGP 7: Multiple Treatment Groups, Time-Varying Heterogeneous TE, **Parallel Trends Violated**
+
+```{r}
+print(analyze_sim_results(load_sim_results("Sim_7")))
+```
+
