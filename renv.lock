@@ -137,6 +137,20 @@
       ],
       "Hash": "38082d362d317745fb932e13956dccbb"
     },
+    "MatrixExtra": {
+      "Package": "MatrixExtra",
+      "Version": "0.1.13",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Matrix",
+        "Rcpp",
+        "RhpcBLASctl",
+        "float",
+        "methods"
+      ],
+      "Hash": "700ca7bd63aad738b171c46ef8e63758"
+    },
     "MatrixModels": {
       "Package": "MatrixModels",
       "Version": "0.5-1",
@@ -208,6 +222,13 @@
         "utils"
       ],
       "Hash": "1e035db628cefb315c571202d70202fe"
+    },
+    "RhpcBLASctl": {
+      "Package": "RhpcBLASctl",
+      "Version": "0.23-42",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c966ea2957ff75e77afa5c908dfc89e1"
     },
     "SparseM": {
       "Package": "SparseM",
@@ -737,6 +758,29 @@
       ],
       "Hash": "673ca0cf577be27b6e5c899279656d90"
     },
+    "did2s": {
+      "Package": "did2s",
+      "Version": "1.0.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Matrix",
+        "MatrixExtra",
+        "R",
+        "SparseM",
+        "boot",
+        "broom",
+        "data.table",
+        "did",
+        "didimputation",
+        "fixest",
+        "ggplot2",
+        "rlang",
+        "staggered",
+        "stats"
+      ],
+      "Hash": "94efef50c541305dedbf3b29262fb036"
+    },
     "didimputation": {
       "Package": "didimputation",
       "Version": "0.3.0",
@@ -993,6 +1037,19 @@
         "utils"
       ],
       "Hash": "ef8b18e94a7fd593a1eef3a9a4ea2a0a"
+    },
+    "float": {
+      "Package": "float",
+      "Version": "0.3-1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "methods",
+        "tools",
+        "utils"
+      ],
+      "Hash": "f3b27b4d5181bc230dde2f0314771856"
     },
     "fontawesome": {
       "Package": "fontawesome",
