@@ -15,7 +15,7 @@ if (renv::status()$synchronized == T) {
 
 CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", "knitr", "withr", "lfe",
               "callr", "ggplot2", "scales", "panelView", "devtools","fect", "didimputation",
-              "latex2exp",  "gsynth", "did2s", "grateful", "parallel", "did2s",
+              "latex2exp",  "gsynth", "did2s", "grateful", "parallel", "did2s", "stringr",
               "fixest", "DRDID", "staggered", "modelsummary", "ggthemes", "fastDummies")
 
 github_packages = c("MCPanel", "synthdid", "MarcusSantAnna2020", "DIDmultiplegt") # not available on CRAN
@@ -66,7 +66,7 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(ggplot2)))
   suppressMessages(suppressWarnings(library(latex2exp)))
   suppressMessages(suppressWarnings(library(devtools)))
-  suppressMessages(suppressWarnings(library(panelView)))
+  suppressMessages(suppressWarnings(library(stringr)))
   suppressMessages(suppressWarnings(library(fixest)))
   suppressMessages(suppressWarnings(library(DRDID)))
   suppressMessages(suppressWarnings(library(staggered)))
