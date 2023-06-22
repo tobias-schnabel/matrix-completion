@@ -1218,7 +1218,7 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
   
   # combine and arrange plots
   plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
-  if (save ==T) {
+  if (save ==T & Sys.info()[7] == "ts") {
     fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Figures"
     filename = paste0("Sim_", dgp_number, ".png")
     ggsave(filename, plot = test, path = fp,
