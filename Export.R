@@ -6,71 +6,57 @@ setwd("/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Tables")
 ## DGP 1
 save_table_results(sim1_table1, 
                    caption = "Simulation 1, Static Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim1_stat.tex")
 save_table_results(sim1_table2, 
                    caption = "Simulation 1, Dynamic Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim1_dyn.tex")
 
 ## DGP 2
 save_table_results(sim2_table1, 
                    caption = "Simulation 2, Static Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim2_stat.tex")
 save_table_results(sim2_table2, 
                    caption = "Simulation 2, Dynamic Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim2_dyn.tex")
 
 ## DGP 1
 save_table_results(sim3_table1, 
                    caption = "Simulation 3, Static Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim3_stat.tex")
 save_table_results(sim3_table2, 
                    caption = "Simulation 3, Dynamic Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim3_dyn.tex")
 
 ## DGP 4
 save_table_results(sim4_table1, 
                    caption = "Simulation 4, Static Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim4_stat.tex")
 save_table_results(sim4_table2, 
                    caption = "Simulation 4, Dynamic Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim4_dyn.tex")
 
 ## DGP 5
 save_table_results(sim5_table1, 
                    caption = "Simulation 5, Static Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim5_stat.tex")
 save_table_results(sim5_table2, 
                    caption = "Simulation 5, Dynamic Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim5_dyn.tex")
 
 ## DGP 6
 save_table_results(sim6_table1, 
                    caption = "Simulation 6, Static Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim6_stat.tex")
 save_table_results(sim6_table2, 
                    caption = "Simulation 6, Dynamic Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim6_dyn.tex")
 
-## DGP 1
+## DGP 7
 save_table_results(sim7_table1, 
                    caption = "Simulation 7, Static Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim7_stat.tex")
 save_table_results(sim7_table2, 
                    caption = "Simulation 7, Dynamic Estimates", 
-                   note = "500 iterations",
                    file_name = "Sim7_dyn.tex")
 
 

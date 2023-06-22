@@ -1048,14 +1048,13 @@ summarize_sim_results <- function(results,
 # function to save results tables to latex
 save_table_results <- function(sumdata, 
                                caption = "", 
-                               note = "", 
                                file_name = "table.tex") {
-  align <- ifelse(sapply(sumdata, is.numeric), "c", "l")
+  align = ifelse(sapply(sumdata, is.numeric), "c", "l")
   
   sumdata %>%
     kable(format = "latex", booktabs = T, caption = caption,
           digits = 2, align = align) %>%
-    footnote(general = note) %>%
+    footnote(general = "Results obtained from 500 iterations", general_title = ) %>%
     kable_styling(latex_options = c("hold_position")) %>% #"striped",
     save_kable(file = file_name)
 }
