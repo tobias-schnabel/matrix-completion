@@ -10,10 +10,10 @@ source("Functions.R")
 source("Get_Results.R")
 
 # Make Figures
-rscript("Figures.R", show = T)
+source("Figures.R")
 
 # Make Tables
-rscript("Tables.R", show = F)
+source("Tables.R")
 
 # On my machine only, export figures and tables into Overleaf
 if (Sys.info()[7] == "ts") {
