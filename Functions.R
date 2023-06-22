@@ -1129,6 +1129,7 @@ dgp_plot <- function(df, subtitle = ""){
   })
 }
 
+# function to plot densities of estimates of each estimator
 plot_est_dens <- function(df, dynamic = F) {
   # get estimator names
   estimators = c("MC-NNM", "DiD", "CS", "SA", "dCdH", "BJS")
@@ -1138,14 +1139,16 @@ plot_est_dens <- function(df, dynamic = F) {
     true_mean = df %>% filter(estimator == "TRUE") %>% 
       summarize(mean_est = mean(cum_est), min_est = min(cum_est),
                 max_est = max(cum_est))
+    title = "Distributions of Dynamic Estimates"
     
-    # filter out dCdH estimator if dynamic is TRUE and it does not contain any values
+    # filter out dCdH estimator if dynamic is TRUE 
     if(all(is.na(df$cum_est[df$estimator == "dCdH"]))) {
       estimators = estimators[estimators != "dCdH"]
     }
   } else {
     true_mean = df %>% filter(estimator == "TRUE") %>% 
       summarize(mean_est = mean(est), min_est = min(est), max_est = max(est))
+    title = "Distributions of Static Estimates"
   }
   
   # filter data
@@ -1164,6 +1167,7 @@ plot_est_dens <- function(df, dynamic = F) {
   my_palette = c("MC-NNM" = "#4E79A7", "DiD" = "#F28E2B", "CS" = "#E15759", 
                   "SA" = "#76B7B2", "dCdH" = "#59A14F", "BJS" = "#EDC948")
   
+  
   # Create the plot
   p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
     geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
@@ -1174,13 +1178,53 @@ plot_est_dens <- function(df, dynamic = F) {
                linetype = "dashed", color = "red") +
     geom_vline(aes(xintercept = true_mean$max_est), 
                linetype = "dashed", color = "red", alpha = 0.35) +
-    labs(x = "Estimate", y = "Density") +
+    labs(x = "Point Estimate", y = "Density") +
     guides(color = FALSE, fill = FALSE) +
-    facet_wrap(~ estimator, scales = "free")
+    facet_wrap(~ estimator, scales = "free") + 
+    theme(legend.position = 'bottom',
+          axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12),
+          plot.title = element_text(hjust = 0.5, size=12),
+          plot.subtitle = element_text(hjust = 0.5),
+          legend.title = element_text(size = 12, hjust = 0.5)) +
+    ggtitle(title)
   
   return(p)
 }
 
+## function to combine dgp plot and desnities and save
+plot_combined <- function(dgp_number, dynamic, save = F) {
+  # Generate the DGP plot based on the number argument
+  dgp_data = switch(dgp_number,
+                    dgp_1_sim(),
+                    dgp_2_sim(),
+                    dgp_3_sim(),
+                    dgp_4_sim(),
+                    dgp_5_sim(),
+                    dgp_6_sim(),
+                    dgp_7_sim())
+  dgp_plot = dgp_plot(dgp_data)
+  
+  # Generate the density plot based on the number argument
+  sim_data = switch(dgp_number,
+                    sim1,
+                    sim2,
+                    sim3,
+                    sim4,
+                    sim5,
+                    sim6,
+                    sim7)
+  plot_est_dens = plot_dens(sim_data, dynamic)
+  
+  # combine and arrange plots
+  plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
+  if (save ==T) {
+    fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Figures"
+    filename = paste0("Sim_", dgp_number, ".png")
+    ggsave(filename, plot = test, path = fp,
+           width = 15, height = 20, units = "cm")
+  }
+}
 
 
 writeLines("Ready")
