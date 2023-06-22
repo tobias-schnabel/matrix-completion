@@ -16,42 +16,42 @@ source("Functions.R")
 DGP 1: One treatment group, TE is unit-and time- homogeneous
 
 ```{r}
-print(analyze_sim_results(load_sim_results("Sim_1")))
+print(analyze_sim_results(load_sim_results("Sim_1"), "static"))
 ```
 
 DGP 2: One treatment group, TE is unit-homogeneous, time-varying
 
 ```{r}
-print(analyze_sim_results(load_sim_results("Sim_2")))
+print(analyze_sim_results(load_sim_results("Sim_2"), "dynamic"))
 ```
 
 DGP 3: Multiple Treatment Groups, Time-Invariant Homogeneous TE 
 
 ```{r}
-print(analyze_sim_results(load_sim_results("Sim_3")))
+print(analyze_sim_results(load_sim_results("Sim_3"), "static"))
 ```
 
 DGP 4: Multiple Treatment Groups,Time-Invariant Heterogeneous TE
 
 ```{r}
-print(analyze_sim_results(load_sim_results("Sim_4")))
+print(analyze_sim_results(load_sim_results("Sim_4"), "static"))
 ```
 
 DGP 5: Multiple Treatment Groups, Time-Varying Homogeneous TE 
 
 ```{r}
-print(analyze_sim_results(load_sim_results("Sim_5")))
+print(analyze_sim_results(load_sim_results("Sim_5"), "dynamic"))
 ```
 
 DGP 6: Multiple Treatment Groups, Time-Varying Heterogeneous TE 
 
 ```{r}
-print(analyze_sim_results(load_sim_results("Sim_6")))
+print(analyze_sim_results(load_sim_results("Sim_6"), "dynamic"))
 ```
 
-DGP 7: Multiple Treatment Groups, Time-Varying Heterogeneous TE, **Parallel Trends Violated**
+DGP 7: Multiple Treatment Groups, Time-Varying Heterogeneous TE, **Unconditional Parallel Trends Violated**
 
 ```{r}
-print(analyze_sim_results(load_sim_results("Sim_7")))
+print(analyze_sim_results(load_sim_results("Sim_7"), "dynamic"))
 ```
 
