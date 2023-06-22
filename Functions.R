@@ -890,12 +890,19 @@ load_sim_results <- function(file_name = "test") {
   dates <- str_replace_all(dates, ":", "")
   
   # Order the files by dates
-  sorted_files <- files[order(dates, decreasing = TRUE)]
+  sorted_files = files[order(dates, decreasing = TRUE)]
   
   # construct full path 
-  most_recent_file <- file.path(directory, sorted_files[1])
+  most_recent_file = file.path(directory, sorted_files[1])
   
-  loaded_data <- readRDS(most_recent_file) # load most recent file
+  loaded_data = readRDS(most_recent_file) # load most recent file
+  
+  # make sure numeric values are numeric
+  loaded_data$iteration = as.numeric(loaded_data$iteration)
+  loaded_data$est = as.numeric(loaded_data$est)
+  loaded_data$se = as.numeric(loaded_data$se)
+  loaded_data$cum_est = as.numeric(loaded_data$cum_est)
+  loaded_data$cum_se = as.numeric(loaded_data$cum_se)
   
   cat("Loaded file:", sorted_files[1], "\n") # print confirmation
   
@@ -1084,7 +1091,7 @@ dgp_plot_basic <- function(df) {
 
 
 # More elaborate plotting function
-dgp_plot <- function(df, subtitle = ""){
+dgp_plot <- function(df, subtitle = "", sim_num = NULL){
   # Define your color palette
   my_palette = c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F")
   
@@ -1095,6 +1102,13 @@ dgp_plot <- function(df, subtitle = ""){
     
     # relabel the control group
     control_label <- as.character(max(df$period)) # max period considered as control group
+    
+    if (!is.null(sim_num)) {
+      # extract the number from the df function name
+      sim_num = as.integer(gsub("[^0-9]", "", substitute(df)))
+    }
+    # set as plot title
+    plot_title = paste("Outcome Data from One Draw of Simulation", sim_num)
     
     p = df %>% 
       ggplot(aes(x = period, y = y, group = unit)) + 
@@ -1113,7 +1127,7 @@ dgp_plot <- function(df, subtitle = ""){
             plot.subtitle = element_text(hjust = 0.5),
             legend.title = element_text(size = 12, hjust = 0.5)) +
       guides(color = guide_legend(title.position = "top")) +
-      ggtitle("Outcome Data from Simulation") +
+      ggtitle(plot_title) +
       labs(subtitle = subtitle)
     
     # Add vertical lines for each treatment group
@@ -1179,7 +1193,7 @@ plot_est_dens <- function(df, dynamic = F) {
     geom_vline(aes(xintercept = true_mean$max_est), 
                linetype = "dashed", color = "red", alpha = 0.35) +
     labs(x = "Point Estimate", y = "Density") +
-    guides(color = FALSE, fill = FALSE) +
+    guides(color = "none", fill = "none") +
     facet_wrap(~ estimator, scales = "free") + 
     theme(legend.position = 'bottom',
           axis.title = element_text(size = 14),
@@ -1203,7 +1217,7 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
                     dgp_5_sim(),
                     dgp_6_sim(),
                     dgp_7_sim())
-  dgp_plot = dgp_plot(dgp_data)
+  dgp_plot = dgp_plot(dgp_data, "",  dgp_number)
   
   # Generate the density plot based on the number argument
   sim_data = switch(dgp_number,
@@ -1214,14 +1228,14 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
                     sim5,
                     sim6,
                     sim7)
-  plot_est_dens = plot_dens(sim_data, dynamic)
+  plot_est_dens = plot_est_dens(sim_data, dynamic)
   
   # combine and arrange plots
   plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
   if (save ==T & Sys.info()[7] == "ts") {
     fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Figures"
     filename = paste0("Sim_", dgp_number, ".png")
-    ggsave(filename, plot = test, path = fp,
+    ggsave(filename, plot = plot_combined, path = fp,
            width = 16, height = 19, units = "cm")
   }
 }

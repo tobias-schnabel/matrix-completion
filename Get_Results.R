@@ -5,6 +5,9 @@ if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
   set_pushover_app(token = "awswexyruunh8f3gex8yyzk4guarie")
 }
 writeLines("Which simulation process should be used?")
+writeLines("-----------------------------------------------------------------")
+writeLines("Press 0 to load results from disk to replicate tables and figures")
+writeLines("-----------------------------------------------------------------")
 sim_bool = utils::menu(c("Single-core (takes around 6h per simulation)", 
                           "Parallelized (recommended, substantially faster but takes up 100% CPU)"), 
                         title = "Press 0 to abort and load saved data" )
