@@ -959,8 +959,14 @@ load_sim_results <- function(file_name = "test") {
     return(NULL)
   }
   
-  # sort file names in descending order (most recent first)
-  sorted_files <- files[order(files, decreasing = TRUE)]
+  # Extract dates from the filenames
+  dates <- str_extract(files, "\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}")
+  dates <- str_replace_all(dates, "-", "")
+  dates <- str_replace_all(dates, "_", "")
+  dates <- str_replace_all(dates, ":", "")
+  
+  # Order the files by dates
+  sorted_files <- files[order(dates, decreasing = TRUE)]
   
   # construct full path 
   most_recent_file <- file.path(directory, sorted_files[1])
@@ -972,6 +978,7 @@ load_sim_results <- function(file_name = "test") {
   # return the loaded data
   return(loaded_data)
 }
+
 
 # function to trim excess iterations
 keep_iterations <- function(sim_data, num_iterations = 500) {
