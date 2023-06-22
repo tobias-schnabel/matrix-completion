@@ -1103,7 +1103,7 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
     # relabel the control group
     control_label <- as.character(max(df$period)) # max period considered as control group
     
-    if (!is.null(sim_num)) {
+    if (is.null(sim_num)) {
       # extract the number from the df function name
       sim_num = as.integer(gsub("[^0-9]", "", substitute(df)))
     }
@@ -1217,7 +1217,7 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
                     dgp_5_sim(),
                     dgp_6_sim(),
                     dgp_7_sim())
-  dgp_plot = dgp_plot(dgp_data, "",  dgp_number)
+  dgp_plot = dgp_plot(dgp_data, "",  sim_num = dgp_number)
   
   # Generate the density plot based on the number argument
   sim_data = switch(dgp_number,
