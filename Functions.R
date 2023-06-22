@@ -463,82 +463,6 @@ get_true_values <- function(data){
 }
 
 
-### Data Plotting Functions
-# Set Theme
-theme_set(theme_clean() + theme(plot.background = element_blank(),
-                                legend.background = element_blank()))
-
-# Helper function to get unique treatment start times
-get_treat_times <- function(df) {
-  unique(df$group)
-}
-
-# Basic plotting function
-dgp_plot_basic <- function(df) {
-  df %>%
-    ggplot(aes(x = period, y = y, group = unit)) +
-    geom_line(alpha = 0.1, color = "grey") +
-    geom_line(data = df %>%
-                group_by(group, period) %>%
-                summarize(dep_var = mean(y), .groups = 'drop'), # Add .groups = 'drop'
-              aes(x = period, y = dep_var, group = factor(group),
-                  color = factor(group)),
-              size = 0.5) +
-    labs(x = "", y = "Value", color = "Treatment group   ") +
-    theme(legend.position = 'bottom',
-          axis.title = element_text(size = 14),
-          axis.text = element_text(size = 12)) +
-    ggtitle("Outcome Data from Simulation") +
-    theme(plot.title = element_text(hjust = 0.5, size = 12))
-}
-
-
-# More elaborate plotting function
-dgp_plot <- function(df, subtitle = ""){
-  # Define your color palette
-  my_palette <- c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F")
-  
-  suppressWarnings({
-    # get treatment times and remove the control group
-    treat_times <- get_treat_times(df)
-    treat_times <- treat_times[treat_times != max(treat_times)]
-    
-    # relabel the control group
-    control_label <- as.character(max(df$period)) # max period considered as control group
-    
-    p <- df %>% 
-      ggplot(aes(x = period, y = y, group = unit)) + 
-      geom_line(alpha = .1, color = "grey") + 
-      geom_line(data = df %>% 
-                  group_by(group, period) %>% 
-                  summarize(dep_var = mean(y), .groups = "drop"),
-                aes(x = period, y = dep_var, group = factor(group),
-                    color = factor(group)),
-                size = 0.5) + 
-      labs(x = "Period", y = "y", color = "Treatment Groups") + 
-      theme(legend.position = 'bottom',
-            axis.title = element_text(size = 14),
-            axis.text = element_text(size = 12),
-            plot.title = element_text(hjust = 0.5, size=12),
-            plot.subtitle = element_text(hjust = 0.5),
-            legend.title = element_text(size = 12, hjust = 0.5)) +
-      guides(color = guide_legend(title.position = "top")) +
-      ggtitle("Outcome Data from Simulation") +
-      labs(subtitle = subtitle)
-    
-    # Add vertical lines for each treatment group
-    vlines <- data.frame(xintercept = treat_times, group = treat_times)
-    p <- p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(group)), 
-                        size = 0.5, show.legend = FALSE)
-    
-    # Set color scale and replace treatment group 100 with "Control" in legend
-    p <- p + scale_color_manual(values = my_palette,
-                                labels = function(x) ifelse(x == control_label, "Control", x))
-    
-    p
-  })
-}
-
 #### Estimator wrappers
 # helpers
 timer <- function(func, ...){
@@ -1128,5 +1052,135 @@ save_table_results <- function(sumdata,
     kable_styling(latex_options = c("hold_position")) %>% #"striped",
     save_kable(file = file_name)
 }
+
+### Data Plotting Functions
+# Set Theme
+theme_set(theme_clean() + theme(plot.background = element_blank(),
+                                legend.background = element_blank()))
+
+# Helper function to get unique treatment start times
+get_treat_times <- function(df) {
+  unique(df$group)
+}
+
+# Basic plotting function
+dgp_plot_basic <- function(df) {
+  df %>%
+    ggplot(aes(x = period, y = y, group = unit)) +
+    geom_line(alpha = 0.1, color = "grey") +
+    geom_line(data = df %>%
+                group_by(group, period) %>%
+                summarize(dep_var = mean(y), .groups = 'drop'), # Add .groups = 'drop'
+              aes(x = period, y = dep_var, group = factor(group),
+                  color = factor(group)),
+              size = 0.5) +
+    labs(x = "", y = "Value", color = "Treatment group   ") +
+    theme(legend.position = 'bottom',
+          axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12)) +
+    ggtitle("Outcome Data from Simulation") +
+    theme(plot.title = element_text(hjust = 0.5, size = 12))
+}
+
+
+# More elaborate plotting function
+dgp_plot <- function(df, subtitle = ""){
+  # Define your color palette
+  my_palette = c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F")
+  
+  suppressWarnings({
+    # get treatment times and remove the control group
+    treat_times <- get_treat_times(df)
+    treat_times <- treat_times[treat_times != max(treat_times)]
+    
+    # relabel the control group
+    control_label <- as.character(max(df$period)) # max period considered as control group
+    
+    p = df %>% 
+      ggplot(aes(x = period, y = y, group = unit)) + 
+      geom_line(alpha = .1, color = "grey") + 
+      geom_line(data = df %>% 
+                  group_by(group, period) %>% 
+                  summarize(dep_var = mean(y), .groups = "drop"),
+                aes(x = period, y = dep_var, group = factor(group),
+                    color = factor(group)),
+                size = 0.5) + 
+      labs(x = "Period", y = "y", color = "Treatment Groups") + 
+      theme(legend.position = 'bottom',
+            axis.title = element_text(size = 14),
+            axis.text = element_text(size = 12),
+            plot.title = element_text(hjust = 0.5, size=12),
+            plot.subtitle = element_text(hjust = 0.5),
+            legend.title = element_text(size = 12, hjust = 0.5)) +
+      guides(color = guide_legend(title.position = "top")) +
+      ggtitle("Outcome Data from Simulation") +
+      labs(subtitle = subtitle)
+    
+    # Add vertical lines for each treatment group
+    vlines <- data.frame(xintercept = treat_times, group = treat_times)
+    p = p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(group)), 
+                        size = 0.5, show.legend = FALSE)
+    
+    # Set color scale and replace treatment group 100 with "Control" in legend
+    p = p + scale_color_manual(values = my_palette,
+                                labels = function(x) ifelse(x == control_label, "Control", x))
+    
+    p
+  })
+}
+
+plot_est_dens <- function(df, dynamic = F) {
+  # get estimator names
+  estimators = c("MC-NNM", "DiD", "CS", "SA", "dCdH", "BJS")
+  
+  # get true mean
+  if (dynamic == T) {
+    true_mean = df %>% filter(estimator == "TRUE") %>% 
+      summarize(mean_est = mean(cum_est), min_est = min(cum_est),
+                max_est = max(cum_est))
+    
+    # filter out dCdH estimator if dynamic is TRUE and it does not contain any values
+    if(all(is.na(df$cum_est[df$estimator == "dCdH"]))) {
+      estimators = estimators[estimators != "dCdH"]
+    }
+  } else {
+    true_mean = df %>% filter(estimator == "TRUE") %>% 
+      summarize(mean_est = mean(est), min_est = min(est), max_est = max(est))
+  }
+  
+  # filter data
+  df = df %>% filter(estimator %in% estimators)
+  
+  # Create plot variable depending on 'dynamic' argument
+  plot_var = ifelse(dynamic, "cum_est", "est")
+  
+  # Set factor levels for estimator to control facet order
+  df$estimator = factor(df$estimator, levels = estimators)
+  
+  # Order the dataframe by estimator
+  df = df %>% arrange(estimator)
+  
+  # Assign colors
+  my_palette = c("MC-NNM" = "#4E79A7", "DiD" = "#F28E2B", "CS" = "#E15759", 
+                  "SA" = "#76B7B2", "dCdH" = "#59A14F", "BJS" = "#EDC948")
+  
+  # Create the plot
+  p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
+    geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
+    scale_color_manual(values = my_palette) +
+    geom_vline(aes(xintercept = true_mean$min_est), 
+               linetype = "dashed", color = "red", alpha = 0.35) +
+    geom_vline(aes(xintercept = true_mean$mean_est), 
+               linetype = "dashed", color = "red") +
+    geom_vline(aes(xintercept = true_mean$max_est), 
+               linetype = "dashed", color = "red", alpha = 0.35) +
+    labs(x = "Estimate", y = "Density") +
+    guides(color = FALSE, fill = FALSE) +
+    facet_wrap(~ estimator, scales = "free")
+  
+  return(p)
+}
+
+
 
 writeLines("Ready")
