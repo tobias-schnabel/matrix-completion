@@ -13,7 +13,7 @@ if (renv::status()$synchronized == T) {
     writeLines("Locked versions ignored, installing latest versions")
   }
 
-CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", "knitr", "withr", "lfe",
+CRAN_packages = c("renv", "tidyverse", "xtable", "purrr", "knitr", "withr", "lfe", "gridExtra",
               "callr", "ggplot2", "scales", "panelView", "devtools","fect", "didimputation",
               "latex2exp",  "gsynth", "did2s", "grateful", "parallel", "did2s", "stringr",
               "fixest", "DRDID", "staggered", "modelsummary", "ggthemes", "fastDummies")
@@ -81,6 +81,7 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(ggthemes)))
   suppressMessages(suppressWarnings(library(parallel)))
   suppressMessages(suppressWarnings(library(did2s)))
+  suppressMessages(suppressWarnings(library(gridExtra)))
   writeLines("All required CRAN packages are loaded")
 
   suppressMessages(suppressWarnings(library(DIDmultiplegt)))
