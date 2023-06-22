@@ -1222,7 +1222,7 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
     fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Figures"
     filename = paste0("Sim_", dgp_number, ".png")
     ggsave(filename, plot = test, path = fp,
-           width = 15, height = 20, units = "cm")
+           width = 16, height = 19, units = "cm")
   }
 }
 
