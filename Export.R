@@ -88,3 +88,4 @@ modified_entries = gsub("@[^}]+\\{", "@Manual{", bib_entries)
 writeLines(modified_entries, con = bib_file)
 
 setwd("~/Git/matrix-completion")
+file.copy("truevals.R", "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Tex/truevals.R") # copy code to overleaf
