@@ -988,7 +988,7 @@ analyze_sim_results <- function(sim_results, type = "static") {
       mean_est = mean(cum_est, na.rm = F),
       max_est = max(cum_est),
       mean_se = mean(cum_se, na.rm = F),
-      bias = mean(est) - mean(true_values$cum_est, na.rm = F),
+      bias = mean(cum_est) - mean(true_values$cum_est, na.rm = F),
       rmse = sqrt(mean((cum_est - mean(true_values$cum_est, 
                                        na.rm = F))^2, na.rm = F)),
       .groups = 'drop'  # avoid the grouped_df class for output
