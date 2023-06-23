@@ -1030,7 +1030,7 @@ summarize_sim_results <- function(results,
   } else {
     s %>%  kable(format = "latex", booktabs = T, caption = caption,
                  digits = 2, align = align) %>% 
-      add_header_above(c(" ", "Static Estimates"= 6, "Dynamic Estimates"= 6)) %>% 
+      add_header_above(c(" ", "ATET Estimates"= 6, "Event-Study Estimates"= 6)) %>% 
       kable_styling(latex_options = "hold_position") %>% 
       save_kable(file = file_name)
   }
@@ -1042,11 +1042,12 @@ options(knitr.kable.NA = '-')
 save_table_results <- function(sumdata, 
                                caption = "", 
                                file_name = "table.tex") {
-  align = ifelse(sapply(sumdata, is.numeric), "c", "l")
+  align = ifelse(sapply(sumdata, is.numeric), "c", "l") # fix alignment
+  t_label = sub("\\.tex$", "", file_name) # strip .tex from filename
   
   sumdata %>%
     kable(format = "latex", booktabs = T, caption = caption,
-          digits = 2, align = align, linesep = "") %>%
+          digits = 2, align = align, linesep = "", label = t_label) %>%
     footnote(general = "Results obtained from 500 iterations", 
              general_title = "") %>%
     row_spec(1, color = "red") %>% #, bold = T, hline_after = T
