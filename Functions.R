@@ -1113,9 +1113,10 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
                 aes(x = period, y = dep_var, group = factor(group),
                     color = factor(group)),
                 size = 0.5) + 
-      labs(x = "Period", y = "y", color = "Treatment Groups") + 
+      labs(x = "Period", y = expression(Y[italic(i)*","*italic(t)]), color = "Treatment Groups") + 
       theme(legend.position = 'bottom',
             axis.title = element_text(size = 14),
+            axis.title.y = element_text(hjust = 0.5, vjust = 0.5, angle = 360),
             axis.text = element_text(size = 12),
             plot.title = element_text(hjust = 0.5, size=12),
             plot.subtitle = element_text(hjust = 0.5),
