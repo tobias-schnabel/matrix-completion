@@ -28,3 +28,4 @@ vignettes/*.pdf
 .Renviron
 test.R
 scrap.R
+truevals.R
