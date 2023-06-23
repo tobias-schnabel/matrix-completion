@@ -35,7 +35,5 @@ for (i in 1:7) { # loop over DGPs and types, assign and print
 
 # On my machine only, export figures and tables into Overleaf
 if (Sys.info()[7] == "ts") {
-  grateful::scan_packages() # get loaded packages to cite
   source("Export.R")
-  setwd("~/Git/matrix-completion")
 }
