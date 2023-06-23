@@ -1145,9 +1145,9 @@ plot_est_dens <- function(df, dynamic = F) {
   
   # get true mean
   if (dynamic == T) {
-    true_mean = df %>% filter(estimator == "TRUE") %>% 
-      summarize(mean_est = mean(cum_est), min_est = min(cum_est),
-                max_est = max(cum_est))
+    true_v = df %>% filter(estimator == "TRUE") %>% 
+      summarize(mean_e = mean(cum_est), min_e = min(cum_est),
+                max_e = max(cum_est))
     title = "Distributions of Event-Study Parameter Estimates"
     
     # filter out dCdH estimator if dynamic is TRUE 
@@ -1155,8 +1155,8 @@ plot_est_dens <- function(df, dynamic = F) {
       estimators = estimators[estimators != "dCdH"]
     }
   } else {
-    true_mean = df %>% filter(estimator == "TRUE") %>% 
-      summarize(mean_est = mean(est), min_est = min(est), max_est = max(est))
+    true_v = df %>% filter(estimator == "TRUE") %>% 
+      summarize(mean_e = mean(est), min_e = min(est), max_e = max(est))
     title = "Distributions of ATET Estimates"
   }
   
@@ -1180,11 +1180,11 @@ plot_est_dens <- function(df, dynamic = F) {
   p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
     geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
     scale_color_manual(values = my_palette) +
-    geom_vline(aes(xintercept = true_mean$min_est), 
+    geom_vline(aes(xintercept = true_v$min_e), 
                linetype = "dashed", color = "red", alpha = 0.35) +
-    geom_vline(aes(xintercept = true_mean$mean_est), 
+    geom_vline(aes(xintercept = true_v$mean_e), 
                linetype = "dashed", color = "red") +
-    geom_vline(aes(xintercept = true_mean$max_est), 
+    geom_vline(aes(xintercept = true_v$max_e), 
                linetype = "dashed", color = "red", alpha = 0.35) +
     labs(x = "Point Estimate", y = "Density") +
     guides(color = "none", fill = "none") +
