@@ -426,7 +426,6 @@ get_true_values <- function(data){
   use_cum_effect = as.logical(data$use_cum_te[1])
   
   # get number of treated units
-  
   numtreated = data %>% filter(group %in% tgroups) %>%  get_num_units()
   
   # get share of each treatment group
