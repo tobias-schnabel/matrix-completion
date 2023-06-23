@@ -60,21 +60,24 @@ save_table_results(sim7_table2,
                    file_name = "Sim7_dyn.tex")
 
 
-
-
-
 ### Export Package References
 setwd("~/Git/matrix-completion")
 bib_path = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Tex/"
 
 # Write the package references to a BibTeX file
+grateful::scan_packages() # get loaded packages to cite
+grateful::scan_packages("MarcusSantAnna2020") # get loaded packages to cite
 grateful::cite_packages(output = "file",
+              pkgs = "All",
               out.dir = bib_path,
               omit = NULL,
               cite.tidyverse = T,
               dependencies = T,
               include.RStudio = T,
               bib.file = "packages")
+grateful::cite_packages(output = "citekeys",out.dir = bib_path,
+                        pkgs = c("MarcusSantAnna2020", "gsynth", "MCPanel"),
+                        bib.file = "packages-2")
 
 ## Modify all entries to have type "Manual"
 # Read file
@@ -83,3 +86,5 @@ bib_entries = readLines(bib_file)
 # Modify the entry types to "Manual"
 modified_entries = gsub("@[^}]+\\{", "@Manual{", bib_entries)
 writeLines(modified_entries, con = bib_file)
+
+setwd("~/Git/matrix-completion")
