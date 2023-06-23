@@ -363,7 +363,8 @@ dgp_6_sim <- function(nobs = 1000,
     ungroup()
 }
 
-## DGP 7  Multiple Treatment Groups, Time-Varying Heterogeneous TE, NO PARALLEL TRENDS
+## DGP 7  Multiple Treatment Groups, Time-Varying Heterogeneous TE, 
+# CONDITIONAL PARALLEL TRENDS
 dgp_7_sim <- function(nobs = 1000, 
                       nperiods = 100,
                       nobsgroups = 50,
@@ -413,7 +414,6 @@ dgp_7_sim <- function(nobs = 1000,
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, nuisance, everything())
   
 }
-
 
 ### Function to extract true ATET and cumulative ATET from simulated data
 get_true_values <- function(data){
@@ -758,7 +758,7 @@ run_sim <- function(i, fun, quiet = T) {
   true = est_true(dt, i)
   #estimate
   mc = est_mc(dt, i)
-  did = est_canonical(es, i)
+  did = est_canonical(dt, i)
   cs = est_cs(es, i)
   sa = est_sa(es, i)
   dcdh = est_dcdh(dt, i)
@@ -931,15 +931,7 @@ keep_iterations <- function(sim_data, num_iterations = 500) {
 ### Analyzing sim results
 
 # function to create summary tibble
-analyze_sim_results <- function(results, type = "static") {
-  
-  sim_results = results
-  # make sure numeric values are numeric
-  sim_results$iteration = as.numeric(results$iteration)
-  sim_results$est = as.numeric(results$est)
-  sim_results$se = as.numeric(results$se)
-  sim_results$cum_est = as.numeric(results$cum_est)
-  sim_results$cum_se = as.numeric(results$cum_se)
+analyze_sim_results <- function(sim_results, type = "static") {
   
   # keep original order
   sim_results$estimator = factor(sim_results$estimator, 
@@ -957,9 +949,9 @@ analyze_sim_results <- function(results, type = "static") {
       min_est  = min(est),
       mean_est = mean(est, na.rm = F),
       max_est = max(est),
-      mean_se = 0,
-      bias = 0,
-      rmse = 0,
+      mean_se = NA,
+      bias = NA,
+      rmse = NA,
       .groups = 'drop'
     )
   
@@ -969,9 +961,9 @@ analyze_sim_results <- function(results, type = "static") {
       min_est  = min(cum_est),
       mean_est = mean(cum_est, na.rm = F),
       max_est = max(cum_est),
-      mean_se = 0,
-      bias = 0,
-      rmse = 0,
+      mean_se = NA,
+      bias = NA,
+      rmse = NA,
       .groups = 'drop'
     )
   
@@ -986,11 +978,11 @@ analyze_sim_results <- function(results, type = "static") {
       bias = mean(est) - mean(true_values$est, na.rm = F),
       rmse = sqrt(mean((est - mean(true_values$est, 
                                        na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for the output
+      .groups = 'drop'  # avoid the grouped_df class for output
     )
   
   dynamic_summary = sim_results %>% # summary results for dynamic-type estimate
-    filter(estimator != "TRUE") %>%
+    filter(estimator != "TRUE") %>% filter(estimator != "dCdH") %>% 
     group_by(estimator) %>%
     summarise(
       min_est  = min(cum_est),
@@ -1000,8 +992,9 @@ analyze_sim_results <- function(results, type = "static") {
       bias = mean(est) - mean(true_values$cum_est, na.rm = F),
       rmse = sqrt(mean((cum_est - mean(true_values$cum_est, 
                                        na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for the output
+      .groups = 'drop'  # avoid the grouped_df class for output
     )
+  
   
   if (type == "static") {
     final_summary = bind_rows(true_summary_static, static_summary) %>% 
@@ -1046,6 +1039,7 @@ summarize_sim_results <- function(results,
 }
 
 # function to save results tables to latex
+options(knitr.kable.NA = '-')
 save_table_results <- function(sumdata, 
                                caption = "", 
                                file_name = "table.tex") {
@@ -1053,9 +1047,10 @@ save_table_results <- function(sumdata,
   
   sumdata %>%
     kable(format = "latex", booktabs = T, caption = caption,
-          digits = 2, align = align) %>%
-    footnote(general = "Results obtained from 500 iterations", general_title = ) %>%
-    kable_styling(latex_options = c("hold_position")) %>% #"striped",
+          digits = 2, align = align, linesep = "") %>%
+    footnote(general = "Results obtained from 500 iterations", 
+             general_title = "") %>%
+    row_spec(1, color = "red") %>% #, bold = T, hline_after = T
     save_kable(file = file_name)
 }
 
@@ -1152,7 +1147,7 @@ plot_est_dens <- function(df, dynamic = F) {
     true_mean = df %>% filter(estimator == "TRUE") %>% 
       summarize(mean_est = mean(cum_est), min_est = min(cum_est),
                 max_est = max(cum_est))
-    title = "Distributions of Dynamic Estimates"
+    title = "Distributions of Event-Study Parameter Estimates"
     
     # filter out dCdH estimator if dynamic is TRUE 
     if(all(is.na(df$cum_est[df$estimator == "dCdH"]))) {
@@ -1161,7 +1156,7 @@ plot_est_dens <- function(df, dynamic = F) {
   } else {
     true_mean = df %>% filter(estimator == "TRUE") %>% 
       summarize(mean_est = mean(est), min_est = min(est), max_est = max(est))
-    title = "Distributions of Static Estimates"
+    title = "Distributions of ATET Estimates"
   }
   
   # filter data
@@ -1180,7 +1175,6 @@ plot_est_dens <- function(df, dynamic = F) {
   my_palette = c("MC-NNM" = "#4E79A7", "DiD" = "#F28E2B", "CS" = "#E15759", 
                   "SA" = "#76B7B2", "dCdH" = "#59A14F", "BJS" = "#EDC948")
   
-  
   # Create the plot
   p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
     geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
@@ -1196,7 +1190,7 @@ plot_est_dens <- function(df, dynamic = F) {
     facet_wrap(~ estimator, scales = "free") + 
     theme(legend.position = 'bottom',
           axis.title = element_text(size = 14),
-          axis.text = element_text(size = 12),
+          axis.text = element_text(size = 9),
           plot.title = element_text(hjust = 0.5, size=12),
           plot.subtitle = element_text(hjust = 0.5),
           legend.title = element_text(size = 12, hjust = 0.5)) +
@@ -1231,6 +1225,7 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
   
   # combine and arrange plots
   plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
+ 
   if (save ==T & Sys.info()[7] == "ts") {
     fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Figures"
     filename = paste0("Sim_", dgp_number, ".png")
