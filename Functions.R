@@ -1065,7 +1065,7 @@ save_table_results <- function(sumdata,
           align = align, linesep = "", label = t_label) %>%
     footnote(general = "Results obtained from 500 iterations", 
              general_title = "") %>%
-    row_spec(1, color = "red") %>% #, bold = T, hline_after = T
+    row_spec(1, bold = T) %>% #, bold = T, hline_after = T color = "red"
     save_kable(file = file_name)
 }
 
