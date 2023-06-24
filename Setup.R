@@ -15,11 +15,12 @@ plot_combined(4, dynamic = F, T) # dgp 4
 plot_combined(5, dynamic = T, T) # dgp 5
 plot_combined(6, dynamic = T, T) # dgp 6
 plot_combined(7, dynamic = T, T) # dgp 7
+plot_combined(8, dynamic = T, T) # dgp 8
 
 ## Make Tables
 analysis_types = c("static", "dynamic") # define analysis types
 
-for (i in 1:7) { # loop over DGPs and types, assign and print
+for (i in 1:8) { # loop over DGPs and types, assign and print
   dgp <- get(paste0("sim", i))
   
   # Loop over analysis types
