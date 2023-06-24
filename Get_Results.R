@@ -12,14 +12,7 @@ sim_bool = utils::menu(c("Single-core (takes around 6h per simulation)",
                           "Parallelized (recommended, substantially faster but takes up 100% CPU)"), 
                         title = "Press 0 to abort and load saved data" )
 if (sim_bool == 0) {
-  writeLines("Loading saved data")
-  sim1 = keep_iterations(load_sim_results("Sim_1"), 500)
-  sim2 = keep_iterations(load_sim_results("Sim_2"), 500)
-  sim3 = keep_iterations(load_sim_results("Sim_3"), 500)
-  sim4 = keep_iterations(load_sim_results("Sim_4"), 500)
-  sim5 = keep_iterations(load_sim_results("Sim_5"), 500)
-  sim6 = keep_iterations(load_sim_results("Sim_6"), 500)
-  sim7 = keep_iterations(load_sim_results("Sim_7"), 500)
+  load_all_results()
 } else if (sim_bool == 2) {
   ## Simulate using mclapply
   # substantially faster
@@ -66,6 +59,15 @@ if (sim_bool == 0) {
   sim7_par = verify_sim_results(sim7_par_out)
   verify_iteration_counts(sim7_par)
   save_sim_results(sim7_par, "Sim_7")
+  
+  # DGP 8
+  sim8_par_out = run_sim_parallel(1:800, dgp_8_sim)
+  sim8_par = verify_sim_results(sim8_par_out)
+  verify_iteration_counts(sim8_par)
+  save_sim_results(sim8_par, "Sim_8")
+  
+  # load results
+  load_all_results()
   
   if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
     pushover("Single-core Simulations complete")
@@ -117,6 +119,15 @@ if (sim_bool == 0) {
   sim7 = verify_sim_results(sim7_out)
   verify_iteration_counts(sim7)
   save_sim_results(sim7, "Sim_7")
+  
+  # DGP 8
+  sim8_out = run_sim_map(1:500, dgp_8_sim)
+  sim8 = verify_sim_results(sim8_out)
+  verify_iteration_counts(sim7)
+  save_sim_results(sim8, "Sim_8")
+  
+  # load all results
+  load_all_results()
   
   if (Sys.info()[7] == "ts" | Sys.info()[7] == "tobiasschnabel") {
     pushover("Single-core Simulations complete")
