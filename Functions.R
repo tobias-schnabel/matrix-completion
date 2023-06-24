@@ -985,6 +985,7 @@ analyze_sim_results <- function(sim_results, type = "static") {
       min_est  = min(est),
       mean_est = mean(est, na.rm = F),
       max_est = max(est),
+      sd_est = sd(est),
       mean_se = NA,
       bias = NA,
       rmse = NA,
@@ -997,6 +998,7 @@ analyze_sim_results <- function(sim_results, type = "static") {
       min_est  = min(cum_est),
       mean_est = mean(cum_est, na.rm = F),
       max_est = max(cum_est),
+      sd_est = sd(cum_est),
       mean_se = NA,
       bias = NA,
       rmse = NA,
@@ -1010,6 +1012,7 @@ analyze_sim_results <- function(sim_results, type = "static") {
       min_est  = min(est),
       mean_est = mean(est, na.rm = F),
       max_est = max(est),
+      sd_est = sd(est),
       mean_se = mean(se, na.rm = F),
       bias = mean(est) - mean(true_values$est, na.rm = F),
       rmse = sqrt(mean((est - mean(true_values$est, 
@@ -1024,6 +1027,7 @@ analyze_sim_results <- function(sim_results, type = "static") {
       min_est  = min(cum_est),
       mean_est = mean(cum_est, na.rm = F),
       max_est = max(cum_est),
+      sd_est = sd(cum_est),
       mean_se = mean(cum_se, na.rm = F),
       bias = mean(cum_est) - mean(true_values$cum_est, na.rm = F),
       rmse = sqrt(mean((cum_est - mean(true_values$cum_est, 
@@ -1035,43 +1039,16 @@ analyze_sim_results <- function(sim_results, type = "static") {
   if (type == "static") {
     final_summary = bind_rows(true_summary_static, static_summary) %>% 
       select("Estimator" = estimator, 
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est,
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
              "Mean SE" = mean_se, "Bias" = bias, "RMSE" = rmse)
   } else if (type == "dynamic"){
     final_summary = bind_rows(true_summary_dynamic, dynamic_summary) %>% 
       select("Estimator" = estimator, 
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est,
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
              "Mean SE" = mean_se, Bias = bias, "RMSE" = rmse)
   }
   
   return(final_summary)
-}
-
-# Function to combine static and dynamic summaries into one large table
-summarize_sim_results <- function(results,
-                                  caption = "", 
-                                  note = "", 
-                                  file_name = "table.tex",
-                                  export = F){
-  stat = analyze_sim_results(results, "static") 
-  dyn = analyze_sim_results(results, "dynamic")
-  
-  s = cbind(stat, dyn[,-1])
-  
-  # static_estimates <- s[, c("Min", "Mean", "Max", "MeanSE", "Bias", "RMSE")]
-  # dynamic_estimates <- s[, c("Min.1", "Mean.1", "Max.1", "MeanSE.1", "Bias.1", "RMSE.1")]
-  align <- ifelse(sapply(data, is.numeric), "c", "l")
-  
-  if(export == F) {
-    return(s)
-  } else {
-    s %>%  kable(format = "latex", booktabs = T, caption = caption,
-                 digits = 2, align = align) %>% 
-      add_header_above(c(" ", "ATET Estimates"= 6, "Event-Study Estimates"= 6)) %>% 
-      kable_styling(latex_options = "hold_position") %>% 
-      save_kable(file = file_name)
-  }
-  
 }
 
 # function to save results tables to latex
@@ -1084,7 +1061,8 @@ save_table_results <- function(sumdata,
   
   sumdata %>%
     kable(format = "latex", booktabs = T, caption = caption,
-          digits = 2, align = align, linesep = "", label = t_label) %>%
+          digits = ifelse(names(sumdata) == "SD", 3, 2), 
+          align = align, linesep = "", label = t_label) %>%
     footnote(general = "Results obtained from 500 iterations", 
              general_title = "") %>%
     row_spec(1, color = "red") %>% #, bold = T, hline_after = T
@@ -1247,7 +1225,8 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
                     dgp_4_sim(),
                     dgp_5_sim(),
                     dgp_6_sim(),
-                    dgp_7_sim())
+                    dgp_7_sim(),
+                    dgp_8_sim())
   dgp_plot = dgp_plot(dgp_data, "",  sim_num = dgp_number)
   
   # Generate the density plot based on the number argument
@@ -1258,7 +1237,8 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
                     sim4,
                     sim5,
                     sim6,
-                    sim7)
+                    sim7,
+                    sim8)
   plot_est_dens = plot_est_dens(sim_data, dynamic)
   
   # combine and arrange plots
