@@ -1139,7 +1139,8 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
             legend.title = element_text(size = 12, hjust = 0.5)) +
       guides(color = guide_legend(title.position = "top")) +
       ggtitle(plot_title) +
-      labs(subtitle = subtitle)
+      labs(subtitle = subtitle) +
+      scale_x_continuous(breaks = seq(0, 100, 20))  # ticks at 20, 40, 60, 80, 100
     
     # Add vertical lines for each treatment group
     vlines <- data.frame(xintercept = treat_times, group = treat_times)
