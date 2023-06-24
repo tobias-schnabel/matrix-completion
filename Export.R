@@ -59,6 +59,14 @@ save_table_results(sim7_table2,
                    caption = "Simulation 7, Point Estimates of  $\\tau^{ES}$", 
                    file_name = "Sim7_dyn.tex")
 
+## DGP 8
+save_table_results(sim7_table1, 
+                   caption = "Simulation 8, Point Estimates of  $\\tau$", 
+                   file_name = "Sim8_stat.tex")
+save_table_results(sim7_table2, 
+                   caption = "Simulation 8, Point Estimates of  $\\tau^{ES}$", 
+                   file_name = "Sim8_dyn.tex")
+
 
 ### Export Package References
 setwd("~/Git/matrix-completion")

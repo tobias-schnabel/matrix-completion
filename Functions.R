@@ -935,15 +935,16 @@ load_sim_results <- function(file_name = "test") {
 # function to load all results and trim to 500 iterations
 load_all_results <- function(){
   writeLines("Loading saved results")
-  sim1 = keep_iterations(load_sim_results("Sim_1"), 500)
-  sim2 = keep_iterations(load_sim_results("Sim_2"), 500)
-  sim3 = keep_iterations(load_sim_results("Sim_3"), 500)
-  sim4 = keep_iterations(load_sim_results("Sim_4"), 500)
-  sim5 = keep_iterations(load_sim_results("Sim_5"), 500)
-  sim6 = keep_iterations(load_sim_results("Sim_6"), 500)
-  sim7 = keep_iterations(load_sim_results("Sim_7"), 500)
-  sim7 = keep_iterations(load_sim_results("Sim_8"), 500)
+  sim1 <<- keep_iterations(load_sim_results("Sim_1"), 500)
+  sim2 <<- keep_iterations(load_sim_results("Sim_2"), 500)
+  sim3 <<- keep_iterations(load_sim_results("Sim_3"), 500)
+  sim4 <<- keep_iterations(load_sim_results("Sim_4"), 500)
+  sim5 <<- keep_iterations(load_sim_results("Sim_5"), 500)
+  sim6 <<- keep_iterations(load_sim_results("Sim_6"), 500)
+  sim7 <<- keep_iterations(load_sim_results("Sim_7"), 500)
+  sim8 <<- keep_iterations(load_sim_results("Sim_8"), 500)
   writeLines("Results loaded succesfully")
+  
 }
 
 
