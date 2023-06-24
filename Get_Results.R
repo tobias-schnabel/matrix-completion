@@ -123,7 +123,7 @@ if (sim_bool == 0) {
   # DGP 8
   sim8_out = run_sim_map(1:500, dgp_8_sim)
   sim8 = verify_sim_results(sim8_out)
-  verify_iteration_counts(sim7)
+  verify_iteration_counts(sim8)
   save_sim_results(sim8, "Sim_8")
   
   # load all results
