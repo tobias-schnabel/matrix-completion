@@ -759,14 +759,27 @@ run_sim <- function(i, fun, quiet = T) {
     cat(" ", i, "...")
   }
   # make data from function
-  dt = fun()
+  dt = withr::with_seed(i, fun()) # use with_seed to guarantee reproducibility
   # make event study data
   es = prep_es(dt)
   
+  # check if DGP is 8
+  if (identical(fun, dgp_8_sim)) {
+    dgp8 = T
+  } else {
+    dgp8 = F
+  }
   #true values
   true = est_true(dt, i)
+  
   #estimate
-  mc = est_mc(dt, i)
+  if(dgp8 ==T ){
+    # give MC-NNM more CV folds and candidate lambdas for DGP 8
+    mc = est_mc(dt, i, k = 4, n_lam = 6) 
+  } else {
+    mc = est_mc(dt, i)  
+  }
+  
   did = est_canonical(dt, i)
   cs = est_cs(es, i)
   sa = est_sa(es, i)
@@ -800,7 +813,7 @@ run_sim_map <- function(iterations, sim_function) {
   # Combine the list of data frames into a single data frame
   out_df <- dplyr::bind_rows(out_list)
   end_time = Sys.time()
-  cat("Elapsed time: ", round(end_time - start_time, digits = 1), "\n")
+  cat("\nElapsed time: ", round(end_time - start_time, digits = 1), "\n")
   cat("Simulation of  ", deparse(substitute(sim_function)), " complete \n")
   
   # Return the combined data frame
