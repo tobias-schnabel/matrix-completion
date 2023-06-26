@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Tobias Schnabel" />
+
+<meta name="date" content="2023-06-26" />
+
+<title>Simulation Results</title>
+
+<script src="Results_files/header-attrs-2.22/header-attrs.js"></script>
+<script src="Results_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="Results_files/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="Results_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="Results_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="Results_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="Results_files/navigation-1.1/tabsets.js"></script>
+<link href="Results_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="Results_files/highlightjs-9.12.0/highlight.js"></script>
+<script src="Results_files/htmlwidgets-1.6.2/htmlwidgets.js"></script>
+<link href="Results_files/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
+<script src="Results_files/datatables-binding-0.28/datatables.js"></script>
+<link href="Results_files/dt-core-1.13.4/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="Results_files/dt-core-1.13.4/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="Results_files/dt-core-1.13.4/js/jquery.dataTables.min.js"></script>
+<link href="Results_files/crosstalk-1.2.0/css/crosstalk.min.css" rel="stylesheet" />
+<script src="Results_files/crosstalk-1.2.0/js/crosstalk.min.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Simulation Results</h1>
+<h4 class="author">Tobias Schnabel</h4>
+<h4 class="date">June 26, 2023</h4>
+
+</div>
+
+
+<style type="text/css">
+table th {
+    text-align: left !important;
+}
+</style>
+<div id="dgp-1-one-treatment-group-te-is-unit-and-time--homogeneous"
+class="section level1">
+<h1>DGP 1: One treatment group, TE is unit-and time- homogeneous</h1>
+<p><img src="Results_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-8c37816100f3adb7aa8c" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-8c37816100f3adb7aa8c">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6","7"],["TRUE","MC-NNM","DiD","CS","SA","dCdH","BJS"],[1,0.9682544567376128,0.9682544567382342,0.8882233780696115,0.8882233782384972,0.8596154623821379,0.9499359900813272],[1,0.9998367233680268,0.9998367233678938,0.9805404353708245,0.9805404353597021,0.9957451962618149,0.9803101901581894],[1,1.030377516117389,1.030377516118421,1.081973077782249,1.081973077735668,1.134023380844815,1.00959808805805],[0,0.01084028917443434,0.01084028917438849,0.03388424985263107,0.0338842498540376,0.04446193178490265,0.01075625819267838],[null,0.0109503649683763,0.006392048611337463,0.03309095551166101,0.03314033892864131,null,0.01082966004822677],[null,-0.0001632766319732415,-0.0001632766321062462,-0.01945956462917553,-0.01945956464029786,-0.004254803738185098,-0.01968980984181057],[null,0.01083067425902636,0.01083067425898256,0.03904511184330804,0.03904511185006948,0.04462076877575866,0.02243110134910026]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Estimator<\/th>\n      <th>Min<\/th>\n      <th>Mean<\/th>\n      <th>Max<\/th>\n      <th>SD<\/th>\n      <th>Mean SE<\/th>\n      <th>Bias<\/th>\n      <th>RMSE<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"scrollX":true,"dom":"t","columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":4,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":5,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":6,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":7,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":8,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row","selectable":null}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.columnDefs.2.render","options.columnDefs.3.render","options.columnDefs.4.render","options.columnDefs.5.render","options.columnDefs.6.render"],"jsHooks":[]}</script>
+<p><img src="Results_files/figure-html/unnamed-chunk-1-3.png" width="672" /></p>
+</div>
+<div id="dgp-2-one-treatment-group-te-is-unit-homogeneous-time-varying"
+class="section level1">
+<h1>DGP 2: One treatment group, TE is unit-homogeneous,
+time-varying</h1>
+<p><img src="Results_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-ec2847a0336cfb1b0812" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-ec2847a0336cfb1b0812">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["TRUE","MC-NNM","DiD","CS","SA","BJS"],[0.588334785052375,0.583017032079153,0.525551926054411,0.566213895160448,0.525551926054411,0.587801409119974],[0.6367533933618152,0.6306326217103537,0.6424404674754043,0.6364910794517001,0.6424404674754043,0.6369854845360026],[0.6870538515609,0.679141609095076,0.7347129019077,0.695970120084623,0.7347129019077,0.685552478167522],[0.01438714417719379,0.01449613422147482,0.03477687326601156,0.02138199217027663,0.03477687326601156,0.01470254099916462],[null,0.02203552091389845,0.04984190300992487,0.02782165616258887,0.04984190300992487,0.02261583675207684],[null,-0.006120771651461521,0.005687074113589041,-0.0002623139101151084,0.005687074113589041,0.0002320911741873211],[null,0.0157200791410147,0.03519951916818005,0.02135912445125803,0.03519951916818005,0.0146875430911403]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Estimator<\/th>\n      <th>Min<\/th>\n      <th>Mean<\/th>\n      <th>Max<\/th>\n      <th>SD<\/th>\n      <th>Mean SE<\/th>\n      <th>Bias<\/th>\n      <th>RMSE<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"scrollX":true,"dom":"t","columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":4,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":5,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":6,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":7,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":8,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row","selectable":null}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.columnDefs.2.render","options.columnDefs.3.render","options.columnDefs.4.render","options.columnDefs.5.render","options.columnDefs.6.render"],"jsHooks":[]}</script>
+<p><img src="Results_files/figure-html/unnamed-chunk-2-3.png" width="672" /></p>
+</div>
+<div id="dgp-3-multiple-treatment-groups-time-invariant-homogeneous-te"
+class="section level1">
+<h1>DGP 3: Multiple Treatment Groups, Time-Invariant Homogeneous TE</h1>
+<p><img src="Results_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-9a83499f4e39fcd5bcab" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-9a83499f4e39fcd5bcab">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6","7"],["TRUE","MC-NNM","DiD","CS","SA","dCdH","BJS"],[1,0.9471744812751801,0.9460259451486841,0.8571677345632536,0.8231909016966743,0.8072954915475962,0.9501637129768532],[1,0.999624741208211,0.9895377365266909,0.9991263878040954,0.9990350445378293,0.9967376765078713,0.999560008158615],[1,1.038468459754294,1.030821083456372,1.142370733269635,1.165219338543058,1.16311447489478,1.037133649685242],[0,0.01566701313729233,0.01408885339545758,0.05031711746951898,0.05649314047660488,0.06258882049257611,0.01551760353126549],[null,0.0154550643799486,0.01122939221401845,0.0509390770600653,0.05571216441330117,null,0.01540964500056805],[null,-0.0003752587917890127,-0.01046226347330914,-0.0008736121959046494,-0.0009649554621706802,-0.003262323492128738,-0.0004399918413849901],[null,0.01565583626650513,0.01753732463643292,0.05027436607347053,0.05644486788107106,0.0626112488640652,0.01550832099665601]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Estimator<\/th>\n      <th>Min<\/th>\n      <th>Mean<\/th>\n      <th>Max<\/th>\n      <th>SD<\/th>\n      <th>Mean SE<\/th>\n      <th>Bias<\/th>\n      <th>RMSE<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"scrollX":true,"dom":"t","columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":4,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":5,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":6,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":7,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":8,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row","selectable":null}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.columnDefs.2.render","options.columnDefs.3.render","options.columnDefs.4.render","options.columnDefs.5.render","options.columnDefs.6.render"],"jsHooks":[]}</script>
+<p><img src="Results_files/figure-html/unnamed-chunk-3-3.png" width="672" /></p>
+</div>
+<div id="dgp-4-multiple-treatment-groupstime-invariant-heterogeneous-te"
+class="section level1">
+<h1>DGP 4: Multiple Treatment Groups,Time-Invariant Heterogeneous
+TE</h1>
+<p><img src="Results_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-dfbca011e0608ded65f4" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-dfbca011e0608ded65f4">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6","7"],["TRUE","MC-NNM","DiD","CS","SA","dCdH","BJS"],[0.768803945745993,0.962649870565913,0.73284570792064,0.959179535446982,0.827067329590838,0.623838882915576,0.959120314477104],[0.8133295776801756,1.02440808028209,0.7809764025015836,1.135912071925679,1.020246086365997,0.8101097244006183,1.020362071990746],[0.869002525252525,1.09499876009422,0.8254223025842869,1.27458807504661,1.19579394783313,1.01579477166837,1.08810868293583],[0.01613478879472166,0.02246868578811932,0.01629587828009509,0.05272677371904196,0.05861909453830304,0.0652187658918391,0.02241350264993662],[null,0.02251930822715839,0.01137353470068399,0.05187952638249956,0.05579138604008887,null,0.01541622376370119],[null,0.2110785026019143,-0.03235317517859193,0.3225824942455039,0.2069165086858212,-0.003219853279557205,0.2070324943105702],[null,0.2122682756730833,0.03621706661542114,0.3268535091544632,0.2150413370897385,0.06522362684459063,0.2082394516526702]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Estimator<\/th>\n      <th>Min<\/th>\n      <th>Mean<\/th>\n      <th>Max<\/th>\n      <th>SD<\/th>\n      <th>Mean SE<\/th>\n      <th>Bias<\/th>\n      <th>RMSE<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"scrollX":true,"dom":"t","columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":4,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":5,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":6,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":7,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":8,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row","selectable":null}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.columnDefs.2.render","options.columnDefs.3.render","options.columnDefs.4.render","options.columnDefs.5.render","options.columnDefs.6.render"],"jsHooks":[]}</script>
+<p><img src="Results_files/figure-html/unnamed-chunk-4-3.png" width="672" /></p>
+</div>
+<div id="dgp-5-multiple-treatment-groups-time-varying-homogeneous-te"
+class="section level1">
+<h1>DGP 5: Multiple Treatment Groups, Time-Varying Homogeneous TE</h1>
+<p><img src="Results_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-65b601c7600434cd0dce" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-65b601c7600434cd0dce">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["TRUE","MC-NNM","DiD","CS","SA","BJS"],[0.963020680769721,0.936923736920548,1.47858641867696,0.899759998115098,0.855603568773221,1.52614492360471],[1.046204146888484,1.019932840851111,1.659570451605081,1.043494466929081,1.044639483539577,1.660396014667113],[1.11813280455339,1.10346451032422,1.85595400578054,1.18869896432593,1.20787442489246,1.79542935079194],[0.02920774486258297,0.03118853495336895,0.06563084736105843,0.05010428941596021,0.05784394607284215,0.04558147331468528],[null,0.06760304283646341,0.09383146249317183,0.08364110621997808,0.1079837529641417,0.0729756476715054],[null,-0.02627130603737315,0.6133663047165967,-0.002709679959403077,-0.00156466334890748,0.6141918677786284],[null,0.04075223457645639,0.6168598381066539,0.05012188572080914,0.05780082080935262,0.615877182650012]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Estimator<\/th>\n      <th>Min<\/th>\n      <th>Mean<\/th>\n      <th>Max<\/th>\n      <th>SD<\/th>\n      <th>Mean SE<\/th>\n      <th>Bias<\/th>\n      <th>RMSE<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"scrollX":true,"dom":"t","columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":4,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":5,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":6,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":7,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":8,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row","selectable":null}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.columnDefs.2.render","options.columnDefs.3.render","options.columnDefs.4.render","options.columnDefs.5.render","options.columnDefs.6.render"],"jsHooks":[]}</script>
+<p><img src="Results_files/figure-html/unnamed-chunk-5-3.png" width="672" /></p>
+</div>
+<div id="dgp-6-multiple-treatment-groups-time-varying-heterogeneous-te"
+class="section level1">
+<h1>DGP 6: Multiple Treatment Groups, Time-Varying Heterogeneous TE</h1>
+<p><img src="Results_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-0b5c785a95cdfc660efb" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-0b5c785a95cdfc660efb">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["TRUE","MC-NNM","DiD","CS","SA","BJS"],[1.308431597288599,1.273145384640759,1.947260602570388,1.296295537754487,1.194201885932665,1.954881054573446],[1.391083659176936,1.34876237416614,2.075145136386054,1.390850740225945,1.305209620653266,2.0754638539149],[1.462354710978237,1.415249322187628,2.200344768728951,1.475296903382182,1.400609072108595,2.198561173892594],[0.02498912096269893,0.02502606166612013,0.0486155917095081,0.03300326476239671,0.03771325517023864,0.04306036622706841],[null,0.04217188117452444,0.06433871039859959,0.0492260053064837,0.06420361261843621,0.05522258913637507],[null,-0.04232128501079613,0.6840614772091176,-0.0002329189509910901,-0.08587403852367026,0.6843801947379633],[null,0.04915427061768331,0.6857833866515513,0.03297106769949426,0.09377523942208441,0.6857308055635989]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Estimator<\/th>\n      <th>Min<\/th>\n      <th>Mean<\/th>\n      <th>Max<\/th>\n      <th>SD<\/th>\n      <th>Mean SE<\/th>\n      <th>Bias<\/th>\n      <th>RMSE<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"scrollX":true,"dom":"t","columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":4,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":5,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":6,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":7,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":8,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row","selectable":null}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.columnDefs.2.render","options.columnDefs.3.render","options.columnDefs.4.render","options.columnDefs.5.render","options.columnDefs.6.render"],"jsHooks":[]}</script>
+<p><img src="Results_files/figure-html/unnamed-chunk-6-3.png" width="672" /></p>
+</div>
+<div
+id="dgp-7-multiple-treatment-groups-time-varying-heterogeneous-te-unconditional-parallel-trends-violated"
+class="section level1">
+<h1>DGP 7: Multiple Treatment Groups, Time-Varying Heterogeneous TE,
+<strong>Unconditional</strong> Parallel Trends Violated</h1>
+<p><img src="Results_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-208c82fa311f9b5f169e" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-208c82fa311f9b5f169e">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["TRUE","MC-NNM","DiD","CS","SA","BJS"],[1.261192335900593,1.211950947474987,-10.10794553503719,-11.44095660556206,-0.4878726122785556,1.85727310825664],[1.392726885231609,1.35001614336743,-9.829707009804061,-3.457101674041543,1.343558363287518,2.074205792403063],[1.503793573271421,1.467902632726061,-9.606184659534209,3.565863639128503,3.430505133113898,2.288376183106798],[0.04404849393195091,0.04461240456351993,0.08312875436293025,2.007712091872875,0.6542949330460163,0.07723788473088282],[null,0.05775206114746336,0.1020345361725803,2.686838075359941,1.442064808687676,0.09140354906344253],[null,-0.04271074186417856,-11.22243389503567,-4.849828559273153,-0.04916852194409094,0.6814789071714538],[null,0.06172919550946523,11.22274115791092,5.248207606650707,0.6554869939526169,0.6858332598931205]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Estimator<\/th>\n      <th>Min<\/th>\n      <th>Mean<\/th>\n      <th>Max<\/th>\n      <th>SD<\/th>\n      <th>Mean SE<\/th>\n      <th>Bias<\/th>\n      <th>RMSE<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"scrollX":true,"dom":"t","columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":4,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":5,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":6,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":7,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":8,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row","selectable":null}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.columnDefs.2.render","options.columnDefs.3.render","options.columnDefs.4.render","options.columnDefs.5.render","options.columnDefs.6.render"],"jsHooks":[]}</script>
+<p><img src="Results_files/figure-html/unnamed-chunk-7-3.png" width="672" /></p>
+</div>
+<div
+id="dgp-8-multiple-treatment-groups-time-varying-heterogeneous-te-parallel-trends-violated"
+class="section level1">
+<h1>DGP 8: Multiple Treatment Groups, Time-Varying Heterogeneous TE,
+<strong>Parallel Trends Violated</strong></h1>
+<p><img src="Results_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-cd4aea97230ef476d121" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-cd4aea97230ef476d121">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["TRUE","MC-NNM","DiD","CS","SA","BJS"],[1.26048810696533,-7.374043673402458,-10.04681786317027,-5.113356393238936,-3.573007085983898,-11.52947604508405],[1.393668930971812,-7.036856051088507,-9.825196670925191,-4.730456585358077,-3.344400510499553,-11.24416413615102],[1.525354206726475,-6.57969780320711,-9.592481175143359,-4.243678819129295,-3.124621305809818,-10.92259529243639],[0.04457638105977741,0.1417922663167493,0.08137158444922264,0.1529088211846254,0.07174156297351859,0.1024783680516151],[null,0.1551094622165713,0.101981768699428,0.1829213618022167,0.08448001780291141,0.113761534272525],[null,-8.430524982060319,-11.218865601897,-6.124125516329889,-4.738069441471366,-12.63783306712283],[null,8.431714909188807,11.21916010606472,6.126030336616341,4.738611462270244,12.63824772050105]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Estimator<\/th>\n      <th>Min<\/th>\n      <th>Mean<\/th>\n      <th>Max<\/th>\n      <th>SD<\/th>\n      <th>Mean SE<\/th>\n      <th>Bias<\/th>\n      <th>RMSE<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"autoWidth":true,"scrollX":true,"dom":"t","columnDefs":[{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":4,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":5,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":6,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":7,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"targets":8,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 3, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row","selectable":null}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render","options.columnDefs.2.render","options.columnDefs.3.render","options.columnDefs.4.render","options.columnDefs.5.render","options.columnDefs.6.render"],"jsHooks":[]}</script>
+<p><img src="Results_files/figure-html/unnamed-chunk-8-3.png" width="672" /></p>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
