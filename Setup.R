@@ -7,6 +7,8 @@ source("Functions.R") ## load functions
 
 source("Get_Results.R") ## get results
 
+rmarkdown::render("Results.Rmd") # make results notebook
+
 # Make Figures
 plot_combined(1, dynamic = F, T) # dgp 1
 plot_combined(2, dynamic = T, T) # dgp 2
