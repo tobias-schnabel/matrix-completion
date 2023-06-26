@@ -1,8 +1,11 @@
 ---
-title: "Preliminary Results"
+title: "Simulation Results"
 author: Tobias Schnabel
-date: June 18, 2023
-output: pdf_document
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: 
+  html_document:
+    self_contained: no
+    theme: flatly
 ---
 
 
@@ -10,48 +13,78 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 source("packages.R")
 source("Functions.R")
+library(DT)
+load_all_results()
+plot_html(1, F)
+```
+<style type="text/css">
+table th {
+    text-align: left !important;
+}
+</style>
+
+
+# DGP 1: One treatment group, TE is unit-and time- homogeneous
+
+```{r, echo=FALSE}
+dgp_plot(dgp_1_sim(), "", 1)
+results_html(sim1, "static")
+plot_est_dens(sim1, F)
 ```
 
 
-DGP 1: One treatment group, TE is unit-and time- homogeneous
+# DGP 2: One treatment group, TE is unit-homogeneous, time-varying
 
-```{r}
-print(analyze_sim_results(load_sim_results("Sim_1"), "static"))
+```{r, echo=FALSE}
+dgp_plot(dgp_2_sim(), "", 2)
+results_html(sim2, "dynamic")
+plot_est_dens(sim2, T)
 ```
 
-DGP 2: One treatment group, TE is unit-homogeneous, time-varying
+# DGP 3: Multiple Treatment Groups, Time-Invariant Homogeneous TE 
 
-```{r}
-print(analyze_sim_results(load_sim_results("Sim_2"), "dynamic"))
+```{r, echo=FALSE}
+dgp_plot(dgp_3_sim(), "", 3)
+results_html(sim3, "static")
+plot_est_dens(sim3, F)
 ```
 
-DGP 3: Multiple Treatment Groups, Time-Invariant Homogeneous TE 
+# DGP 4: Multiple Treatment Groups,Time-Invariant Heterogeneous TE
 
-```{r}
-print(analyze_sim_results(load_sim_results("Sim_3"), "static"))
+```{r, echo=FALSE}
+dgp_plot(dgp_4_sim(), "", 4)
+results_html(sim4, "static")
+plot_est_dens(sim4, F)
 ```
 
-DGP 4: Multiple Treatment Groups,Time-Invariant Heterogeneous TE
+# DGP 5: Multiple Treatment Groups, Time-Varying Homogeneous TE 
 
-```{r}
-print(analyze_sim_results(load_sim_results("Sim_4"), "static"))
+```{r, echo=FALSE}
+dgp_plot(dgp_5_sim(), "", 5)
+results_html(sim5, "dynamic")
+plot_est_dens(sim5, T)
 ```
 
-DGP 5: Multiple Treatment Groups, Time-Varying Homogeneous TE 
+# DGP 6: Multiple Treatment Groups, Time-Varying Heterogeneous TE 
 
-```{r}
-print(analyze_sim_results(load_sim_results("Sim_5"), "dynamic"))
+```{r, echo=FALSE}
+dgp_plot(dgp_6_sim(), "", 6)
+results_html(sim6, "dynamic")
+plot_est_dens(sim6, T)
 ```
 
-DGP 6: Multiple Treatment Groups, Time-Varying Heterogeneous TE 
+# DGP 7: Multiple Treatment Groups, Time-Varying Heterogeneous TE, **Unconditional** Parallel Trends Violated
 
-```{r}
-print(analyze_sim_results(load_sim_results("Sim_6"), "dynamic"))
+```{r, echo=FALSE}
+dgp_plot(dgp_7_sim(), "", 7)
+results_html(sim7, "dynamic")
+plot_est_dens(sim7, T)
 ```
 
-DGP 7: Multiple Treatment Groups, Time-Varying Heterogeneous TE, **Unconditional Parallel Trends Violated**
+# DGP 8: Multiple Treatment Groups, Time-Varying Heterogeneous TE, **Parallel Trends Violated**
 
-```{r}
-print(analyze_sim_results(load_sim_results("Sim_7"), "dynamic"))
+```{r, echo=FALSE}
+dgp_plot(dgp_8_sim(), "", 8)
+results_html(sim8, "dynamic")
+plot_est_dens(sim8, T)
 ```
-

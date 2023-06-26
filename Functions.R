@@ -1052,6 +1052,97 @@ analyze_sim_results <- function(sim_results, type = "static") {
   return(final_summary)
 }
 
+# variant of same function to output nice-looking HTML table
+results_html <- function(sim_results, type = "static") {
+  
+  # keep original order
+  sim_results$estimator = factor(sim_results$estimator, 
+                                 levels = unique(sim_results$estimator))
+  
+  
+  
+  # get true values for bias
+  true_values = filter(sim_results, estimator == "TRUE")
+  
+  # create 'TRUE' row for summary table
+  true_summary_static = true_values %>%
+    summarise(
+      estimator = "TRUE",
+      min_est  = min(est),
+      mean_est = mean(est, na.rm = F),
+      max_est = max(est),
+      sd_est = sd(est),
+      mean_se = NA,
+      bias = NA,
+      rmse = NA,
+      .groups = 'drop'
+    )
+  
+  true_summary_dynamic = true_values %>%
+    summarise(
+      estimator = "TRUE",
+      min_est  = min(cum_est),
+      mean_est = mean(cum_est, na.rm = F),
+      max_est = max(cum_est),
+      sd_est = sd(cum_est),
+      mean_se = NA,
+      bias = NA,
+      rmse = NA,
+      .groups = 'drop'
+    )
+  
+  static_summary = sim_results %>% # summary results for static-type estimate
+    filter(estimator != "TRUE") %>%
+    group_by(estimator) %>%
+    summarise(
+      min_est  = min(est),
+      mean_est = mean(est, na.rm = F),
+      max_est = max(est),
+      sd_est = sd(est),
+      mean_se = mean(se, na.rm = F),
+      bias = mean(est) - mean(true_values$est, na.rm = F),
+      rmse = sqrt(mean((est - mean(true_values$est, 
+                                   na.rm = F))^2, na.rm = F)),
+      .groups = 'drop'  # avoid the grouped_df class for output
+    )
+  
+  dynamic_summary = sim_results %>% # summary results for dynamic-type estimate
+    filter(estimator != "TRUE") %>% filter(estimator != "dCdH") %>% 
+    group_by(estimator) %>%
+    summarise(
+      min_est  = min(cum_est),
+      mean_est = mean(cum_est, na.rm = F),
+      max_est = max(cum_est),
+      sd_est = sd(cum_est),
+      mean_se = mean(cum_se, na.rm = F),
+      bias = mean(cum_est) - mean(true_values$cum_est, na.rm = F),
+      rmse = sqrt(mean((cum_est - mean(true_values$cum_est, 
+                                       na.rm = F))^2, na.rm = F)),
+      .groups = 'drop'  # avoid the grouped_df class for output
+    )
+  
+  
+  if (type == "static") {
+    final_summary = bind_rows(true_summary_static, static_summary) %>% 
+      select("Estimator" = estimator, 
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
+             "Mean SE" = mean_se, "Bias" = bias, "RMSE" = rmse)
+  } else if (type == "dynamic"){
+    final_summary = bind_rows(true_summary_dynamic, dynamic_summary) %>% 
+      select("Estimator" = estimator, 
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
+             "Mean SE" = mean_se, Bias = bias, "RMSE" = rmse)
+  }
+  
+  # round numeric columns to 3 digits
+  numeric_columns <- sapply(final_summary, is.numeric)
+  final_summary <- datatable(final_summary, options = list(autoWidth = TRUE, scrollX = TRUE, dom = 't')) %>% 
+    formatRound(columns = which(numeric_columns), digits = 3)
+  
+  return(final_summary)
+  
+}
+
 # function to save results tables to latex
 options(knitr.kable.NA = '-')
 save_table_results <- function(sumdata, 
@@ -1065,8 +1156,9 @@ save_table_results <- function(sumdata,
           digits = ifelse(names(sumdata) == "SD", 3, 2), 
           align = align, linesep = "", label = t_label) %>%
     footnote(general = "Results obtained from 500 iterations", 
-             general_title = "") %>%
+             general_title = "") %>% 
     row_spec(1, bold = T) %>% #, bold = T, hline_after = T color = "red"
+    kable_styling(latex_options = "hold_position") %>% 
     save_kable(file = file_name)
 }
 
@@ -1166,6 +1258,7 @@ plot_est_dens <- function(df, dynamic = F) {
       summarize(mean_e = mean(cum_est), min_e = min(cum_est),
                 max_e = max(cum_est))
     title = "Distributions of Event-Study Parameter Estimates"
+    cap = "Upper Panel shows all observatins from one draw of the simulation with group means. Lower panel shows for each \nestimator described in sections 4.3 and 5.5/6 densities of point estimates of the event-study parameter defined in (53). \nVertical Red Lines indicate minimum, mean, and maximum of true parameter value."
     
     # filter out dCdH estimator if dynamic is TRUE 
     if(all(is.na(df$cum_est[df$estimator == "dCdH"]))) {
@@ -1175,6 +1268,7 @@ plot_est_dens <- function(df, dynamic = F) {
     true_v = df %>% filter(estimator == "TRUE") %>% 
       summarize(mean_e = mean(est), min_e = min(est), max_e = max(est))
     title = "Distributions of ATET Estimates"
+    cap = "Upper Panel shows all observatins from one draw of the simulation with group means. \nLower panel shows for each estimator described in sections 4.3 and 5.5/6 densities of point estimates of\n the ATET as defined on p. 12. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
   }
   
   # filter data
@@ -1198,12 +1292,11 @@ plot_est_dens <- function(df, dynamic = F) {
     geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
     scale_color_manual(values = my_palette) +
     geom_vline(aes(xintercept = true_v$min_e), 
-               linetype = "dashed", color = "red", alpha = 0.35) +
+               linetype = "dashed", color = "red", alpha = 0.45) +
     geom_vline(aes(xintercept = true_v$mean_e), 
                linetype = "dashed", color = "red") +
     geom_vline(aes(xintercept = true_v$max_e), 
-               linetype = "dashed", color = "red", alpha = 0.35) +
-    labs(x = "Point Estimate", y = "Density") +
+               linetype = "dashed", color = "red", alpha = 0.45) +
     guides(color = "none", fill = "none") +
     facet_wrap(~ estimator, scales = "free") + 
     theme(legend.position = 'bottom',
@@ -1212,12 +1305,13 @@ plot_est_dens <- function(df, dynamic = F) {
           plot.title = element_text(hjust = 0.5, size=12),
           plot.subtitle = element_text(hjust = 0.5),
           legend.title = element_text(size = 12, hjust = 0.5)) +
-    ggtitle(title)
+    ggtitle(title) + labs(x = "Point Estimate", y = "Density",
+                          caption = cap)
   
   return(p)
 }
 
-## function to combine dgp plot and desnities and save
+## function to combine dgp plot and densities and save
 plot_combined <- function(dgp_number, dynamic, save = F) {
   # Generate the DGP plot based on the number argument
   dgp_data = switch(dgp_number,
@@ -1250,7 +1344,44 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
     fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Figures"
     filename = paste0("Sim_", dgp_number, ".png")
     ggsave(filename, plot = plot_combined, path = fp,
-           width = 16, height = 19, units = "cm")
+           width = 18, height = 20, units = "cm")
+  }
+}
+
+# variant of same function for html results
+plot_html <- function(dgp_number, dynamic, save = T) {
+  # Generate the DGP plot based on the number argument
+  dgp_data = switch(dgp_number,
+                    dgp_1_sim(),
+                    dgp_2_sim(),
+                    dgp_3_sim(),
+                    dgp_4_sim(),
+                    dgp_5_sim(),
+                    dgp_6_sim(),
+                    dgp_7_sim(),
+                    dgp_8_sim())
+  dgp_plot = dgp_plot(dgp_data, "",  sim_num = dgp_number)
+  
+  # Generate the density plot based on the number argument
+  sim_data = switch(dgp_number,
+                    sim1,
+                    sim2,
+                    sim3,
+                    sim4,
+                    sim5,
+                    sim6,
+                    sim7,
+                    sim8)
+  plot_est_dens = plot_est_dens(sim_data, dynamic)
+  
+  # combine and arrange plots
+  plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
+  
+  if (save ==T & Sys.info()[7] == "ts") {
+    fp = "/Users/ts/Library/Mobile Documents/com~apple~CloudDocs/Uni/UM/Year 3/Thesis/HTML"
+    filename = paste0("Sim_", dgp_number, ".svg")
+    ggsave(filename, plot = plot_combined, path = fp,
+           width = 18, height = 20, units = "cm", device = "svg")
   }
 }
 
