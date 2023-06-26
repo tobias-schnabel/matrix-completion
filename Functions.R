@@ -1124,14 +1124,14 @@ results_html <- function(sim_results, type = "static") {
   
   if (type == "static") {
     final_summary = bind_rows(true_summary_static, static_summary) %>% 
-      select("Estimator" = estimator, 
+      select("Estimator" = estimator, Bias = bias, "RMSE" = rmse,
              "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
              "Mean SE" = mean_se, "Bias" = bias, "RMSE" = rmse)
   } else if (type == "dynamic"){
     final_summary = bind_rows(true_summary_dynamic, dynamic_summary) %>% 
-      select("Estimator" = estimator, 
+      select("Estimator" = estimator, Bias = bias, "RMSE" = rmse,
              "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
-             "Mean SE" = mean_se, Bias = bias, "RMSE" = rmse)
+             "Mean SE" = mean_se)
   }
   
   # round numeric columns to 3 digits
@@ -1347,43 +1347,5 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
            width = 18, height = 20, units = "cm")
   }
 }
-
-# variant of same function for html results
-plot_html <- function(dgp_number, dynamic, save = T) {
-  # Generate the DGP plot based on the number argument
-  dgp_data = switch(dgp_number,
-                    dgp_1_sim(),
-                    dgp_2_sim(),
-                    dgp_3_sim(),
-                    dgp_4_sim(),
-                    dgp_5_sim(),
-                    dgp_6_sim(),
-                    dgp_7_sim(),
-                    dgp_8_sim())
-  dgp_plot = dgp_plot(dgp_data, "",  sim_num = dgp_number)
-  
-  # Generate the density plot based on the number argument
-  sim_data = switch(dgp_number,
-                    sim1,
-                    sim2,
-                    sim3,
-                    sim4,
-                    sim5,
-                    sim6,
-                    sim7,
-                    sim8)
-  plot_est_dens = plot_est_dens(sim_data, dynamic)
-  
-  # combine and arrange plots
-  plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
-  
-  if (save ==T & Sys.info()[7] == "ts") {
-    fp = "/Users/ts/Library/Mobile Documents/com~apple~CloudDocs/Uni/UM/Year 3/Thesis/HTML"
-    filename = paste0("Sim_", dgp_number, ".svg")
-    ggsave(filename, plot = plot_combined, path = fp,
-           width = 18, height = 20, units = "cm", device = "svg")
-  }
-}
-
 
 writeLines("Ready")
