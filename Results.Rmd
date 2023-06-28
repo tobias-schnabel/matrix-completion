@@ -24,7 +24,7 @@ table th {
 
 ## Instructions to replicate can be found [here](https://github.com/tobias-schnabel/matrix-completion/blob/main/Replication.md)
 
-# Full thesis can be found [here](https://github.com/tobias-schnabel/matrix-completion/Thesis_Schnabel.pdf)
+# Full thesis can be found [here](https://tobias-schnabel.github.io/matrix-completion/Thesis_Schnabel.pdf)
 
 
 
