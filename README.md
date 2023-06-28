@@ -7,5 +7,5 @@ Final version of Thesis:
 Poster:[Poster Schnabel.pdf](https://github.com/tobias-schnabel/matrix-completion/files/11892370/Poster.Schnabel.pdf)
 
 
-To replicate, see instructions [here] (Replication.md)
+To replicate, see instructions [here](Replication.md)
 
