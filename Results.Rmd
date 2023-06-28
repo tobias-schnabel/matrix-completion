@@ -1,7 +1,7 @@
 ---
 title: "Simulation Results"
 author: Tobias Schnabel
-date: "`r format(Sys.Date(), '%B %d, %Y')`"
+date: "Last compiled on `r format(Sys.Date(), '%B %d, %Y')`"
 output: 
   html_document:
     self_contained: no
@@ -21,6 +21,10 @@ table th {
     text-align: left !important;
 }
 </style>
+
+## Instructions to replicate can be found [here](https://github.com/tobias-schnabel/matrix-completion/blob/main/Replication.md)
+
+# Full thesis can be found [here](https://github.com/tobias-schnabel/matrix-completion/)
 
 
 # Simulation 1: One treatment group, TE is unit-and time- homogeneous
