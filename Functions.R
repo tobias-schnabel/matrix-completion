@@ -524,40 +524,52 @@ get_cohorts <- function(data) {
   return(cohorts)
 }
 
-# Estimate Full MC-NNM object
-est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
+#### Estimate MC-NNM ####
+est_mc <- function(data, iteration = 0, k = 2, n_lam = 5){
   cohorts = get_cohorts(data)
   # check whether we should use covariates in estimation
   use_covariates = as.logical(data$use_cov[1]) 
-  # adjust estimation formula to include covariates for dgp 7
+  # adjust estimation formula to include covariates for dgp 7, 8
   if (use_covariates) {
     form = y ~ treat + nuisance
   } else {
     form = y ~ treat
   }
   
-  model = suppressMessages(fect::fect(form, data = cohorts, 
+  out = suppressMessages(fect::fect(form, data = cohorts, 
                                       method = "mc", index = c("unit","period"), 
-                                      se = T, force = "two-way",
+                                      se = F, force = "two-way", group = 'Cohort',
                                       CV = T,  cores = globalcores, parallel = T,
-                                      nboots = b_iter, group = 'Cohort',
-                                      nlambda = n_lam, k = k))
+                                      nlambda = n_lam, k = k, normalize = T))
   
-  est_avg = unname(model$est.avg[,1:2]) #get static effect
-  est_eff_calendar = c(model$est.eff.calendar[,1],0) # get dynamic point estimate
+  est_avg = out$att.avg #get static effect
+  est_eff_calendar = out$eff.calendar[,1] # get dynamic point estimate
   est_eff_calendar[is.nan(est_eff_calendar)] = 0 # replace NaN with 0
-  est_cal_se = c(model$est.eff.calendar[,2],0) # get dynamic SE
-  est_cal_se[is.na(est_cal_se)] = 0 # replace NaN with 0
   
-  mc_output = list(est = est_avg[1], se = est_avg[2],
+  mc_output = list(est = est_avg,
                    cum_est = mean(est_eff_calendar), 
-                   cum_se = mean(est_cal_se),
                    iter = iteration, estimator = "MC-NNM")
   
   return(mc_output)
 }
 
-### Helpers to set up event study
+#### Estimate DiD Methods ####
+est_did <- function(data, iteration = 0){
+  cohorts = get_cohorts(data)
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(data$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7, 8
+  if (use_covariates) {
+    form = y ~ treat + nuisance
+  } else {
+    form = y ~ treat
+  }
+  
+  out = suppressMessages(did2s::event_study())
+  
+}
+
+#### Helpers to set up event study ####
 
 prep_es <- function(data){
   # Prepare data
@@ -569,188 +581,13 @@ prep_es <- function(data){
     ungroup()
 }
 
-## Canonical DiD, using fixest:::feols
-est_canonical <- function(data, iteration = 0){
-  # check whether we should use covariates in estimation
-  use_covariates = as.logical(data$use_cov[1]) 
-  # adjust estimation formula to include covariates for dgp 7
-  if (use_covariates) {
-    form = y ~ treat + nuisance | unit + period
-    form_dyn = y ~ i(rel_period, ref=c(-1, Inf)) + nuisance | unit + period
-  } else {
-    form = y ~ treat | unit + period
-    form_dyn = y ~ i(rel_period, ref=c(-1, Inf)) | unit + period
-  }
-  
-  static = fixest::feols(form , data = data)
-  if (use_covariates) {
-    stat_out = list(est = unname(static$coefficients)[1], se = unname(static$se[1]))
-  } else {
-    stat_out = list(est = unname(static$coefficients), se = unname(static$se[1]))
-  }
-  
-  dyndat = relabel_control_0(data)
-  dynamic = suppressMessages(did2s::event_study(dyndat, "y", "unit", "group", 
-                                                "period", estimator = "TWFE"))
-  # dynamic = suppressMessages(
-  #   fixest::feols(form_dyn, es_data))
-  # aggregate to ATT dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
-  
-  # only keep 100 coefficients to make dynamic estimate comparable
-  dyn_est = dynamic$estimate[(length(dynamic$estimate)-99):length(dynamic$estimate)]
-  dyn_se = dynamic$std.error[(length(dynamic$std.error)-99):length(dynamic$std.error)]
-  
-  dyn_out = list(cum_est = mean(dyn_est), 
-                 cum_se = mean(dyn_se))
-  
-  # dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
-  #                cum_se = sum(dynamic$se[-length(dynamic$se)]))
-  out = c(stat_out, dyn_out)
-  out$iter = iteration
-  out$estimator = "DiD"
-  
-  return(out)
-}
-
-## Callaway-Sant'Anna
-est_cs <- function(es_data, iteration = 0){
-  # check whether we should use covariates in estimation
-  use_covariates = as.logical(es_data$use_cov[1]) 
-  # adjust estimation formula to include covariates for dgp 7
-  if (use_covariates) {
-    mod = suppressWarnings(did::att_gt(yname = "y",
-                                       tname = "period",
-                                       idname = "unit",
-                                       gname = "group",
-                                       xformla = ~ 0 + nuisance,
-                                       est_method = "dr",
-                                       control_group = "notyettreated",
-                                       bstrap = F,
-                                       data = es_data,
-                                       print_details = F))
-  } else {
-    mod = did::att_gt(yname = "y",
-                      tname = "period",
-                      idname = "unit",
-                      gname = "group",
-                      control_group = "notyettreated",
-                      bstrap = F,
-                      data = es_data,
-                      print_details = F)
-  }
-  
-  
-  dynamic = did::aggte(mod, type = "calendar", cband = F)
-  
-  dyn_est = c(dynamic$att.egt, rep(0, 100 - length(dynamic$att.egt)))
-  dyn_se = c(dynamic$se.egt, rep(0, 100 - length(dynamic$se.egt)))
-  
-  cs_output = list(est = dynamic$overall.att, se = dynamic$overall.se, 
-                   cum_est = mean(dyn_est), 
-                   cum_se = mean(dyn_se), 
-                   iter = iteration, estimator = "CS")
-  
-  return(cs_output)
-}
-
-## Sun and Abraham using fixest
-est_sa <- function(es_data, iteration = 0){
-  # check whether we should use covariates in estimation
-  use_covariates = as.logical(es_data$use_cov[1]) 
-  # adjust estimation formula to include covariates for dgp 7
-  if (use_covariates) {
-    form = y ~ nuisance + sunab(group, period) | unit + period
-  } else {
-    form = y ~ sunab(group, period) | unit + period
-  }
-  
-  mod = fixest::feols(form, es_data)
-  static = aggregate(mod, agg = "att")
-  dyn = aggregate(mod, agg = "period")
-  
-  de = dyn[1:(nrow(dyn)), 1] # get point estimates
-  dse = dyn[1:(nrow(dyn)), 2] # get SE
-  
-  if (length(de) < 100){ # make sure that only 100 periods
-    dyn_est = c(de, rep(0, 100 - length(de)))
-    dyn_se =  c(dse, rep(0, 100 - length(dse)))
-  } else {
-    dyn_est = de[(length(de)-99):length(de)]
-    dyn_se = dse[(length(dse)-99):length(dse)]
-  }
-  
-  sa_output = list(est = static[1], se = static[2],
-                   cum_est = mean(de), 
-                   cum_se = mean(dse), 
-                   iter = iteration, estimator = "SA")
-  
-  return(sa_output)
-}
-
-## de Chaisemartin & D’Haultfœuille using DIDmultiplegt
-est_dcdh <- function(data, iteration = 0){
-  # check whether we should use covariates in estimation
-  use_covariates = as.logical(data$use_cov[1]) 
-  # adjust estimation formula to include covariates for dgp 7
-  if (use_covariates) {
-    control = "nuisance"
-  } else {
-    control = c()
-  }
-  
-  mod = DIDmultiplegt::did_multiplegt(
-      data, "y", "group", "period", controls = control,
-      "treat", dynamic = 0, average_effect = "simple")
-  
-  dcdh_output = list(est = mod$effect, se = NA, cum_est = NA, cum_se = NA, 
-                     iter = iteration, estimator = "dCdH")
-  
-  return(dcdh_output)
-}
-
-## Borusyak Jaravel Spiess using didimputation
-est_bjs <- function(data, iteration = 0){
-  # change data because didimputation does not work when depvar is called "y"
-  imput_dat = relabel_control_0(data) %>% 
-    rename(dep_var = y) %>% as.data.table()
-  
-  # check whether we should use covariates in estimation
-  use_covariates = as.logical(imput_dat$use_cov[1]) 
-  # adjust estimation formula to include covariates for dgp 7
-  if (use_covariates) {
-    fs = ~ nuisance | unit + period
-  } else {
-    fs = ~ 0 | unit + period
-  }
-  
-  stat = didimputation::did_imputation(
-    data = imput_dat, yname = "dep_var", gname = "group", first_stage = fs,
-    tname = "period", idname = "unit") #tname = "period", idname = "unit", 
-  
-  dyn = didimputation::did_imputation(
-    data = imput_dat, yname = "dep_var", gname = "group", 
-    tname = "period", idname = "unit", first_stage = fs,
-    horizon = T)
-  
-  dyn_est = c(dyn$estimate, rep(0, 100 - length(dyn$estimate))) #dyn$std.error
-  dyn_se = c(dyn$std.error, rep(0, 100 - length(dyn$std.error)))
-  
-  bjs_output = list(est = stat$estimate, se = stat$std.error,
-                    cum_est = mean(dyn_est), 
-                    cum_se = mean(dyn_se),
-                    iter = iteration, estimator = "BJS")
-  
-  return(bjs_output)
-}
-
+#### Functions to run simulations ####
 timer <- function(func, ...){
   start_time = Sys.time()  # Record the start time
   do.call(func, list(...)) # Run the function
   end_time = Sys.time() # Record the end time
   cat("Execution Time:", round((end_time - start_time), digits = 2), "seconds\n")
 }
-
-### Functions to run simulations
 
 ## Function to compare estimators in an iteration
 run_sim <- function(i, fun, quiet = T) {
