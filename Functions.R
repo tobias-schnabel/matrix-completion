@@ -28,7 +28,7 @@ dgp_1_sim <- function(nobs = 1000,
       # gen treatment and control groups
       group = case_when(
         obsgroup %in% shuffled_groups[1:half] ~ treated.period,
-        obsgroup %in% shuffled_groups[(half + 1):length(shuffled_groups)] ~ nperiods
+        obsgroup %in% shuffled_groups[(half + 1):length(shuffled_groups)] ~ nperiods + 1
       ),
       # Mark Control as never treated
       evertreated = ifelse(group == treated.period, 1, 0),
@@ -60,6 +60,7 @@ dgp_1_sim <- function(nobs = 1000,
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     ungroup() %>%
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = F, use_cov = F) %>% 
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything(), -evertreated)
 }
@@ -80,7 +81,7 @@ dgp_2_sim <- function(nobs = 1000,
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%2) ~ treated.period,
-      obsgroup %in% (nobsgroups%/%2 + 1):nobsgroups ~ nperiods
+      obsgroup %in% (nobsgroups%/%2 + 1):nobsgroups ~ nperiods + 1
     ),
     # Mark Control as never treated
     evertreated = ifelse(group == treated.period, 1, 0),
@@ -115,6 +116,7 @@ dgp_2_sim <- function(nobs = 1000,
     # Cumulative TE
     mutate(cum.t.eff = cumsum(t.eff)) %>% 
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>%
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = T, use_cov = F) %>% 
     ungroup() %>% 
     # change column order
@@ -141,7 +143,7 @@ dgp_3_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
@@ -178,6 +180,7 @@ dgp_3_sim <- function(nobs = 1000,
     ungroup() %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = F, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
@@ -202,7 +205,7 @@ dgp_4_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
@@ -239,6 +242,7 @@ dgp_4_sim <- function(nobs = 1000,
     ungroup() %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = F, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
@@ -263,7 +267,7 @@ dgp_5_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
@@ -296,6 +300,7 @@ dgp_5_sim <- function(nobs = 1000,
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = T, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything()) %>% 
@@ -321,7 +326,7 @@ dgp_6_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
@@ -356,7 +361,8 @@ dgp_6_sim <- function(nobs = 1000,
     group_by(unit) %>%
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     # add everything to get outcome
-    mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
+    mutate(y = unit_fe + period_fe + cum.t.eff + error) %>%
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = T, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything()) %>% 
@@ -380,7 +386,7 @@ dgp_7_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     avg.te = case_when(
       group == treatgroups[1] ~ .05,
@@ -408,6 +414,7 @@ dgp_7_sim <- function(nobs = 1000,
       t.eff = ifelse(treat == 1, te, 0),
       cum.t.eff = ave(t.eff, unit, FUN = cumsum),
       y = unit_fe + period_fe + cum.t.eff + error + nuisance,
+      group = ifelse(group == nperiods + 1, 0, group),
       use_cum_te = T,
       use_cov = T) %>% 
     # change column order
@@ -517,9 +524,9 @@ est_true <- function(data, iteration = 0) {
 get_cohorts <- function(data) {
   df = data  %>% as.data.frame()
   cohorts = get.cohort(df, "treat", index = c("unit", "period"))
-  cohorts$FirstTreat[cohorts$Cohort == "Cohort:100"] = NA
-  cohorts$Time_to_Treatment[cohorts$Cohort == "Cohort:100"] = NA
-  cohorts$Cohort[cohorts$Cohort == "Cohort:100"] = "Control"
+  cohorts$FirstTreat[cohorts$Cohort == "Cohort:0"] = NA
+  cohorts$Time_to_Treatment[cohorts$Cohort == "Cohort:0"] = NA
+  cohorts$Cohort[cohorts$Cohort == "Cohort:0"] = "Control"
   
   return(cohorts)
 }
@@ -537,10 +544,9 @@ est_mc <- function(data, iteration = 0, k = 2, n_lam = 5){
   }
   
   out = suppressMessages(fect::fect(form, data = cohorts, 
-                                      method = "mc", index = c("unit","period"), 
-                                      se = F, force = "two-way", group = 'Cohort',
-                                      CV = T,  cores = globalcores, parallel = T,
-                                      nlambda = n_lam, k = k, normalize = T))
+                                    method = "mc", index = c("unit","period"), 
+                                    force = "two-way", group = 'Cohort',
+                                    normalize = T) )
   
   est_avg = out$att.avg #get static effect
   est_eff_calendar = out$eff.calendar[,1] # get dynamic point estimate
@@ -565,8 +571,49 @@ est_did <- function(data, iteration = 0){
     form = y ~ treat
   }
   
-  out = suppressMessages(did2s::event_study())
+  out = suppressMessages(did2s::event_study(es1, "y", "unit", "group", "period"))
   
+}
+
+## Canonical DiD, using fixest:::feols
+est_canonical <- function(data, iteration = 0){
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(data$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    form = y ~ treat + nuisance | unit + period
+    form_dyn = y ~ i(rel_period, ref=c(-1, Inf)) + nuisance | unit + period
+  } else {
+    form = y ~ treat | unit + period
+    form_dyn = y ~ i(rel_period, ref=c(-1, Inf)) | unit + period
+  }
+  
+  static = fixest::feols(form , data = data)
+  if (use_covariates) {
+    stat_out = unname(static$coefficients)[1]
+  } else {
+    stat_out = unname(static$coefficients)
+  }
+  
+  dyndat = relabel_control_0(data)
+  dynamic = suppressMessages(did2s::event_study(dyndat, "y", "unit", "group", 
+                                                "period", estimator = "TWFE"))
+
+  
+  # only keep 100 coefficients to make dynamic estimate comparable
+  dyn_est = dynamic$estimate[(length(dynamic$estimate)-99):length(dynamic$estimate)]
+  dyn_se = dynamic$std.error[(length(dynamic$std.error)-99):length(dynamic$std.error)]
+  
+  dyn_out = list(cum_est = mean(dyn_est), 
+                 cum_se = mean(dyn_se))
+  
+  # dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
+  #                cum_se = sum(dynamic$se[-length(dynamic$se)]))
+  out = c(stat_out, dyn_out)
+  out$iter = iteration
+  out$estimator = "DiD"
+  
+  return(out)
 }
 
 #### Helpers to set up event study ####
@@ -574,9 +621,8 @@ est_did <- function(data, iteration = 0){
 prep_es <- function(data){
   # Prepare data
   esdat <- data %>%
-    mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
-    mutate(rel_period = period - group) %>% # relative time to treatment
-    mutate(evertreated = ifelse(group == get_num_periods(data), 0, 1)) %>% 
+    mutate(group = ifelse(group == 100, NA, group)) %>% #mark control
+    mutate(rel_period = ifelse(group == 0, 0, period - group)) %>% # relative time to treatment
     dplyr::arrange(group, unit, period) %>% 
     ungroup()
 }
