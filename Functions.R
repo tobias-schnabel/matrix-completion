@@ -587,11 +587,11 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
   relative = as.logical(data$use_cum_te[1]) 
   
   if(relative) {
-    rel_att = tail(out$att, nperiods + 1) # get relative period effect estimates incl. 0
+    rel_att = tail(out$att, nperiods) # get relative period effect estimates incl. 0
     
     # Subset to keep relative period estimates of interest
-    negative_index = - get_first_treatment(data)
-    positive_index = nperiods + negative_index
+    negative_index = - get_first_treatment(data) + 1
+    positive_index = nperiods + negative_index -1
     names(rel_att) <- seq(from = negative_index, to = positive_index)
     
     # Compute RMSE of relative period ATT estimates
