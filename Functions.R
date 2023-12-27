@@ -515,19 +515,16 @@ get_true_relative_period_ATT <- function(data) {
     summarise(ATT = mean(cum.t.eff), .groups = 'drop')
   
   # Extract ATT as a vector
-  att <- att_data %>% select(ATT) %>% slice_tail(n = nperiods + 1) %>% pull()
-  
-  # Extract relative periods as a vector
-  rel_periods <- att_data %>% pull(relative_period)
+  rel_att <- att_data %>% select(ATT) %>% slice_tail(n = nperiods + 1) %>% pull()
   
   # Assign names to the att vector
-  names(att) <- seq(from = negative_index, to = positive_index)
+  names(rel_att) <- seq(from = negative_index, to = positive_index)
   
-  return(att)
+  return(rel_att)
 }
 
 ## Extract true values from data within simulation iteration
-est_true <- function(data, iteration = 0) {
+est_true <- function(data, true_rel_att, iteration = 0) {
   
   # Check whether to use static ATET or relative periods
   relative = as.logical(data$use_cum_te[1]) 
@@ -543,7 +540,7 @@ est_true <- function(data, iteration = 0) {
     out = tibble(
       estimator = "TRUE",
       iter = iteration,
-      rel_dev_0 = 0,
+      rel_att_0 = true_rel_att["0"],
       rel_rmse = 0) %>% 
       bind_cols(as_tibble(t(rel_dev_true))
       )
@@ -590,33 +587,44 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
                                     force = "two-way", group = 'Cohort',
                                     normalize = T)) # normalize to speed up
   
-  att_avg = out$att.avg # get static effect estimate
-  rel_att = tail(out$att, nperiods + 1) # get relative period effect estimates incl. 0
+  # Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1]) 
   
-  # Subset to keep relative period estimates of interest
-  negative_index = - get_first_treatment(data)
-  positive_index = nperiods + negative_index
-  names(rel_att) <- seq(from = negative_index, to = positive_index)
-  
-  # Compute RMSE of relative period ATT estimates
-  rel_rmse = compute_rmse(rel_att, true_rel_att)
-  
-  # Compute absolute deviation
-  dev = true_rel_att - rel_att
-  
-  # Subset relative period deviations -10 to 10 inclusive to return
-  return_sequence <- as.character(-10:10)
-  
-  # Subset dev using names
-  out_dev <- dev[names(dev) %in% return_sequence]
-  
-  mc_output <- tibble(
-    estimator = "MC-NNM",
-    iter = iteration,
-    est = att_avg,
-    rel_dev_0 = dev["0"],
-    rel_rmse = rel_rmse) %>% 
-    bind_cols(as_tibble(t(out_dev)))
+  if(relative) {
+    rel_att = tail(out$att, nperiods + 1) # get relative period effect estimates incl. 0
+    
+    # Subset to keep relative period estimates of interest
+    negative_index = - get_first_treatment(data)
+    positive_index = nperiods + negative_index
+    names(rel_att) <- seq(from = negative_index, to = positive_index)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att)
+    
+    # Compute absolute deviation
+    dev = true_rel_att - rel_att
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev <- dev[names(dev) %in% return_sequence]
+    
+    mc_output <- tibble(
+      estimator = "MC-NNM",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
+  } else {
+    att_avg = out$att.avg # get static effect estimate
+    mc_output <- tibble(
+      estimator = "MC-NNM",
+      iter = iteration,
+      ATET = att_avg
+    )
+  }
   
   return(mc_output)
 }
