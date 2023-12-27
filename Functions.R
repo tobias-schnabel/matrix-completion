@@ -803,7 +803,7 @@ est_cs <- function(data, true_rel_att, iteration = 0){
   return(cs_output)
 }
 
-#### Sun and Abraham ####
+#### Estimate Sun and Abraham ####
 est_sa <- function(data, true_rel_att, iteration = 0){
   # check whether we should use covariates in estimation
   use_covariates = as.logical(data$use_cov[1]) 
@@ -867,7 +867,7 @@ est_sa <- function(data, true_rel_att, iteration = 0){
   return(sa_output)
 }
 
-#### de Chaisemartin & D’Haultfœuille using DIDmultiplegt ####
+#### Estimate de Chaisemartin & D’Haultfœuille using DIDmultiplegt ####
 # This estimator can only estimate static ATTs (DGPs 1,3,4)
 est_dcdh <- function(data, true_rel_att, iteration = 0){
   
@@ -890,6 +890,84 @@ est_dcdh <- function(data, true_rel_att, iteration = 0){
   return(dcdh_output)
 }
 
+####Estimate Borusyak Jaravel Spiess using didimputation ####
+est_bjs <- function(data, true_rel_att, iteration = 0){
+  # change data because didimputation does not work when depvar is called "y"
+  imput_dat = data %>% 
+    rename(dep_var = y) %>% as.data.table()
+  
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(imput_dat$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    fs = ~ nuisance | unit + period
+  } else {
+    fs = ~ 0 | unit + period
+  }
+  
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(imput_dat$use_cum_te[1]) 
+  
+  if(relative) {
+    indices = get_rel_indices(imput_dat)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    
+    model = didimputation::did_imputation(
+      data = imput_dat, yname = "dep_var", gname = "group", 
+      tname = "period", idname = "unit", first_stage = fs,
+      horizon = T)
+    
+    # DIDImputation only reports positive relative time periods
+    # therefore subset true_rel_att for relative periods >= 0
+    true_rel_att_nonneg <- true_rel_att[as.numeric(names(true_rel_att)) >= 0]
+    
+    # use length of this to get right # of estimates
+    rel_att = tail(model$estimate, length(true_rel_att_nonneg))
+    
+    # Set names
+    names(rel_att) <- seq(from = 0, to = length(true_rel_att_nonneg) - 1)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att_nonneg)
+    
+    # Compute absolute deviation
+    dev = true_rel_att_nonneg - rel_att
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev_right <- dev[names(dev) %in% return_sequence]
+    # -10 to -1 not available:
+    out_dev_left = rep(NA, 10)
+    out_dev = c(out_dev_left, out_dev_right)
+    
+    names(out_dev) <- return_sequence
+    
+    bjs_output <- tibble(
+      estimator = "BJS",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
+    
+    
+  } else {
+    att_avg = didimputation::did_imputation(
+      data = imput_dat, yname = "dep_var", gname = "group", first_stage = fs,
+      tname = "period", idname = "unit")$estimate
+    
+    bjs_output <- tibble(
+      estimator = "BJS",
+      iter = iteration,
+      ATET = att_avg
+    )
+  }
+
+  return(bjs_output)
+}
 
 #### Helper to set up event study ####
 
