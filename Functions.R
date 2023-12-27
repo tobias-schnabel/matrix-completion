@@ -435,15 +435,6 @@ dgp_8_sim <- function(){
 
 
 #### Helper functions for Estimation ####
-# function to set up data for event study estimation
-prep_es <- function(data){
-  # Prepare data
-  esdat <- data %>%
-    mutate(group = ifelse(group == 0, NA, group)) %>% #mark control
-    mutate(rel_period = ifelse(group == 0, 0, period - group)) %>% # relative time to treatment
-    dplyr::arrange(group, unit, period) %>% 
-    ungroup()
-}
 
 timer <- function(func, ...){
   start_time = Sys.time()  # Record the start time
