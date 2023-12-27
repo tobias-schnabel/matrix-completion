@@ -1480,15 +1480,15 @@ plot_est_dens <- function(df) {
   
   # get estimator names
   if (dynamic) {
-    estimators = c("TWFE", "CS", "SA", "MC-NNM", "BJS", "TRUE") 
+    estimators = c("CS", "SA", "TWFE", "MC-NNM", "BJS", "TRUE") 
     
     # Define your custom color palette
-    my_palette = c("TWFE" = "#F28E2B", "CS" = "#E15759", "SA" = "#76B7B2", 
+    my_palette = c("TWFE" = "#F28E2B", "CS" = "#E15759", "SA" = "#B07AA1",  #"#4E79A7" "#F28E2B" "#E15759" "#76B7B2" "#59A14F" "#EDC948" "#B07AA1" "#FF9DA7" "#9C755F" "#BAB0AC"
                    "BJS" = scales::alpha("#59A14F", 0.8), "MC-NNM" = "#4E79A7", "TRUE" = "#BAB0AC") 
     
     # Define line sizes and line types
     line_sizes <- c(0.6, 0.4, 0.4, 0.8, 0.4, 0.7)  # Thicker line for MC-NNM and TRUE
-    line_types <- c("solid", "solid", "solid", "solid", "solid", "dashed")  # Dashed line for TRUE
+    line_types <- c("solid", "solid", "dashed", "solid", "solid", "longdash")  # Dashed line for TRUE
     
     event_study_df <- df %>%
       select(iter, estimator, `-10`:`10`) %>%
@@ -1502,7 +1502,6 @@ plot_est_dens <- function(df) {
     cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the mean of point estimates of the Treatment Effect in\nRelative Periods -10 to 10. Missing Points mean that an Estimate is not produced for that relative period."
     
     # Build the plot
-    suppressWarnings({
     p <- event_study_df %>%
       ggplot(aes(x = relative_period, y = value, group = estimator, color = estimator)) +
       geom_line(aes(linetype = estimator, size = estimator), na.rm = T) +  # conditional line type and size
@@ -1519,13 +1518,12 @@ plot_est_dens <- function(df) {
             legend.position = "bottom") +
       guides(color = guide_legend(override.aes = list(size=3)), 
              size = "none", linetype = "none", shape = "none")  # hide size, linetype legends
-    })
     
     } else {
     estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
     # Assign colors
     my_palette = c("MC-NNM" = "#4E79A7", "TWFE" = "#F28E2B", "CS" = "#E15759", 
-                   "SA" = "#76B7B2", "dCdH" = "#EDC948", "BJS" = "#59A14F")
+                   "SA" = "#B07AA1", "dCdH" = "#EDC948", "BJS" = "#59A14F") 
     
     true_v = df %>% filter(estimator == "TRUE") %>% 
       summarize(mean_e = mean(ATET), min_e = min(ATET), max_e = max(ATET))
@@ -1571,7 +1569,7 @@ plot_est_dens <- function(df) {
 }
 
 ## function to combine dgp plot and densities and save
-plot_combined <- function(dgp_number, dynamic, save = F) {
+plot_combined <- function(dgp_number, save = F) {
   # Generate the DGP plot based on the number argument
   dgp_data = switch(dgp_number,
                     dgp_1_sim(),
@@ -1594,7 +1592,7 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
                     sim6,
                     sim7,
                     sim8)
-  plot_est_dens = plot_est_dens(sim_data, dynamic)
+  plot_est_dens = plot_est_dens(sim_data)
   
   # combine and arrange plots
   plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
@@ -1607,4 +1605,4 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
   }
 }
 
-writeLines("Ready")
+writeLines("Done!")
