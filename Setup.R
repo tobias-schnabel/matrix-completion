@@ -1,5 +1,5 @@
 ## CLEAR ALL
-rm(list = ls(all = TRUE)) 
+# Please restart R Session before proceeding
 
 source("packages.R") ## load packages
 
