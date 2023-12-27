@@ -3,3 +3,4 @@ Results_files/* linguist-generated=true
 *.html linguist-detectable=false
 *.css linguist-detectable=false
 *.scss linguist-detectable=false
+*.jsx linguist-detectable=false
