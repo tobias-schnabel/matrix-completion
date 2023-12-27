@@ -849,7 +849,7 @@ est_sa <- function(data, true_rel_att, iteration = 0){
     out_dev <- dev[names(dev) %in% return_sequence]
     
     sa_output <- tibble(
-      estimator = "TWFE",
+      estimator = "SA",
       iter = iteration,
       rel_att_0 = rel_att["0"],
       rel_rmse = rel_rmse,
@@ -994,7 +994,7 @@ run_sim <- function(i, fun, quiet = T) {
   
   if (relative) {
     true_rel_att <- get_true_relative_period_ATT(dt)  
-  } else{
+  } else {
     true_rel_att <- 0
   }
   
@@ -1475,66 +1475,98 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
 }
 
 # function to plot densities of estimates of each estimator
-plot_est_dens <- function(df, dynamic = F) {
+plot_est_dens <- function(df) {
+    dynamic <- names(df)[3] == "rel_att_0"
+  
   # get estimator names
-  estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
-  
-  # get true mean
-  if (dynamic == T) {
-    true_v = df %>% filter(estimator == "TRUE") %>% 
-      summarize(mean_e = mean(cum_est), min_e = min(cum_est),
-                max_e = max(cum_est))
-    title = "Distributions of Event-Study Parameter Estimates"
-    cap = "Upper Panel shows all observatins from one draw of the simulation with group means. Lower panel shows for each \nestimator described in sections 4.3 and 5.5/6 densities of point estimates of the event-study parameter defined in (53). \nVertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+  if (dynamic) {
+    estimators = c("TWFE", "CS", "SA", "MC-NNM", "BJS", "TRUE") 
     
-    # filter out dCdH estimator if dynamic is TRUE 
-    if(all(is.na(df$cum_est[df$estimator == "dCdH"]))) {
-      estimators = estimators[estimators != "dCdH"]
-    }
-  } else {
+    # Define your custom color palette
+    my_palette = c("TWFE" = "#F28E2B", "CS" = "#E15759", "SA" = "#76B7B2", 
+                   "BJS" = scales::alpha("#59A14F", 0.8), "MC-NNM" = "#4E79A7", "TRUE" = "#BAB0AC") 
+    
+    # Define line sizes and line types
+    line_sizes <- c(0.6, 0.4, 0.4, 0.8, 0.4, 0.7)  # Thicker line for MC-NNM and TRUE
+    line_types <- c("solid", "solid", "solid", "solid", "solid", "dashed")  # Dashed line for TRUE
+    
+    event_study_df <- df %>%
+      select(iter, estimator, `-10`:`10`) %>%
+      pivot_longer(cols = `-10`:`10`, names_to = "relative_period", values_to = "value") %>%
+      mutate(relative_period = as.numeric(relative_period),
+             estimator = factor(estimator, levels = estimators)) %>%
+      group_by(estimator, relative_period) %>%
+      summarise(value = mean(value, na.rm = TRUE), .groups = 'drop')
+    
+    title = "Deviation from True Treatment Effect"
+    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the mean of point estimates of the Treatment Effect in\nRelative Periods -10 to 10. Missing Points mean that an Estimate is not produced for that relative period."
+    
+    # Build the plot
+    suppressWarnings({
+    p <- event_study_df %>%
+      ggplot(aes(x = relative_period, y = value, group = estimator, color = estimator)) +
+      geom_line(aes(linetype = estimator, size = estimator), na.rm = T) +  # conditional line type and size
+      geom_point(aes(shape = estimator), na.rm = T) +
+      scale_size_manual(values = line_sizes) + # define line sizes
+      scale_linetype_manual(values = line_types) + # define line types
+      scale_color_manual(values = my_palette) +  # apply color palette
+      theme_minimal() +
+      labs(x = "Relative Time Period", y = "Estimated Effect - True Effect", color = "Estimator",
+           caption = cap) +
+      scale_x_continuous(breaks = -10:10) +
+      ggtitle(title) +
+      theme(plot.title = element_text(hjust = 0.5),
+            legend.position = "bottom") +
+      guides(color = guide_legend(override.aes = list(size=3)), 
+             size = "none", linetype = "none", shape = "none")  # hide size, linetype legends
+    })
+    
+    } else {
+    estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
+    # Assign colors
+    my_palette = c("MC-NNM" = "#4E79A7", "TWFE" = "#F28E2B", "CS" = "#E15759", 
+                   "SA" = "#76B7B2", "dCdH" = "#EDC948", "BJS" = "#59A14F")
+    
     true_v = df %>% filter(estimator == "TRUE") %>% 
-      summarize(mean_e = mean(est), min_e = min(est), max_e = max(est))
+      summarize(mean_e = mean(ATET), min_e = min(ATET), max_e = max(ATET))
+    
     title = "Distributions of ATET Estimates"
-    cap = "Upper Panel shows all observatins from one draw of the simulation with group means. \nLower panel shows for each estimator described in sections 4.3 and 5.5/6 densities of point estimates of\n the ATET as defined on p. 12. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the density of point estimates of\n the ATET. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    
+    # filter data
+    df = df %>% filter(estimator %in% estimators)
+    
+    # Create plot variable depending on 'dynamic' argument
+    plot_var = "ATET"
+    
+    # Set factor levels for estimator to control facet order
+    df$estimator = factor(df$estimator, levels = estimators)
+    
+    # Order the dataframe by estimator
+    df = df %>% arrange(estimator)
+    
+    # Build the plot
+    p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
+      geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
+      scale_color_manual(values = my_palette) +
+      geom_vline(aes(xintercept = true_v$min_e), 
+                 linetype = "dashed", color = "red", alpha = 0.45) +
+      geom_vline(aes(xintercept = true_v$mean_e), 
+                 linetype = "dashed", color = "red") +
+      geom_vline(aes(xintercept = true_v$max_e), 
+                 linetype = "dashed", color = "red", alpha = 0.45) +
+      guides(color = "none", fill = "none") +
+      facet_wrap(~ estimator, scales = "free") + 
+      theme(legend.position = 'bottom',
+            axis.title = element_text(size = 14),
+            axis.text = element_text(size = 9),
+            plot.title = element_text(hjust = 0.5, size=12),
+            plot.subtitle = element_text(hjust = 0.5),
+            legend.title = element_text(size = 12, hjust = 0.5)) +
+      ggtitle(title) + labs(x = "Point Estimate", y = "Density",
+                            caption = cap)
   }
-  
-  # filter data
-  df = df %>% filter(estimator %in% estimators)
-  
-  # Create plot variable depending on 'dynamic' argument
-  plot_var = ifelse(dynamic, "cum_est", "est")
-  
-  # Set factor levels for estimator to control facet order
-  df$estimator = factor(df$estimator, levels = estimators)
-  
-  # Order the dataframe by estimator
-  df = df %>% arrange(estimator)
-  
-  # Assign colors
-  my_palette = c("MC-NNM" = "#4E79A7", "DiD" = "#F28E2B", "CS" = "#E15759", 
-                  "SA" = "#76B7B2", "dCdH" = "#59A14F", "BJS" = "#EDC948")
-  
-  # Create the plot
-  p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
-    geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
-    scale_color_manual(values = my_palette) +
-    geom_vline(aes(xintercept = true_v$min_e), 
-               linetype = "dashed", color = "red", alpha = 0.45) +
-    geom_vline(aes(xintercept = true_v$mean_e), 
-               linetype = "dashed", color = "red") +
-    geom_vline(aes(xintercept = true_v$max_e), 
-               linetype = "dashed", color = "red", alpha = 0.45) +
-    guides(color = "none", fill = "none") +
-    facet_wrap(~ estimator, scales = "free") + 
-    theme(legend.position = 'bottom',
-          axis.title = element_text(size = 14),
-          axis.text = element_text(size = 9),
-          plot.title = element_text(hjust = 0.5, size=12),
-          plot.subtitle = element_text(hjust = 0.5),
-          legend.title = element_text(size = 12, hjust = 0.5)) +
-    ggtitle(title) + labs(x = "Point Estimate", y = "Density",
-                          caption = cap)
-  
+
   return(p)
 }
 
