@@ -473,7 +473,7 @@ get_true_ATT <- function(data){
   units = get_num_units(data)
   periods = get_num_periods(data)
   treat_times <- sort(get_treat_times(data)) 
-  tgroups <- treat_times[-length(treat_times)]
+  tgroups <- treat_times[-1]
   
   # check whether DGP uses t.eff or cum.t.eff
   use_cum_effect = as.logical(data$use_cum_te[1])
@@ -501,6 +501,7 @@ get_true_ATT <- function(data){
 
 ### Helper function to subset relative period ATT estimates
 get_rel_indices <- function(data) {
+  nperiods = get_num_periods(data)
   negative_index = - get_first_treatment(data) + 1
   positive_index = nperiods + negative_index - 1
   vec_length = positive_index - negative_index + 1
@@ -551,7 +552,7 @@ est_true <- function(data, true_rel_att, iteration = 0) {
     names(rel_dev_true) <- return_sequence
     
     # Subset dev using names
-    out_dev <- dev[names(dev) %in% return_sequence]
+    out_dev <- rel_dev_true[names(rel_dev_true) %in% return_sequence]
     out = tibble(
       estimator = "TRUE",
       iter = iteration,
@@ -813,7 +814,7 @@ est_sa <- function(data, true_rel_att, iteration = 0){
   mod = fixest::feols(form, data)
   
   ## Check whether to use static ATET or relative periods
-  relative = as.logical(es_data$use_cum_te[1]) 
+  relative = as.logical(data$use_cum_te[1]) 
   
   if(relative) {
     indices = get_rel_indices(data)
@@ -992,9 +993,11 @@ run_sim <- function(i, fun, quiet = T) {
     true_rel_att <- 0
   }
   
+  # Get true values
+  true = est_true(data = dt, true_rel_att = true_rel_att, iteration = i)
   # Estimation
   mc = est_mc(data = dt, true_rel_att = true_rel_att, iteration = i)  
-  did = est_canonical(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  did = est_twfe(data = dt, true_rel_att = true_rel_att, iteration = i)  
   cs = est_cs(data = dt, true_rel_att = true_rel_att, iteration = i)  
   sa = est_sa(data = dt, true_rel_att = true_rel_att, iteration = i)  
   dcdh = est_dcdh(data = dt, true_rel_att = true_rel_att, iteration = i)  
