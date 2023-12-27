@@ -432,53 +432,6 @@ dgp_8_sim <- function(){
   return(data)
 }
 
-### Function to extract true ATET and cumulative ATET from simulated data
-get_true_values <- function(data){
-  units = get_num_units(data)
-  periods = get_num_periods(data)
-  treat_times <- sort(get_treat_times(data)) 
-  tgroups <- treat_times[-length(treat_times)]
-  
-  # check whether DGP uses t.eff or cum.t.eff
-  use_cum_effect = as.logical(data$use_cum_te[1])
-  
-  # get number of treated units
-  numtreated = data %>% filter(group %in% tgroups) %>%  get_num_units()
-  
-  # get share of each treatment group
-  group_share <- data %>%
-    filter(group %in% tgroups) %>%
-    group_by(group) %>%
-    summarise(share = n() / numtreated)
-  
-  # calculate true dynamic treatment effect
-  if (use_cum_effect) {
-    ce = data %>%  group_by(period) %>% 
-      filter(group %in% tgroups) %>% 
-      filter(treat == 1) %>% 
-      summarise(mce = mean(cum.t.eff)) %>% 
-      summarise(cum_est = sum(mce) / periods)
-  } else {
-    ce = data %>%  group_by(period) %>% 
-      filter(group %in% tgroups) %>% 
-      filter(treat == 1) %>% 
-      summarise(mce = mean(t.eff)) %>% 
-      summarise(cum_est = sum(mce) / periods)
-  }
-  
-  # calculate true static treatment effect
-  group_data <- data %>%
-    filter(group %in% tgroups) %>%
-    left_join(group_share, by = "group") %>%
-    # left_join(ce, by = "period") %>%
-    group_by(group) %>%
-    summarise(est = mean(avg.te), 
-              cum_est = mean(as.numeric(ce)), share = mean(share))
-  
-  return(group_data)
-}
-
-
 #### Estimator wrappers
 # helpers
 timer <- function(func, ...){
@@ -511,18 +464,38 @@ relabel_control_0 <- function(df){
 # set number of cores
 globalcores = parallel::detectCores()
 
-## True values from data
-est_true <- function(data, iteration = 0) {
-  vals = get_true_values(data)
-  weighted_est <- sum(vals$est * vals$share) / sum(vals$share)
-  ce = mean(vals$cum_est)
+### Function to extract true static ATET from simulated data
+get_true_ATT <- function(data){
+  units = get_num_units(data)
+  periods = get_num_periods(data)
+  treat_times <- sort(get_treat_times(data)) 
+  tgroups <- treat_times[-length(treat_times)]
   
-  out = list(est = weighted_est, se = 0, cum_est = ce,
-             cum_se = 0, iter = iteration, estimator = "TRUE")
+  # check whether DGP uses t.eff or cum.t.eff
+  use_cum_effect = as.logical(data$use_cum_te[1])
   
-  return(out)
+  # get number of treated units
+  numtreated = data %>% filter(group %in% tgroups) %>%  get_num_units()
+  
+  # get share of each treatment group
+  group_share <- data %>%
+    filter(group %in% tgroups) %>%
+    group_by(group) %>%
+    summarise(share = n() / numtreated)
+  
+  # calculate true static treatment effect
+  group_data <- data %>%
+    filter(group %in% tgroups) %>%
+    left_join(group_share, by = "group") %>%
+    group_by(group) %>%
+    summarise(est = mean(avg.te), share = mean(share))
+  
+  true_att = sum(group_data$est * group_data$share) / sum(group_data$share)
+  
+  return(true_att)
 }
 
+### Function to extract true relative period ATET from simulated data
 get_true_relative_period_ATT <- function(data) {
   
   nperiods = get_num_periods(data)
@@ -550,6 +523,38 @@ get_true_relative_period_ATT <- function(data) {
   names(att) <- seq(from = negative_index, to = positive_index)
   
   return(att)
+}
+
+## Extract true values from data within simulation iteration
+est_true <- function(data, iteration = 0) {
+  
+  # Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1]) 
+  
+  if(relative) {
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    rel_dev_true <- rep(0, length(return_sequence))
+    names(rel_dev_true) <- return_sequence
+    
+    # Subset dev using names
+    out_dev <- dev[names(dev) %in% return_sequence]
+    out = tibble(
+      estimator = "TRUE",
+      iter = iteration,
+      rel_dev_0 = 0,
+      rel_rmse = 0) %>% 
+      bind_cols(as_tibble(t(rel_dev_true))
+      )
+  } else {
+    out = tibble(
+      estimator = "TRUE",
+      iter = iteration,
+      ATET = get_true_ATT(data)
+      )
+  }
+  
+  return(out)
 }
 
 ## Function to compute RMSE
@@ -601,16 +606,16 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
   # Compute absolute deviation
   dev = true_rel_att - rel_att
   
-  # Subset relative period deviations -10 to 10 incluse to return
+  # Subset relative period deviations -10 to 10 inclusive to return
   return_sequence <- as.character(-10:10)
   
   # Subset dev using names
   out_dev <- dev[names(dev) %in% return_sequence]
   
   mc_output <- tibble(
-    est = att_avg,
-    iter = iteration,
     estimator = "MC-NNM",
+    iter = iteration,
+    est = att_avg,
     rel_dev_0 = dev["0"],
     rel_rmse = rel_rmse) %>% 
     bind_cols(as_tibble(t(out_dev)))
@@ -705,23 +710,11 @@ run_sim <- function(i, fun, quiet = T) {
   # make event study data
   es = prep_es(dt)
   
-  # check if DGP is 8
-  if (identical(fun, dgp_8_sim)) {
-    dgp8 = T
-  } else {
-    dgp8 = F
-  }
-  #true values
-  true = est_true(dt, i)
+  # compute true relative period ATTs
+  true_rel_att = get_true_relative_period_ATT(dt)
   
-  #estimate
-  if(dgp8 ==T ){
-    # give MC-NNM more CV folds and candidate lambdas for DGP 8
-    mc = est_mc(dt, i, k = 4, n_lam = 6) 
-  } else {
-    mc = est_mc(dt, i)  
-  }
-  
+  # Estimation
+  mc = est_mc(data = dt, true_rel_att = true_rel_att, iteration = i)  
   did = est_canonical(dt, i)
   cs = est_cs(es, i)
   sa = est_sa(es, i)
