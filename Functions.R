@@ -885,7 +885,7 @@ est_dcdh <- function(data, true_rel_att, iteration = 0){
   return(dcdh_output)
 }
 
-####Estimate Borusyak Jaravel Spiess using didimputation ####
+#### Estimate Borusyak Jaravel Spiess using didimputation ####
 est_bjs <- function(data, true_rel_att, iteration = 0){
   # change data because didimputation does not work when depvar is called "y"
   imput_dat = data %>% 
@@ -981,34 +981,39 @@ run_sim <- function(i, fun, quiet = T) {
   }
   # make data from function
   dt = withr::with_seed(i, fun()) # use with_seed to guarantee reproducibility
-  # make event study data
-  es = prep_es(dt)
   
-  # compute true relative period ATTs
-  true_rel_att = get_true_relative_period_ATT(dt)
+  ## compute true relative period ATTs
+  # check whether to use static ATET or relative periods
+  relative = as.logical(dt$use_cum_te[1]) 
+  
+  if (relative) {
+    true_rel_att <- get_true_relative_period_ATT(dt)  
+  } else{
+    true_rel_att <- 0
+  }
   
   # Estimation
   mc = est_mc(data = dt, true_rel_att = true_rel_att, iteration = i)  
-  did = est_canonical(dt, i)
-  cs = est_cs(es, i)
-  sa = est_sa(es, i)
-  dcdh = est_dcdh(dt, i)
-  bjs = est_bjs(dt, i)
+  did = est_canonical(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  cs = est_cs(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  sa = est_sa(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  dcdh = est_dcdh(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  bjs = est_bjs(data = dt, true_rel_att = true_rel_att, iteration = i)  
   
-  results_list <- list(true, mc, did, cs, sa, dcdh, bjs)
-  names(results_list) <- c('TRUE', 'MC-NNM', 'DiD', 'CS', 'SA', 'dCdH', 'BJS')
+  results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>% # names(results_list) <- c('TRUE', 'MC-NNM', 'DiD', 'CS', 'SA', 'dCdH', 'BJS')
+    select(iter, everything())
+    
+  # # convert list to long tibble
+  # results_df <- tibble(
+  #   iteration = i,
+  #   estimator = names(results_list),
+  #   est = vapply(results_list, function(x) x$est, numeric(1)),
+  #   se = vapply(results_list, function(x) x$se, numeric(1)),
+  #   cum_est = vapply(results_list, function(x) x$cum_est, numeric(1)),
+  #   cum_se = vapply(results_list, function(x) x$cum_se, numeric(1))
+  # )
   
-  # convert list to long tibble
-  results_df <- tibble(
-    iteration = i,
-    estimator = names(results_list),
-    est = vapply(results_list, function(x) x$est, numeric(1)),
-    se = vapply(results_list, function(x) x$se, numeric(1)),
-    cum_est = vapply(results_list, function(x) x$cum_est, numeric(1)),
-    cum_se = vapply(results_list, function(x) x$cum_se, numeric(1))
-  )
-  
-  return(results_df)
+  return(results_tibble)
 }
 
 ## Function to execute the simulation, not parallelized
@@ -1385,7 +1390,19 @@ get_treat_times <- function(df) {
 }
 
 # Basic plotting function
-dgp_plot_basic <- function(df) {
+dgp_plot_basic <- function(df, sim_num = NULL) {
+  unique_groups <- sort(unique(df$group))
+  group_labels <- as.character(unique_groups)
+  names(group_labels) <- unique_groups
+  group_labels["0"] <- "Control"
+  
+  if (is.null(sim_num)) {
+    # extract the number from the df function name
+    sim_num = as.integer(gsub("[^0-9]", "", substitute(df)))
+  }
+  # set as plot title
+  plot_title = paste("Outcome Data from One Draw of Simulation", sim_num)
+  
   df %>%
     ggplot(aes(x = period, y = y, group = unit)) +
     geom_line(alpha = 0.1, color = "grey") +
@@ -1399,8 +1416,10 @@ dgp_plot_basic <- function(df) {
     theme(legend.position = 'bottom',
           axis.title = element_text(size = 14),
           axis.text = element_text(size = 12)) +
-    ggtitle("Outcome Data from Simulation") +
-    theme(plot.title = element_text(hjust = 0.5, size = 12))
+    ggtitle(plot_title) +
+    theme(plot.title = element_text(hjust = 0.5, size = 12)) +
+    scale_color_manual(values = c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F"),
+                       labels = group_labels)
 }
 
 
@@ -1412,10 +1431,10 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
   suppressWarnings({
     # get treatment times and remove the control group
     treat_times <- get_treat_times(df)
-    treat_times <- treat_times[treat_times != max(treat_times)]
+    treat_times <- treat_times[treat_times != min(treat_times)]
     
     # relabel the control group
-    control_label <- as.character(max(df$period)) # max period considered as control group
+    control_label <- as.character(0) # min period considered as control group
     
     if (is.null(sim_num)) {
       # extract the number from the df function name
@@ -1449,7 +1468,7 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
     # Add vertical lines for each treatment group
     vlines <- data.frame(xintercept = treat_times, group = treat_times)
     p = p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(group)), 
-                        size = 0.5, show.legend = FALSE)
+                        size = 0.5, linetype = "dashed", show.legend = FALSE)
     
     # Set color scale and replace treatment group 100 with "Control" in legend
     p = p + scale_color_manual(values = my_palette,
@@ -1462,7 +1481,7 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
 # function to plot densities of estimates of each estimator
 plot_est_dens <- function(df, dynamic = F) {
   # get estimator names
-  estimators = c("MC-NNM", "DiD", "CS", "SA", "dCdH", "BJS")
+  estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
   
   # get true mean
   if (dynamic == T) {
