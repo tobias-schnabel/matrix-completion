@@ -432,8 +432,17 @@ dgp_8_sim <- function(){
   return(data)
 }
 
-#### Estimator wrappers
-# helpers
+#### Helper functions ####
+# function to set up data for event study estimation
+prep_es <- function(data){
+  # Prepare data
+  esdat <- data %>%
+    mutate(group = ifelse(group == 0, NA, group)) %>% #mark control
+    mutate(rel_period = ifelse(group == 0, 0, period - group)) %>% # relative time to treatment
+    dplyr::arrange(group, unit, period) %>% 
+    ungroup()
+}
+
 timer <- function(func, ...){
   start_time = Sys.time()  # Record the start time
   do.call(func, list(...)) # Run the function
@@ -640,7 +649,6 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
 }
 
 #### Estimate TWFE ####
-## Canonical DiD, using fixest:::feols
 est_twfe <- function(data, true_rel_att, iteration = 0){
   ## check whether we should use covariates in estimation
   use_covariates = as.logical(data$use_cov[1]) 
@@ -670,7 +678,6 @@ est_twfe <- function(data, true_rel_att, iteration = 0){
     rel_att_middle = NA
     rel_att_right = rel_att_raw[abs(negative_index):(indices$len - 1)]
     rel_att = c(rel_att_left, rel_att_middle, rel_att_right)
-    
 
     names(rel_att) <- seq(from = negative_index, to = positive_index)
     
@@ -711,16 +718,94 @@ est_twfe <- function(data, true_rel_att, iteration = 0){
   return(twfe_output)
 }
 
-#### Helpers to set up event study ####
-
-prep_es <- function(data){
-  # Prepare data
-  esdat <- data %>%
-    mutate(group = ifelse(group == 0, NA, group)) %>% #mark control
-    mutate(rel_period = ifelse(group == 0, 0, period - group)) %>% # relative time to treatment
-    dplyr::arrange(group, unit, period) %>% 
-    ungroup()
+#### Estiamte Callaway-Sant'Anna
+est_cs <- function(data, true_rel_att, iteration = 0){
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(data$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    mod = suppressWarnings(did::att_gt(yname = "y",
+                                       tname = "period",
+                                       idname = "unit",
+                                       gname = "group",
+                                       xformla = ~ 0 + nuisance,
+                                       bstrap = F,
+                                       data = data,
+                                       print_details = F))
+  } else {
+    mod = did::att_gt(yname = "y",
+                      tname = "period",
+                      idname = "unit",
+                      gname = "group",
+                      bstrap = F,
+                      data = data,
+                      print_details = F)
+  }
+  
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1]) 
+  
+  if(relative) {
+    indices = get_rel_indices(data)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    
+    # model = suppressMessages(did2s::event_study(data, "y", "unit", "group", 
+    #                                             "period", estimator = "TWFE"))
+    
+    model = did::aggte(mod, type = "dynamic", cband = F)
+    
+    # for DGP 1 and 2, have to manually wrangle vector together as value for -49 is missing
+    if (get_num_groups(data) < 5) {
+      rel_att_right = tail(model$att.egt, indices$len) # get relative period effect estimates incl. 0
+      rel_att_left = NA
+      rel_att = c(rel_att_left, rel_att_right)
+    } else {
+      rel_att = tail(model$att.egt, indices$len)
+    }
+    
+    names(rel_att) <- seq(from = negative_index, to = positive_index)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att)
+    
+    # Compute absolute deviation
+    dev = true_rel_att - rel_att
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev <- dev[names(dev) %in% return_sequence]
+    
+    cs_output <- tibble(
+      estimator = "CS",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
+  } else {
+    model = did::aggte(mod, "simple")
+    if (use_covariates) {
+      att_avg = unname(model$coefficients)[1]
+    } else {
+      att_avg = unname(model$coefficients)
+    }
+    
+    cs_output <- tibble(
+      estimator = "CS",
+      iter = iteration,
+      ATET = model$overall.att
+    )
+  }
+  
+  return(cs_output)
 }
+
+#### Helper to set up event study ####
+
+
 
 #### Functions to run simulations ####
 timer <- function(func, ...){
@@ -807,7 +892,7 @@ run_sim_parallel <- function(iterations, sim_function) {
   return(tibble(out_df))
 }
 
-### Utilities for simulating
+#### Utility functions for simulating ####
 # parallelization leads to errors, which leads to entire iterations missing
 # this helper counts and removes those rows
 verify_sim_results <- function(input_tibble) {
@@ -931,7 +1016,7 @@ keep_iterations <- function(sim_data, num_iterations = 500) {
 
 
 
-### Analyzing sim results
+#### Functions to analyze sim results ####
 
 # function to create summary tibble
 analyze_sim_results <- function(sim_results, type = "static") {
@@ -1128,7 +1213,7 @@ save_table_results <- function(sumdata,
     save_kable(file = file_name)
 }
 
-### Data Plotting Functions
+#### Data Plotting Functions ####
 # Set Theme
 theme_set(theme_clean() + theme(plot.background = element_blank(),
                                 legend.background = element_blank()))
