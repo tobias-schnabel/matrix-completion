@@ -557,7 +557,8 @@ est_true <- function(data, true_rel_att, iteration = 0) {
       estimator = "TRUE",
       iter = iteration,
       rel_att_0 = true_rel_att["0"],
-      rel_rmse = 0) %>% 
+      rel_rmse = 0,
+      rel_bias = 0) %>% 
       bind_cols(as_tibble(t(rel_dev_true))
       )
   } else {
@@ -584,6 +585,7 @@ get_cohorts <- function(data) {
   
   return(cohorts)
 }
+
 est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
   nperiods = get_num_periods(data)
   cohorts = get_cohorts(data) # helper function to label cohorts for fect
@@ -617,7 +619,7 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
     rel_rmse = compute_rmse(rel_att, true_rel_att)
     
     # Compute absolute deviation
-    dev = true_rel_att - rel_att
+    dev = rel_att - true_rel_att
     
     # Subset relative period deviations -10 to 10 inclusive to return
     return_sequence <- as.character(-10:10)
@@ -629,7 +631,8 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
       estimator = "MC-NNM",
       iter = iteration,
       rel_att_0 = rel_att["0"],
-      rel_rmse = rel_rmse) %>% 
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
       bind_cols(as_tibble(t(out_dev))
       )
   } else {
@@ -681,7 +684,7 @@ est_twfe <- function(data, true_rel_att, iteration = 0){
     rel_rmse = compute_rmse(rel_att, true_rel_att)
     
     # Compute absolute deviation
-    dev = true_rel_att - rel_att
+    dev = rel_att - true_rel_att
     
     # Subset relative period deviations -10 to 10 inclusive to return
     return_sequence <- as.character(-10:10)
@@ -693,7 +696,8 @@ est_twfe <- function(data, true_rel_att, iteration = 0){
       estimator = "TWFE",
       iter = iteration,
       rel_att_0 = rel_att["0"],
-      rel_rmse = rel_rmse) %>% 
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
       bind_cols(as_tibble(t(out_dev))
       )
   } else {
@@ -766,7 +770,7 @@ est_cs <- function(data, true_rel_att, iteration = 0){
     rel_rmse = compute_rmse(rel_att, true_rel_att)
     
     # Compute absolute deviation
-    dev = true_rel_att - rel_att
+    dev = rel_att - true_rel_att
     
     # Subset relative period deviations -10 to 10 inclusive to return
     return_sequence <- as.character(-10:10)
@@ -778,7 +782,8 @@ est_cs <- function(data, true_rel_att, iteration = 0){
       estimator = "CS",
       iter = iteration,
       rel_att_0 = rel_att["0"],
-      rel_rmse = rel_rmse) %>% 
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
       bind_cols(as_tibble(t(out_dev))
       )
   } else {
@@ -835,7 +840,7 @@ est_sa <- function(data, true_rel_att, iteration = 0){
     rel_rmse = compute_rmse(rel_att, true_rel_att)
     
     # Compute absolute deviation
-    dev = true_rel_att - rel_att
+    dev = rel_att - true_rel_att
     
     # Subset relative period deviations -10 to 10 inclusive to return
     return_sequence <- as.character(-10:10)
@@ -847,7 +852,8 @@ est_sa <- function(data, true_rel_att, iteration = 0){
       estimator = "TWFE",
       iter = iteration,
       rel_att_0 = rel_att["0"],
-      rel_rmse = rel_rmse) %>% 
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
       bind_cols(as_tibble(t(out_dev))
       )
   } else {
@@ -869,9 +875,7 @@ est_dcdh <- function(data, true_rel_att, iteration = 0){
   
   ## Check whether to use static ATET or relative periods
   relative = as.logical(data$use_cum_te[1])
-  if(relative) {
-    dcdh_output <- tibble(NULL)
-  } else {
+  if(!relative) {
     mod = DIDmultiplegt::did_multiplegt(
       data, "y", "group", "period", controls = c(),
       "treat", dynamic = 0, average_effect = "simple")
@@ -881,10 +885,10 @@ est_dcdh <- function(data, true_rel_att, iteration = 0){
       iter = iteration,
       ATET = mod$effect
     )
+    return(dcdh_output)
   }
-  
-  return(dcdh_output)
 }
+
 
 #### Estimate Borusyak Jaravel Spiess using didimputation ####
 est_bjs <- function(data, true_rel_att, iteration = 0){
@@ -928,7 +932,7 @@ est_bjs <- function(data, true_rel_att, iteration = 0){
     rel_rmse = compute_rmse(rel_att, true_rel_att_nonneg)
     
     # Compute absolute deviation
-    dev = true_rel_att_nonneg - rel_att
+    dev = rel_att - true_rel_att_nonneg
     
     # Subset relative period deviations -10 to 10 inclusive to return
     return_sequence <- as.character(-10:10)
@@ -945,7 +949,8 @@ est_bjs <- function(data, true_rel_att, iteration = 0){
       estimator = "BJS",
       iter = iteration,
       rel_att_0 = rel_att["0"],
-      rel_rmse = rel_rmse) %>% 
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
       bind_cols(as_tibble(t(out_dev))
       )
     
@@ -1003,19 +1008,9 @@ run_sim <- function(i, fun, quiet = T) {
   dcdh = est_dcdh(data = dt, true_rel_att = true_rel_att, iteration = i)  
   bjs = est_bjs(data = dt, true_rel_att = true_rel_att, iteration = i)  
   
-  results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>% # names(results_list) <- c('TRUE', 'MC-NNM', 'DiD', 'CS', 'SA', 'dCdH', 'BJS')
+  results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>% 
     select(iter, everything())
-    
-  # # convert list to long tibble
-  # results_df <- tibble(
-  #   iteration = i,
-  #   estimator = names(results_list),
-  #   est = vapply(results_list, function(x) x$est, numeric(1)),
-  #   se = vapply(results_list, function(x) x$se, numeric(1)),
-  #   cum_est = vapply(results_list, function(x) x$cum_est, numeric(1)),
-  #   cum_se = vapply(results_list, function(x) x$cum_se, numeric(1))
-  # )
-  
+
   return(results_tibble)
 }
 
@@ -1187,85 +1182,83 @@ keep_iterations <- function(sim_data, num_iterations = 500) {
 #### Functions to analyze sim results ####
 
 # function to create summary tibble
-analyze_sim_results <- function(sim_results, type = "static") {
+analyze_sim_results <- function(sim_results) { #, type = "static"
   
+  results_static <- names(sim_results)[3] == "ATET"
   # keep original order
   sim_results$estimator = factor(sim_results$estimator, 
                                  levels = unique(sim_results$estimator))
   
-
-  
   # get true values for bias
   true_values = filter(sim_results, estimator == "TRUE")
-  
-  # create 'TRUE' row for summary table
-  true_summary_static = true_values %>%
-    summarise(
-      estimator = "TRUE",
-      min_est  = min(est),
-      mean_est = mean(est, na.rm = F),
-      max_est = max(est),
-      sd_est = sd(est),
-      mean_se = NA,
-      bias = NA,
-      rmse = NA,
-      .groups = 'drop'
-    )
-  
-  true_summary_dynamic = true_values %>%
-    summarise(
-      estimator = "TRUE",
-      min_est  = min(cum_est),
-      mean_est = mean(cum_est, na.rm = F),
-      max_est = max(cum_est),
-      sd_est = sd(cum_est),
-      mean_se = NA,
-      bias = NA,
-      rmse = NA,
-      .groups = 'drop'
-    )
-  
-  static_summary = sim_results %>% # summary results for static-type estimate
-    filter(estimator != "TRUE") %>%
-    group_by(estimator) %>%
-    summarise(
-      min_est  = min(est),
-      mean_est = mean(est, na.rm = F),
-      max_est = max(est),
-      sd_est = sd(est),
-      mean_se = mean(se, na.rm = F),
-      bias = mean(est) - mean(true_values$est, na.rm = F),
-      rmse = sqrt(mean((est - mean(true_values$est, 
-                                       na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for output
-    )
-  
-  dynamic_summary = sim_results %>% # summary results for dynamic-type estimate
-    filter(estimator != "TRUE") %>% filter(estimator != "dCdH") %>% 
-    group_by(estimator) %>%
-    summarise(
-      min_est  = min(cum_est),
-      mean_est = mean(cum_est, na.rm = F),
-      max_est = max(cum_est),
-      sd_est = sd(cum_est),
-      mean_se = mean(cum_se, na.rm = F),
-      bias = mean(cum_est) - mean(true_values$cum_est, na.rm = F),
-      rmse = sqrt(mean((cum_est - mean(true_values$cum_est, 
-                                       na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for output
-    )
-  
-  
-  if (type == "static") {
+
+  if (results_static) {
+    # create 'TRUE' row for summary table
+    true_summary_static = true_values %>%
+      summarise(
+        estimator = "TRUE",
+        min_est  = min(ATET),
+        mean_est = mean(ATET, na.rm = F),
+        max_est = max(ATET),
+        sd_est = sd(ATET),
+        bias = NA,
+        rmse = NA,
+        .groups = 'drop'
+      )
+    
+    static_summary = sim_results %>% # summary results for ATET ATETimates
+      filter(estimator != "TRUE") %>%
+      group_by(estimator) %>%
+      summarise(
+        min_est  = min(ATET),
+        mean_est = mean(ATET, na.rm = F),
+        max_est = max(ATET),
+        sd_est = sd(ATET),
+        bias = mean(ATET) - mean(true_values$ATET, na.rm = F), #sqrt(mean((ATET - mean(true_values$ATET, na.rm = F))^2, na.rm = F))
+        rmse = compute_rmse(true_values$ATET, ATET),
+        .groups = 'drop'  # avoid the grouped_df class for output
+      )
+    
     final_summary = bind_rows(true_summary_static, static_summary) %>% 
       select("Estimator" = estimator, 
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
-             "Mean SE" = mean_se, "Bias" = bias, "RMSE" = rmse)
-  } else if (type == "dynamic"){
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, 
+             "SD" = sd_est, "Bias" = bias, "RMSE" = rmse)
+  } else {
+    true_summary_dynamic = true_values %>%
+      summarise(
+        estimator = "TRUE",
+        min_est  = min(rel_att_0),
+        mean_est = mean(rel_att_0, na.rm = F),
+        max_est = max(rel_att_0),
+        sd_est = sd(rel_att_0),
+        bias_est = NA,
+        rmse_est = NA,
+        bias_all_rp = NA,
+        rmse_all_rp = NA,
+        .groups = 'drop'
+      )
+    
+    dynamic_summary = sim_results %>% # summary results for dynamic-type estimate
+      filter(estimator != "TRUE") %>% 
+      group_by(estimator) %>%
+      summarise(
+        min_est  = min(rel_att_0),
+        mean_est = mean(rel_att_0, na.rm = F),
+        max_est = max(rel_att_0),
+        sd_est = sd(rel_att_0),
+        bias_est = mean(rel_att_0) - mean(true_values$rel_att_0, na.rm = F),
+        rmse_est = compute_rmse(true_values$rel_att_0, rel_att_0),
+        rmse_all_rp = mean(rel_rmse),
+        bias_all_rp = mean(rel_bias),
+        .groups = 'drop'  # avoid the grouped_df class for output
+      )
+    
     final_summary = bind_rows(true_summary_dynamic, dynamic_summary) %>% 
       select("Estimator" = estimator, 
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
-             "Mean SE" = mean_se, Bias = bias, "RMSE" = rmse)
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, 
+             "SD" = sd_est, "t=0 Bias" = bias_est, "t=0 RMSE" = rmse_est,
+             "All Relative Periods Bias" = bias_all_rp,
+             "ALL Relative Periods RMSE" = rmse_all_rp)
   }
   
   return(final_summary)
