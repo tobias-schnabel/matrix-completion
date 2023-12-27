@@ -457,8 +457,9 @@ get_first_treatment <- function(df) {
   sort(unique(df$group))[2] # 0 is control
 }
 
-relabel_control_0 <- function(df){
-  df %>% mutate(group = ifelse(group == max(group), 0, group))
+## Function to compute RMSE
+compute_rmse <- function(true, estimated) {
+  sqrt(mean((true - estimated) ^ 2))
 }
 
 # set number of cores
@@ -557,10 +558,7 @@ est_true <- function(data, iteration = 0) {
   return(out)
 }
 
-## Function to compute RMSE
-compute_rmse <- function(true, estimated) {
-  sqrt(mean((true - estimated) ^ 2))
-}
+
 
 ## MC-NNM using fect (gsynth fails when no covariates for some reason)
 # helper
