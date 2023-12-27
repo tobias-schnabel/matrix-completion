@@ -500,6 +500,10 @@ get_num_groups <- function(df) {
   length(unique(df$group))
 }
 
+get_first_treatment <- function(df) {
+  sort(unique(df$group))[2] # 0 is control
+}
+
 relabel_control_0 <- function(df){
   df %>% mutate(group = ifelse(group == max(group), 0, group))
 }
@@ -519,6 +523,40 @@ est_true <- function(data, iteration = 0) {
   return(out)
 }
 
+get_true_relative_period_ATT <- function(data) {
+  
+  nperiods = get_num_periods(data)
+  negative_index = - get_first_treatment(data)
+  positive_index = nperiods + negative_index
+  
+  att_data <- data %>%
+    # Create a relative period variable
+    group_by(unit) %>%
+    filter(group != 0) %>% 
+    mutate(relative_period = period - group) %>%
+    ungroup() %>%
+    filter((relative_period > -100) & (relative_period <= 80)) %>%
+    # Group by relative period and compute average treatment effect
+    group_by(relative_period) %>% #filter(treat == 1) %>% 
+    summarise(ATT = mean(cum.t.eff), .groups = 'drop')
+  
+  # Extract ATT as a vector
+  att <- att_data %>% select(ATT) %>% slice_tail(n = nperiods + 1) %>% pull()
+  
+  # Extract relative periods as a vector
+  rel_periods <- att_data %>% pull(relative_period)
+  
+  # Assign names to the att vector
+  names(att) <- seq(from = negative_index, to = positive_index)
+  
+  return(att)
+}
+
+## Function to compute RMSE
+compute_rmse <- function(true, estimated) {
+  sqrt(mean((true - estimated) ^ 2))
+}
+
 ## MC-NNM using fect (gsynth fails when no covariates for some reason)
 # helper
 get_cohorts <- function(data) {
@@ -532,8 +570,9 @@ get_cohorts <- function(data) {
 }
 
 #### Estimate MC-NNM ####
-est_mc <- function(data, iteration = 0, k = 2, n_lam = 5){
-  cohorts = get_cohorts(data)
+est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
+  nperiods = get_num_periods(data)
+  cohorts = get_cohorts(data) # helper function to label cohorts for fect
   # check whether we should use covariates in estimation
   use_covariates = as.logical(data$use_cov[1]) 
   # adjust estimation formula to include covariates for dgp 7, 8
@@ -546,15 +585,35 @@ est_mc <- function(data, iteration = 0, k = 2, n_lam = 5){
   out = suppressMessages(fect::fect(form, data = cohorts, 
                                     method = "mc", index = c("unit","period"), 
                                     force = "two-way", group = 'Cohort',
-                                    normalize = T) )
+                                    normalize = T)) # normalize to speed up
   
-  est_avg = out$att.avg #get static effect
-  est_eff_calendar = out$eff.calendar[,1] # get dynamic point estimate
-  est_eff_calendar[is.nan(est_eff_calendar)] = 0 # replace NaN with 0
+  att_avg = out$att.avg # get static effect estimate
+  rel_att = tail(out$att, nperiods + 1) # get relative period effect estimates incl. 0
   
-  mc_output = list(est = est_avg,
-                   cum_est = mean(est_eff_calendar), 
-                   iter = iteration, estimator = "MC-NNM")
+  # Subset to keep relative period estimates of interest
+  negative_index = - get_first_treatment(data)
+  positive_index = nperiods + negative_index
+  names(rel_att) <- seq(from = negative_index, to = positive_index)
+  
+  # Compute RMSE of relative period ATT estimates
+  rel_rmse = compute_rmse(rel_att, true_rel_att)
+  
+  # Compute absolute deviation
+  dev = true_rel_att - rel_att
+  
+  # Subset relative period deviations -10 to 10 incluse to return
+  return_sequence <- as.character(-10:10)
+  
+  # Subset dev using names
+  out_dev <- dev[names(dev) %in% return_sequence]
+  
+  mc_output <- tibble(
+    est = att_avg,
+    iter = iteration,
+    estimator = "MC-NNM",
+    rel_dev_0 = dev["0"],
+    rel_rmse = rel_rmse) %>% 
+    bind_cols(as_tibble(t(out_dev)))
   
   return(mc_output)
 }
@@ -621,7 +680,7 @@ est_canonical <- function(data, iteration = 0){
 prep_es <- function(data){
   # Prepare data
   esdat <- data %>%
-    mutate(group = ifelse(group == 100, NA, group)) %>% #mark control
+    mutate(group = ifelse(group == 0, NA, group)) %>% #mark control
     mutate(rel_period = ifelse(group == 0, 0, period - group)) %>% # relative time to treatment
     dplyr::arrange(group, unit, period) %>% 
     ungroup()
