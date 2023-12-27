@@ -10,14 +10,14 @@ source("Get_Results.R") ## get results
 rmarkdown::render("Results.Rmd") # make results notebook
 
 # Make Figures
-plot_combined(1, dynamic = F, T) # dgp 1
-plot_combined(2, dynamic = T, T) # dgp 2
-plot_combined(3, dynamic = F, T) # dgp 3
-plot_combined(4, dynamic = F, T) # dgp 4
-plot_combined(5, dynamic = T, T) # dgp 5
-plot_combined(6, dynamic = T, T) # dgp 6
-plot_combined(7, dynamic = T, T) # dgp 7
-plot_combined(8, dynamic = T, T) # dgp 8
+plot_combined(1, T) # dgp 1
+plot_combined(2, T) # dgp 2
+plot_combined(3, T) # dgp 3
+plot_combined(4, T) # dgp 4
+plot_combined(5, T) # dgp 5
+plot_combined(6, T) # dgp 6
+plot_combined(7, T) # dgp 7
+plot_combined(8, T) # dgp 8
 
 ## Make Tables
 analysis_types = c("static", "dynamic") # define analysis types
