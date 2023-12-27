@@ -458,14 +458,15 @@ get_first_treatment <- function(df) {
 }
 
 ## Function to compute RMSE
+# some estimators do not have an estimate of relative period -1, hence na.rm = T
 compute_rmse <- function(true, estimated) {
-  sqrt(mean((true - estimated) ^ 2))
+  sqrt(mean((true - estimated) ^ 2, na.rm = T)) 
 }
 
 # set number of cores
 globalcores = parallel::detectCores()
 
-### Function to extract true static ATET from simulated data
+### Function to extract true static ATT from simulated data
 get_true_ATT <- function(data){
   units = get_num_units(data)
   periods = get_num_periods(data)
@@ -496,12 +497,24 @@ get_true_ATT <- function(data){
   return(true_att)
 }
 
-### Function to extract true relative period ATET from simulated data
+### Helper function to subset relative period ATT estimates
+get_rel_indices <- function(data) {
+  negative_index = - get_first_treatment(data) + 1
+  positive_index = nperiods + negative_index - 1
+  vec_length = positive_index - negative_index + 1
+  return(list(
+    neg = negative_index, 
+    pos = positive_index,
+    len = vec_length))
+}
+
+
+### Function to extract true relative period ATT from simulated data
 get_true_relative_period_ATT <- function(data) {
   
-  nperiods = get_num_periods(data)
-  negative_index = - get_first_treatment(data) + 1
-  positive_index = nperiods + negative_index -1
+  indices = get_rel_indices(data)
+  negative_index = indices$neg
+  positive_index = indices$pos
   
   att_data <- data %>%
     # Create a relative period variable
@@ -515,7 +528,7 @@ get_true_relative_period_ATT <- function(data) {
     summarise(ATT = mean(cum.t.eff), .groups = 'drop')
   
   # Extract ATT as a vector
-  rel_att <- att_data %>% select(ATT) %>% slice_tail(n = nperiods) %>% pull()
+  rel_att <- att_data %>% select(ATT) %>% slice_tail(n = indices$len) %>% pull()
   
   # Assign names to the att vector
   names(rel_att) <- seq(from = negative_index, to = positive_index)
@@ -587,11 +600,12 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
   relative = as.logical(data$use_cum_te[1]) 
   
   if(relative) {
-    rel_att = tail(out$att, nperiods) # get relative period effect estimates incl. 0
-    
     # Subset to keep relative period estimates of interest
-    negative_index = - get_first_treatment(data) + 1
-    positive_index = nperiods + negative_index -1
+    indices = get_rel_indices(data)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    rel_att = tail(out$att, indices$len) # get relative period effect estimates incl. 0
+    
     names(rel_att) <- seq(from = negative_index, to = positive_index)
     
     # Compute RMSE of relative period ATT estimates
@@ -628,8 +642,6 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
 #### Estimate TWFE ####
 ## Canonical DiD, using fixest:::feols
 est_twfe <- function(data, true_rel_att, iteration = 0){
-  nperiods = get_num_periods(data)
-  
   ## check whether we should use covariates in estimation
   use_covariates = as.logical(data$use_cov[1]) 
   # adjust estimation formula to include covariates for dgp 7
@@ -645,14 +657,21 @@ est_twfe <- function(data, true_rel_att, iteration = 0){
   relative = as.logical(data$use_cum_te[1]) 
   
   if(relative) {
+    indices = get_rel_indices(data)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    
     model = suppressMessages(did2s::event_study(data, "y", "unit", "group", 
                                         "period", estimator = "TWFE"))
     
-    rel_att = tail(model$estimate, nperiods + 1) # get relative period effect estimates incl. 0
+    rel_att_raw = tail(model$estimate, indices$len) # get relative period effect estimates incl. 0
+    # Have to manually wrangle vector together as value for -1 is missing
+    rel_att_left = rel_att_raw[1:(abs(negative_index) -1)]
+    rel_att_middle = NA
+    rel_att_right = rel_att_raw[abs(negative_index):(indices$len - 1)]
+    rel_att = c(rel_att_left, rel_att_middle, rel_att_right)
     
-    # Subset to keep relative period estimates of interest
-    negative_index = - get_first_treatment(data)
-    positive_index = nperiods + negative_index
+
     names(rel_att) <- seq(from = negative_index, to = positive_index)
     
     # Compute RMSE of relative period ATT estimates
