@@ -867,6 +867,28 @@ est_sa <- function(data, true_rel_att, iteration = 0){
   return(sa_output)
 }
 
+#### de Chaisemartin & D’Haultfœuille using DIDmultiplegt ####
+# This estimator can only estimate static ATTs (DGPs 1,3,4)
+est_dcdh <- function(data, true_rel_att, iteration = 0){
+  
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1])
+  if(relative) {
+    dcdh_output <- tibble(NULL)
+  } else {
+    mod = DIDmultiplegt::did_multiplegt(
+      data, "y", "group", "period", controls = c(),
+      "treat", dynamic = 0, average_effect = "simple")
+    
+    dcdh_output <- tibble(
+      estimator = "dCdH",
+      iter = iteration,
+      ATET = mod$effect
+    )
+  }
+  
+  return(dcdh_output)
+}
 
 
 #### Helper to set up event study ####
