@@ -718,7 +718,7 @@ est_twfe <- function(data, true_rel_att, iteration = 0){
   return(twfe_output)
 }
 
-#### Estiamte Callaway-Sant'Anna
+#### Estimate Callaway-Sant'Anna ####
 est_cs <- function(data, true_rel_att, iteration = 0){
   # check whether we should use covariates in estimation
   use_covariates = as.logical(data$use_cov[1]) 
@@ -802,6 +802,72 @@ est_cs <- function(data, true_rel_att, iteration = 0){
   
   return(cs_output)
 }
+
+#### Sun and Abraham ####
+est_sa <- function(data, true_rel_att, iteration = 0){
+  # check whether we should use covariates in estimation
+  use_covariates = as.logical(data$use_cov[1]) 
+  # adjust estimation formula to include covariates for dgp 7
+  if (use_covariates) {
+    form = y ~ nuisance + sunab(group, period) | unit + period
+  } else {
+    form = y ~ sunab(group, period) | unit + period
+  }
+  
+  # Estimate
+  mod = fixest::feols(form, data)
+  
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(es_data$use_cum_te[1]) 
+  
+  if(relative) {
+    indices = get_rel_indices(data)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    
+    rel_att_raw_full = aggregate(mod, agg = "period")[,1]
+    rel_att_raw = tail(rel_att_raw_full, indices$len) # get relative period effect estimates incl. 0
+    # Have to manually wrangle vector together as value for -1 is missing
+    rel_att_left = rel_att_raw[1:(abs(negative_index) -1)]
+    rel_att_middle = NA
+    rel_att_right = rel_att_raw[abs(negative_index):(indices$len - 1)]
+    rel_att = c(rel_att_left, rel_att_middle, rel_att_right)
+    
+    names(rel_att) <- seq(from = negative_index, to = positive_index)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att)
+    
+    # Compute absolute deviation
+    dev = true_rel_att - rel_att
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev <- dev[names(dev) %in% return_sequence]
+    
+    sa_output <- tibble(
+      estimator = "TWFE",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
+  } else {
+    att_avg = aggregate(mod, agg = "att")[1]
+    
+    sa_output <- tibble(
+      estimator = "SA",
+      iter = iteration,
+      ATET = att_avg
+    )
+  }
+
+  return(sa_output)
+}
+
+
 
 #### Helper to set up event study ####
 
