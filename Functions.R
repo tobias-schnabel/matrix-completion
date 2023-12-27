@@ -3,7 +3,8 @@ writeLines("Loading custom functions...")
 
 set.seed(1234)
 writeLines("Seed set : 1234")
-### DGP functions
+
+#### DGP simulation functions ####
 
 ## DGP 1 One Treatment Group, Time-Invariant Treatment Effects
 dgp_1_sim <- function(nobs = 1000, 
@@ -432,7 +433,8 @@ dgp_8_sim <- function(){
   return(data)
 }
 
-#### Helper functions ####
+
+#### Helper functions for Estimation ####
 # function to set up data for event study estimation
 prep_es <- function(data){
   # Prepare data
@@ -577,6 +579,8 @@ est_true <- function(data, true_rel_att, iteration = 0) {
   return(out)
 }
 
+
+######## Estimator Wrappers ########
 #### Estimate MC-NNM ####
 # helper
 get_cohorts <- function(data) {
@@ -969,9 +973,6 @@ est_bjs <- function(data, true_rel_att, iteration = 0){
   return(bjs_output)
 }
 
-#### Helper to set up event study ####
-
-
 
 #### Functions to run simulations ####
 timer <- function(func, ...){
@@ -1057,6 +1058,7 @@ run_sim_parallel <- function(iterations, sim_function) {
   # Return the combined data frame
   return(tibble(out_df))
 }
+
 
 #### Utility functions for simulating ####
 # parallelization leads to errors, which leads to entire iterations missing
@@ -1179,6 +1181,7 @@ keep_iterations <- function(sim_data, num_iterations = 500) {
   
   return(out)
 }
+
 
 
 
@@ -1378,6 +1381,7 @@ save_table_results <- function(sumdata,
     kable_styling(latex_options = "hold_position") %>% 
     save_kable(file = file_name)
 }
+
 
 #### Data Plotting Functions ####
 # Set Theme
