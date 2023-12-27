@@ -108,7 +108,7 @@ dgp_2_sim <- function(nobs = 1000,
     # generate additive N(0,1) error
     mutate(error = rnorm(nrow(.), 0, 0.5)) %>% 
     # generate treatment dummy
-    mutate(treat = ifelse(evertreated == 1 & period > treated.period, 1, 0)) %>%
+    mutate(treat = ifelse(evertreated == 1 & period >= treated.period, 1, 0)) %>%
     # generate treatment effect
     mutate(t.eff = ifelse(treat == 1, te, 0)) %>%
     # add everything to get outcome
@@ -500,8 +500,8 @@ get_true_ATT <- function(data){
 get_true_relative_period_ATT <- function(data) {
   
   nperiods = get_num_periods(data)
-  negative_index = - get_first_treatment(data)
-  positive_index = nperiods + negative_index
+  negative_index = - get_first_treatment(data) + 1
+  positive_index = nperiods + negative_index -1
   
   att_data <- data %>%
     # Create a relative period variable
@@ -515,7 +515,7 @@ get_true_relative_period_ATT <- function(data) {
     summarise(ATT = mean(cum.t.eff), .groups = 'drop')
   
   # Extract ATT as a vector
-  rel_att <- att_data %>% select(ATT) %>% slice_tail(n = nperiods + 1) %>% pull()
+  rel_att <- att_data %>% select(ATT) %>% slice_tail(n = nperiods) %>% pull()
   
   # Assign names to the att vector
   names(rel_att) <- seq(from = negative_index, to = positive_index)
@@ -555,9 +555,7 @@ est_true <- function(data, true_rel_att, iteration = 0) {
   return(out)
 }
 
-
-
-## MC-NNM using fect (gsynth fails when no covariates for some reason)
+#### Estimate MC-NNM ####
 # helper
 get_cohorts <- function(data) {
   df = data  %>% as.data.frame()
@@ -568,8 +566,6 @@ get_cohorts <- function(data) {
   
   return(cohorts)
 }
-
-#### Estimate MC-NNM ####
 est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
   nperiods = get_num_periods(data)
   cohorts = get_cohorts(data) # helper function to label cohorts for fect
@@ -629,25 +625,12 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
   return(mc_output)
 }
 
-#### Estimate DiD Methods ####
-est_did <- function(data, iteration = 0){
-  cohorts = get_cohorts(data)
-  # check whether we should use covariates in estimation
-  use_covariates = as.logical(data$use_cov[1]) 
-  # adjust estimation formula to include covariates for dgp 7, 8
-  if (use_covariates) {
-    form = y ~ treat + nuisance
-  } else {
-    form = y ~ treat
-  }
-  
-  out = suppressMessages(did2s::event_study(es1, "y", "unit", "group", "period"))
-  
-}
-
+#### Estimate TWFE ####
 ## Canonical DiD, using fixest:::feols
-est_canonical <- function(data, iteration = 0){
-  # check whether we should use covariates in estimation
+est_twfe <- function(data, true_rel_att, iteration = 0){
+  nperiods = get_num_periods(data)
+  
+  ## check whether we should use covariates in estimation
   use_covariates = as.logical(data$use_cov[1]) 
   # adjust estimation formula to include covariates for dgp 7
   if (use_covariates) {
@@ -658,32 +641,55 @@ est_canonical <- function(data, iteration = 0){
     form_dyn = y ~ i(rel_period, ref=c(-1, Inf)) | unit + period
   }
   
-  static = fixest::feols(form , data = data)
-  if (use_covariates) {
-    stat_out = unname(static$coefficients)[1]
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1]) 
+  
+  if(relative) {
+    model = suppressMessages(did2s::event_study(data, "y", "unit", "group", 
+                                        "period", estimator = "TWFE"))
+    
+    rel_att = tail(model$estimate, nperiods + 1) # get relative period effect estimates incl. 0
+    
+    # Subset to keep relative period estimates of interest
+    negative_index = - get_first_treatment(data)
+    positive_index = nperiods + negative_index
+    names(rel_att) <- seq(from = negative_index, to = positive_index)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att)
+    
+    # Compute absolute deviation
+    dev = true_rel_att - rel_att
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev <- dev[names(dev) %in% return_sequence]
+    
+    twfe_output <- tibble(
+      estimator = "TWFE",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
   } else {
-    stat_out = unname(static$coefficients)
+    model = fixest::feols(form , data = data)
+    if (use_covariates) {
+      att_avg = unname(model$coefficients)[1]
+    } else {
+      att_avg = unname(model$coefficients)
+    }
+    
+    twfe_output <- tibble(
+      estimator = "TWFE",
+      iter = iteration,
+      ATET = att_avg
+    )
   }
   
-  dyndat = relabel_control_0(data)
-  dynamic = suppressMessages(did2s::event_study(dyndat, "y", "unit", "group", 
-                                                "period", estimator = "TWFE"))
-
-  
-  # only keep 100 coefficients to make dynamic estimate comparable
-  dyn_est = dynamic$estimate[(length(dynamic$estimate)-99):length(dynamic$estimate)]
-  dyn_se = dynamic$std.error[(length(dynamic$std.error)-99):length(dynamic$std.error)]
-  
-  dyn_out = list(cum_est = mean(dyn_est), 
-                 cum_se = mean(dyn_se))
-  
-  # dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
-  #                cum_se = sum(dynamic$se[-length(dynamic$se)]))
-  out = c(stat_out, dyn_out)
-  out$iter = iteration
-  out$estimator = "DiD"
-  
-  return(out)
+  return(twfe_output)
 }
 
 #### Helpers to set up event study ####
