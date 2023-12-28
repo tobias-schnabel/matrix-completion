@@ -3,10 +3,11 @@ writeLines("Loading custom functions...")
 
 set.seed(1234)
 writeLines("Seed set : 1234")
-### DGP functions
+
+#### DGP simulation functions ####
 
 ## DGP 1 One Treatment Group, Time-Invariant Treatment Effects
-dgp_1_sim <- function(nobs = 1000, 
+dgp_1_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treated.period = 50) {
@@ -28,7 +29,7 @@ dgp_1_sim <- function(nobs = 1000,
       # gen treatment and control groups
       group = case_when(
         obsgroup %in% shuffled_groups[1:half] ~ treated.period,
-        obsgroup %in% shuffled_groups[(half + 1):length(shuffled_groups)] ~ nperiods
+        obsgroup %in% shuffled_groups[(half + 1):length(shuffled_groups)] ~ nperiods + 1
       ),
       # Mark Control as never treated
       evertreated = ifelse(group == treated.period, 1, 0),
@@ -60,12 +61,13 @@ dgp_1_sim <- function(nobs = 1000,
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     ungroup() %>%
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = F, use_cov = F) %>% 
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything(), -evertreated)
 }
 
 ## DGP 2 One Treatment Group, Time-Varying Treatment Effects
-dgp_2_sim <- function(nobs = 1000, 
+dgp_2_sim <- function(nobs = 500, 
                   nperiods = 100,
                   nobsgroups = 50,
                   treated.period = 50) {
@@ -80,7 +82,7 @@ dgp_2_sim <- function(nobs = 1000,
     # gen treatment and control groups
     group = case_when(
       obsgroup %in% 1:(nobsgroups%/%2) ~ treated.period,
-      obsgroup %in% (nobsgroups%/%2 + 1):nobsgroups ~ nperiods
+      obsgroup %in% (nobsgroups%/%2 + 1):nobsgroups ~ nperiods + 1
     ),
     # Mark Control as never treated
     evertreated = ifelse(group == treated.period, 1, 0),
@@ -107,7 +109,7 @@ dgp_2_sim <- function(nobs = 1000,
     # generate additive N(0,1) error
     mutate(error = rnorm(nrow(.), 0, 0.5)) %>% 
     # generate treatment dummy
-    mutate(treat = ifelse(evertreated == 1 & period > treated.period, 1, 0)) %>%
+    mutate(treat = ifelse(evertreated == 1 & period >= treated.period, 1, 0)) %>%
     # generate treatment effect
     mutate(t.eff = ifelse(treat == 1, te, 0)) %>%
     # add everything to get outcome
@@ -115,6 +117,7 @@ dgp_2_sim <- function(nobs = 1000,
     # Cumulative TE
     mutate(cum.t.eff = cumsum(t.eff)) %>% 
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>%
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = T, use_cov = F) %>% 
     ungroup() %>% 
     # change column order
@@ -123,7 +126,7 @@ dgp_2_sim <- function(nobs = 1000,
 
 ## DGP 3 Multiple Treatment Groups, Time-Invariant Homogeneous Treatment Effects
 
-dgp_3_sim <- function(nobs = 1000, 
+dgp_3_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
@@ -141,7 +144,7 @@ dgp_3_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
@@ -178,13 +181,14 @@ dgp_3_sim <- function(nobs = 1000,
     ungroup() %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = F, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
 
 ## DGP 4 Multiple Treatment Groups,Time-Invariant Heterogeneous Treatment Effects
-dgp_4_sim <- function(nobs = 1000, 
+dgp_4_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
@@ -202,7 +206,7 @@ dgp_4_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
@@ -239,13 +243,14 @@ dgp_4_sim <- function(nobs = 1000,
     ungroup() %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + t.eff + error) %>% 
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = F, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything())
 }
 
 ## DGP 5 Multiple Treatment Groups, Time-Varying Homogeneous Treatment Effects
-dgp_5_sim <- function(nobs = 1000, 
+dgp_5_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
@@ -263,7 +268,7 @@ dgp_5_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
@@ -296,6 +301,7 @@ dgp_5_sim <- function(nobs = 1000,
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     # add everything to get outcome
     mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = T, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything()) %>% 
@@ -303,7 +309,7 @@ dgp_5_sim <- function(nobs = 1000,
 }
 
 ## DGP 6  Multiple Treatment Groups, Time-Varying Heterogeneous Treatment Effects
-dgp_6_sim <- function(nobs = 1000, 
+dgp_6_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
@@ -321,7 +327,7 @@ dgp_6_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     # avg yearly treatment effects by group
     avg.te = case_when(
@@ -356,7 +362,8 @@ dgp_6_sim <- function(nobs = 1000,
     group_by(unit) %>%
     mutate(cum.t.eff = cumsum(t.eff)) %>%
     # add everything to get outcome
-    mutate(y = unit_fe + period_fe + cum.t.eff + error) %>% 
+    mutate(y = unit_fe + period_fe + cum.t.eff + error) %>%
+    mutate(group = ifelse(group == nperiods + 1, 0, group)) %>%
     mutate(use_cum_te = T, use_cov = F) %>% 
     # change column order
     select(unit, period, obsgroup, te, group, treat, cum.t.eff, everything()) %>% 
@@ -365,7 +372,7 @@ dgp_6_sim <- function(nobs = 1000,
 
 ## DGP 7  Multiple Treatment Groups, Time-Varying Heterogeneous TE, 
 # CONDITIONAL PARALLEL TRENDS
-dgp_7_sim <- function(nobs = 1000, 
+dgp_7_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
@@ -380,7 +387,7 @@ dgp_7_sim <- function(nobs = 1000,
       obsgroup %in% ((nobsgroups%/%5) + 1):(2*nobsgroups%/%5) ~ treatgroups[2],
       obsgroup %in% ((2*nobsgroups%/%5) + 1):(3*nobsgroups%/%5) ~ treatgroups[3],
       obsgroup %in% ((3*nobsgroups%/%5) + 1):(4*nobsgroups%/%5) ~ treatgroups[4],
-      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods
+      obsgroup %in% ((4*nobsgroups%/%5) + 1):nobsgroups ~ nperiods + 1
     ),
     avg.te = case_when(
       group == treatgroups[1] ~ .05,
@@ -408,6 +415,7 @@ dgp_7_sim <- function(nobs = 1000,
       t.eff = ifelse(treat == 1, te, 0),
       cum.t.eff = ave(t.eff, unit, FUN = cumsum),
       y = unit_fe + period_fe + cum.t.eff + error + nuisance,
+      group = ifelse(group == nperiods + 1, 0, group),
       use_cum_te = T,
       use_cov = T) %>% 
     # change column order
@@ -425,55 +433,9 @@ dgp_8_sim <- function(){
   return(data)
 }
 
-### Function to extract true ATET and cumulative ATET from simulated data
-get_true_values <- function(data){
-  units = get_num_units(data)
-  periods = get_num_periods(data)
-  treat_times <- sort(get_treat_times(data)) 
-  tgroups <- treat_times[-length(treat_times)]
-  
-  # check whether DGP uses t.eff or cum.t.eff
-  use_cum_effect = as.logical(data$use_cum_te[1])
-  
-  # get number of treated units
-  numtreated = data %>% filter(group %in% tgroups) %>%  get_num_units()
-  
-  # get share of each treatment group
-  group_share <- data %>%
-    filter(group %in% tgroups) %>%
-    group_by(group) %>%
-    summarise(share = n() / numtreated)
-  
-  # calculate true dynamic treatment effect
-  if (use_cum_effect) {
-    ce = data %>%  group_by(period) %>% 
-      filter(group %in% tgroups) %>% 
-      filter(treat == 1) %>% 
-      summarise(mce = mean(cum.t.eff)) %>% 
-      summarise(cum_est = sum(mce) / periods)
-  } else {
-    ce = data %>%  group_by(period) %>% 
-      filter(group %in% tgroups) %>% 
-      filter(treat == 1) %>% 
-      summarise(mce = mean(t.eff)) %>% 
-      summarise(cum_est = sum(mce) / periods)
-  }
-  
-  # calculate true static treatment effect
-  group_data <- data %>%
-    filter(group %in% tgroups) %>%
-    left_join(group_share, by = "group") %>%
-    # left_join(ce, by = "period") %>%
-    group_by(group) %>%
-    summarise(est = mean(avg.te), 
-              cum_est = mean(as.numeric(ce)), share = mean(share))
-  
-  return(group_data)
-}
 
+#### Helper functions for Estimation ####
 
-#### Estimator wrappers
-# helpers
 timer <- function(func, ...){
   start_time = Sys.time()  # Record the start time
   do.call(func, list(...)) # Run the function
@@ -493,85 +455,201 @@ get_num_groups <- function(df) {
   length(unique(df$group))
 }
 
-relabel_control_0 <- function(df){
-  df %>% mutate(group = ifelse(group == max(group), 0, group))
+get_first_treatment <- function(df) {
+  sort(unique(df$group))[2] # 0 is control
+}
+
+## Function to compute RMSE
+# some estimators do not have an estimate of relative period -1, hence na.rm = T
+compute_rmse <- function(true, estimated) {
+  sqrt(mean((true - estimated) ^ 2, na.rm = T)) 
 }
 
 # set number of cores
 globalcores = parallel::detectCores()
 
-## True values from data
-est_true <- function(data, iteration = 0) {
-  vals = get_true_values(data)
-  weighted_est <- sum(vals$est * vals$share) / sum(vals$share)
-  ce = mean(vals$cum_est)
+### Function to extract true static ATT from simulated data
+get_true_ATT <- function(data){
+  units = get_num_units(data)
+  periods = get_num_periods(data)
+  treat_times <- sort(get_treat_times(data)) 
+  tgroups <- treat_times[-1]
   
-  out = list(est = weighted_est, se = 0, cum_est = ce,
-             cum_se = 0, iter = iteration, estimator = "TRUE")
+  # check whether DGP uses t.eff or cum.t.eff
+  use_cum_effect = as.logical(data$use_cum_te[1])
+  
+  # get number of treated units
+  numtreated = data %>% filter(group %in% tgroups) %>%  get_num_units()
+  
+  # get share of each treatment group
+  group_share <- data %>%
+    filter(group %in% tgroups) %>%
+    group_by(group) %>%
+    summarise(share = n() / numtreated)
+  
+  # calculate true static treatment effect
+  group_data <- data %>%
+    filter(group %in% tgroups) %>%
+    left_join(group_share, by = "group") %>%
+    group_by(group) %>%
+    summarise(est = mean(avg.te), share = mean(share))
+  
+  true_att = sum(group_data$est * group_data$share) / sum(group_data$share)
+  
+  return(true_att)
+}
+
+### Helper function to subset relative period ATT estimates
+get_rel_indices <- function(data) {
+  nperiods = get_num_periods(data)
+  negative_index = - get_first_treatment(data) + 1
+  positive_index = nperiods + negative_index - 1
+  vec_length = positive_index - negative_index + 1
+  return(list(
+    neg = negative_index, 
+    pos = positive_index,
+    len = vec_length))
+}
+
+
+### Function to extract true relative period ATT from simulated data
+get_true_relative_period_ATT <- function(data) {
+  
+  indices = get_rel_indices(data)
+  negative_index = indices$neg
+  positive_index = indices$pos
+  
+  att_data <- data %>%
+    # Create a relative period variable
+    group_by(unit) %>%
+    filter(group != 0) %>% 
+    mutate(relative_period = period - group) %>%
+    ungroup() %>%
+    filter((relative_period > -100) & (relative_period <= 80)) %>%
+    # Group by relative period and compute average treatment effect
+    group_by(relative_period) %>% #filter(treat == 1) %>% 
+    summarise(ATT = mean(cum.t.eff), .groups = 'drop')
+  
+  # Extract ATT as a vector
+  rel_att <- att_data %>% select(ATT) %>% slice_tail(n = indices$len) %>% pull()
+  
+  # Assign names to the att vector
+  names(rel_att) <- seq(from = negative_index, to = positive_index)
+  
+  return(rel_att)
+}
+
+## Extract true values from data within simulation iteration
+est_true <- function(data, true_rel_att, iteration = 0) {
+  
+  # Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1]) 
+  
+  if(relative) {
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    rel_dev_true <- rep(0, length(return_sequence))
+    names(rel_dev_true) <- return_sequence
+    
+    # Subset dev using names
+    out_dev <- rel_dev_true[names(rel_dev_true) %in% return_sequence]
+    out = tibble(
+      estimator = "TRUE",
+      iter = iteration,
+      rel_att_0 = true_rel_att["0"],
+      rel_rmse = 0,
+      rel_bias = 0) %>% 
+      bind_cols(as_tibble(t(rel_dev_true))
+      )
+  } else {
+    out = tibble(
+      estimator = "TRUE",
+      iter = iteration,
+      ATET = get_true_ATT(data)
+      )
+  }
   
   return(out)
 }
 
-## MC-NNM using fect (gsynth fails when no covariates for some reason)
+
+######## Estimator Wrappers ########
+#### Estimate MC-NNM ####
 # helper
 get_cohorts <- function(data) {
   df = data  %>% as.data.frame()
   cohorts = get.cohort(df, "treat", index = c("unit", "period"))
-  cohorts$FirstTreat[cohorts$Cohort == "Cohort:100"] = NA
-  cohorts$Time_to_Treatment[cohorts$Cohort == "Cohort:100"] = NA
-  cohorts$Cohort[cohorts$Cohort == "Cohort:100"] = "Control"
+  cohorts$FirstTreat[cohorts$Cohort == "Cohort:0"] = NA
+  cohorts$Time_to_Treatment[cohorts$Cohort == "Cohort:0"] = NA
+  cohorts$Cohort[cohorts$Cohort == "Cohort:0"] = "Control"
   
   return(cohorts)
 }
 
-# Estimate Full MC-NNM object
-est_mc <- function(data, iteration = 0, b_iter = 100, k = 2, n_lam = 4){
-  cohorts = get_cohorts(data)
+est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
+  nperiods = get_num_periods(data)
+  cohorts = get_cohorts(data) # helper function to label cohorts for fect
   # check whether we should use covariates in estimation
   use_covariates = as.logical(data$use_cov[1]) 
-  # adjust estimation formula to include covariates for dgp 7
+  # adjust estimation formula to include covariates for dgp 7, 8
   if (use_covariates) {
     form = y ~ treat + nuisance
   } else {
     form = y ~ treat
   }
   
-  model = suppressMessages(fect::fect(form, data = cohorts, 
-                                      method = "mc", index = c("unit","period"), 
-                                      se = T, force = "two-way",
-                                      CV = T,  cores = globalcores, parallel = T,
-                                      nboots = b_iter, group = 'Cohort',
-                                      nlambda = n_lam, k = k))
+  out = suppressMessages(fect::fect(form, data = cohorts, 
+                                    method = "mc", index = c("unit","period"), 
+                                    force = "two-way", group = 'Cohort',
+                                    normalize = T)) # normalize to speed up
   
-  est_avg = unname(model$est.avg[,1:2]) #get static effect
-  est_eff_calendar = c(model$est.eff.calendar[,1],0) # get dynamic point estimate
-  est_eff_calendar[is.nan(est_eff_calendar)] = 0 # replace NaN with 0
-  est_cal_se = c(model$est.eff.calendar[,2],0) # get dynamic SE
-  est_cal_se[is.na(est_cal_se)] = 0 # replace NaN with 0
+  # Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1]) 
   
-  mc_output = list(est = est_avg[1], se = est_avg[2],
-                   cum_est = mean(est_eff_calendar), 
-                   cum_se = mean(est_cal_se),
-                   iter = iteration, estimator = "MC-NNM")
+  if(relative) {
+    # Subset to keep relative period estimates of interest
+    indices = get_rel_indices(data)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    rel_att = tail(out$att, indices$len) # get relative period effect estimates incl. 0
+    
+    names(rel_att) <- seq(from = negative_index, to = positive_index)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att)
+    
+    # Compute absolute deviation
+    dev = rel_att - true_rel_att
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev <- dev[names(dev) %in% return_sequence]
+    
+    mc_output <- tibble(
+      estimator = "MC-NNM",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
+  } else {
+    att_avg = out$att.avg # get static effect estimate
+    mc_output <- tibble(
+      estimator = "MC-NNM",
+      iter = iteration,
+      ATET = att_avg
+    )
+  }
   
   return(mc_output)
 }
 
-### Helpers to set up event study
-
-prep_es <- function(data){
-  # Prepare data
-  esdat <- data %>%
-    mutate(group = ifelse(group == 100, Inf, group)) %>% #mark control
-    mutate(rel_period = period - group) %>% # relative time to treatment
-    mutate(evertreated = ifelse(group == get_num_periods(data), 0, 1)) %>% 
-    dplyr::arrange(group, unit, period) %>% 
-    ungroup()
-}
-
-## Canonical DiD, using fixest:::feols
-est_canonical <- function(data, iteration = 0){
-  # check whether we should use covariates in estimation
+#### Estimate TWFE ####
+est_twfe <- function(data, true_rel_att, iteration = 0){
+  ## check whether we should use covariates in estimation
   use_covariates = as.logical(data$use_cov[1]) 
   # adjust estimation formula to include covariates for dgp 7
   if (use_covariates) {
@@ -582,40 +660,68 @@ est_canonical <- function(data, iteration = 0){
     form_dyn = y ~ i(rel_period, ref=c(-1, Inf)) | unit + period
   }
   
-  static = fixest::feols(form , data = data)
-  if (use_covariates) {
-    stat_out = list(est = unname(static$coefficients)[1], se = unname(static$se[1]))
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1]) 
+  
+  if(relative) {
+    indices = get_rel_indices(data)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    
+    model = suppressMessages(did2s::event_study(data, "y", "unit", "group", 
+                                        "period", estimator = "TWFE"))
+    
+    rel_att_raw = tail(model$estimate, indices$len) # get relative period effect estimates incl. 0
+    # Have to manually wrangle vector together as value for -1 is missing
+    rel_att_left = rel_att_raw[1:(abs(negative_index) -1)]
+    rel_att_middle = NA
+    rel_att_right = rel_att_raw[abs(negative_index):(indices$len - 1)]
+    rel_att = c(rel_att_left, rel_att_middle, rel_att_right)
+
+    names(rel_att) <- seq(from = negative_index, to = positive_index)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att)
+    
+    # Compute absolute deviation
+    dev = rel_att - true_rel_att
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev <- dev[names(dev) %in% return_sequence]
+    
+    twfe_output <- tibble(
+      estimator = "TWFE",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
   } else {
-    stat_out = list(est = unname(static$coefficients), se = unname(static$se[1]))
+    model = fixest::feols(form , data = data)
+    if (use_covariates) {
+      att_avg = unname(model$coefficients)[1]
+    } else {
+      att_avg = unname(model$coefficients)
+    }
+    
+    twfe_output <- tibble(
+      estimator = "TWFE",
+      iter = iteration,
+      ATET = att_avg
+    )
   }
   
-  dyndat = relabel_control_0(data)
-  dynamic = suppressMessages(did2s::event_study(dyndat, "y", "unit", "group", 
-                                                "period", estimator = "TWFE"))
-  # dynamic = suppressMessages(
-  #   fixest::feols(form_dyn, es_data))
-  # aggregate to ATT dyn = aggregate(dynamic, c("ATT" = "rel_period::[^-]"))
-  
-  # only keep 100 coefficients to make dynamic estimate comparable
-  dyn_est = dynamic$estimate[(length(dynamic$estimate)-99):length(dynamic$estimate)]
-  dyn_se = dynamic$std.error[(length(dynamic$std.error)-99):length(dynamic$std.error)]
-  
-  dyn_out = list(cum_est = mean(dyn_est), 
-                 cum_se = mean(dyn_se))
-  
-  # dyn_out = list(cum_est = sum(dynamic$coefficients[-length(dynamic$coefficients)]), 
-  #                cum_se = sum(dynamic$se[-length(dynamic$se)]))
-  out = c(stat_out, dyn_out)
-  out$iter = iteration
-  out$estimator = "DiD"
-  
-  return(out)
+  return(twfe_output)
 }
 
-## Callaway-Sant'Anna
-est_cs <- function(es_data, iteration = 0){
+#### Estimate Callaway-Sant'Anna ####
+est_cs <- function(data, true_rel_att, iteration = 0){
   # check whether we should use covariates in estimation
-  use_covariates = as.logical(es_data$use_cov[1]) 
+  use_covariates = as.logical(data$use_cov[1]) 
   # adjust estimation formula to include covariates for dgp 7
   if (use_covariates) {
     mod = suppressWarnings(did::att_gt(yname = "y",
@@ -623,40 +729,85 @@ est_cs <- function(es_data, iteration = 0){
                                        idname = "unit",
                                        gname = "group",
                                        xformla = ~ 0 + nuisance,
-                                       est_method = "dr",
-                                       control_group = "notyettreated",
                                        bstrap = F,
-                                       data = es_data,
+                                       data = data,
                                        print_details = F))
   } else {
     mod = did::att_gt(yname = "y",
                       tname = "period",
                       idname = "unit",
                       gname = "group",
-                      control_group = "notyettreated",
                       bstrap = F,
-                      data = es_data,
+                      data = data,
                       print_details = F)
   }
   
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1]) 
   
-  dynamic = did::aggte(mod, type = "calendar", cband = F)
-  
-  dyn_est = c(dynamic$att.egt, rep(0, 100 - length(dynamic$att.egt)))
-  dyn_se = c(dynamic$se.egt, rep(0, 100 - length(dynamic$se.egt)))
-  
-  cs_output = list(est = dynamic$overall.att, se = dynamic$overall.se, 
-                   cum_est = mean(dyn_est), 
-                   cum_se = mean(dyn_se), 
-                   iter = iteration, estimator = "CS")
+  if(relative) {
+    indices = get_rel_indices(data)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    
+    # model = suppressMessages(did2s::event_study(data, "y", "unit", "group", 
+    #                                             "period", estimator = "TWFE"))
+    
+    model = did::aggte(mod, type = "dynamic", cband = F)
+    
+    # for DGP 1 and 2, have to manually wrangle vector together as value for -49 is missing
+    if (get_num_groups(data) < 5) {
+      rel_att_right = tail(model$att.egt, indices$len) # get relative period effect estimates incl. 0
+      rel_att_left = NA
+      rel_att = c(rel_att_left, rel_att_right)
+    } else {
+      rel_att = tail(model$att.egt, indices$len)
+    }
+    
+    names(rel_att) <- seq(from = negative_index, to = positive_index)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att)
+    
+    # Compute absolute deviation
+    dev = rel_att - true_rel_att
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev <- dev[names(dev) %in% return_sequence]
+    
+    cs_output <- tibble(
+      estimator = "CS",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
+  } else {
+    model = did::aggte(mod, "simple")
+    if (use_covariates) {
+      att_avg = unname(model$coefficients)[1]
+    } else {
+      att_avg = unname(model$coefficients)
+    }
+    
+    cs_output <- tibble(
+      estimator = "CS",
+      iter = iteration,
+      ATET = model$overall.att
+    )
+  }
   
   return(cs_output)
 }
 
-## Sun and Abraham using fixest
-est_sa <- function(es_data, iteration = 0){
+#### Estimate Sun and Abraham ####
+est_sa <- function(data, true_rel_att, iteration = 0){
   # check whether we should use covariates in estimation
-  use_covariates = as.logical(es_data$use_cov[1]) 
+  use_covariates = as.logical(data$use_cov[1]) 
   # adjust estimation formula to include covariates for dgp 7
   if (use_covariates) {
     form = y ~ nuisance + sunab(group, period) | unit + period
@@ -664,54 +815,85 @@ est_sa <- function(es_data, iteration = 0){
     form = y ~ sunab(group, period) | unit + period
   }
   
-  mod = fixest::feols(form, es_data)
-  static = aggregate(mod, agg = "att")
-  dyn = aggregate(mod, agg = "period")
+  # Estimate
+  mod = fixest::feols(form, data)
   
-  de = dyn[1:(nrow(dyn)), 1] # get point estimates
-  dse = dyn[1:(nrow(dyn)), 2] # get SE
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1]) 
   
-  if (length(de) < 100){ # make sure that only 100 periods
-    dyn_est = c(de, rep(0, 100 - length(de)))
-    dyn_se =  c(dse, rep(0, 100 - length(dse)))
+  if(relative) {
+    indices = get_rel_indices(data)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    
+    rel_att_raw_full = aggregate(mod, agg = "period")[,1]
+    rel_att_raw = tail(rel_att_raw_full, indices$len) # get relative period effect estimates incl. 0
+    # Have to manually wrangle vector together as value for -1 is missing
+    rel_att_left = rel_att_raw[1:(abs(negative_index) -1)]
+    rel_att_middle = NA
+    rel_att_right = rel_att_raw[abs(negative_index):(indices$len - 1)]
+    rel_att = c(rel_att_left, rel_att_middle, rel_att_right)
+    
+    names(rel_att) <- seq(from = negative_index, to = positive_index)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att)
+    
+    # Compute absolute deviation
+    dev = rel_att - true_rel_att
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev <- dev[names(dev) %in% return_sequence]
+    
+    sa_output <- tibble(
+      estimator = "SA",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
   } else {
-    dyn_est = de[(length(de)-99):length(de)]
-    dyn_se = dse[(length(dse)-99):length(dse)]
+    att_avg = aggregate(mod, agg = "att")[1]
+    
+    sa_output <- tibble(
+      estimator = "SA",
+      iter = iteration,
+      ATET = att_avg
+    )
   }
-  
-  sa_output = list(est = static[1], se = static[2],
-                   cum_est = mean(de), 
-                   cum_se = mean(dse), 
-                   iter = iteration, estimator = "SA")
-  
+
   return(sa_output)
 }
 
-## de Chaisemartin & D’Haultfœuille using DIDmultiplegt
-est_dcdh <- function(data, iteration = 0){
-  # check whether we should use covariates in estimation
-  use_covariates = as.logical(data$use_cov[1]) 
-  # adjust estimation formula to include covariates for dgp 7
-  if (use_covariates) {
-    control = "nuisance"
-  } else {
-    control = c()
-  }
+#### Estimate de Chaisemartin & D’Haultfœuille using DIDmultiplegt ####
+# This estimator can only estimate static ATTs (DGPs 1,3,4)
+est_dcdh <- function(data, true_rel_att, iteration = 0){
   
-  mod = DIDmultiplegt::did_multiplegt(
-      data, "y", "group", "period", controls = control,
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(data$use_cum_te[1])
+  if(!relative) {
+    mod = DIDmultiplegt::did_multiplegt(
+      data, "y", "group", "period", controls = c(),
       "treat", dynamic = 0, average_effect = "simple")
-  
-  dcdh_output = list(est = mod$effect, se = NA, cum_est = NA, cum_se = NA, 
-                     iter = iteration, estimator = "dCdH")
-  
-  return(dcdh_output)
+    
+    dcdh_output <- tibble(
+      estimator = "dCdH",
+      iter = iteration,
+      ATET = mod$effect
+    )
+    return(dcdh_output)
+  }
 }
 
-## Borusyak Jaravel Spiess using didimputation
-est_bjs <- function(data, iteration = 0){
+
+#### Estimate Borusyak Jaravel Spiess using didimputation ####
+est_bjs <- function(data, true_rel_att, iteration = 0){
   # change data because didimputation does not work when depvar is called "y"
-  imput_dat = relabel_control_0(data) %>% 
+  imput_dat = data %>% 
     rename(dep_var = y) %>% as.data.table()
   
   # check whether we should use covariates in estimation
@@ -723,34 +905,79 @@ est_bjs <- function(data, iteration = 0){
     fs = ~ 0 | unit + period
   }
   
-  stat = didimputation::did_imputation(
-    data = imput_dat, yname = "dep_var", gname = "group", first_stage = fs,
-    tname = "period", idname = "unit") #tname = "period", idname = "unit", 
+  ## Check whether to use static ATET or relative periods
+  relative = as.logical(imput_dat$use_cum_te[1]) 
   
-  dyn = didimputation::did_imputation(
-    data = imput_dat, yname = "dep_var", gname = "group", 
-    tname = "period", idname = "unit", first_stage = fs,
-    horizon = T)
-  
-  dyn_est = c(dyn$estimate, rep(0, 100 - length(dyn$estimate))) #dyn$std.error
-  dyn_se = c(dyn$std.error, rep(0, 100 - length(dyn$std.error)))
-  
-  bjs_output = list(est = stat$estimate, se = stat$std.error,
-                    cum_est = mean(dyn_est), 
-                    cum_se = mean(dyn_se),
-                    iter = iteration, estimator = "BJS")
-  
+  if(relative) {
+    indices = get_rel_indices(imput_dat)
+    negative_index = indices$neg
+    positive_index = indices$pos
+    
+    model = didimputation::did_imputation(
+      data = imput_dat, yname = "dep_var", gname = "group", 
+      tname = "period", idname = "unit", first_stage = fs,
+      horizon = T)
+    
+    # DIDImputation only reports positive relative time periods
+    # therefore subset true_rel_att for relative periods >= 0
+    true_rel_att_nonneg <- true_rel_att[as.numeric(names(true_rel_att)) >= 0]
+    
+    # use length of this to get right # of estimates
+    rel_att = tail(model$estimate, length(true_rel_att_nonneg))
+    
+    # Set names
+    names(rel_att) <- seq(from = 0, to = length(true_rel_att_nonneg) - 1)
+    
+    # Compute RMSE of relative period ATT estimates
+    rel_rmse = compute_rmse(rel_att, true_rel_att_nonneg)
+    
+    # Compute absolute deviation
+    dev = rel_att - true_rel_att_nonneg
+    
+    # Subset relative period deviations -10 to 10 inclusive to return
+    return_sequence <- as.character(-10:10)
+    
+    # Subset dev using names
+    out_dev_right <- dev[names(dev) %in% return_sequence]
+    # -10 to -1 not available:
+    out_dev_left = rep(NA, 10)
+    out_dev = c(out_dev_left, out_dev_right)
+    
+    names(out_dev) <- return_sequence
+    
+    bjs_output <- tibble(
+      estimator = "BJS",
+      iter = iteration,
+      rel_att_0 = rel_att["0"],
+      rel_rmse = rel_rmse,
+      rel_bias = mean(dev, na.rm = T)) %>% 
+      bind_cols(as_tibble(t(out_dev))
+      )
+    
+    
+  } else {
+    att_avg = didimputation::did_imputation(
+      data = imput_dat, yname = "dep_var", gname = "group", first_stage = fs,
+      tname = "period", idname = "unit")$estimate
+    
+    bjs_output <- tibble(
+      estimator = "BJS",
+      iter = iteration,
+      ATET = att_avg
+    )
+  }
+
   return(bjs_output)
 }
 
+
+#### Functions to run simulations ####
 timer <- function(func, ...){
   start_time = Sys.time()  # Record the start time
   do.call(func, list(...)) # Run the function
   end_time = Sys.time() # Record the end time
   cat("Execution Time:", round((end_time - start_time), digits = 2), "seconds\n")
 }
-
-### Functions to run simulations
 
 ## Function to compare estimators in an iteration
 run_sim <- function(i, fun, quiet = T) {
@@ -760,46 +987,31 @@ run_sim <- function(i, fun, quiet = T) {
   }
   # make data from function
   dt = withr::with_seed(i, fun()) # use with_seed to guarantee reproducibility
-  # make event study data
-  es = prep_es(dt)
   
-  # check if DGP is 8
-  if (identical(fun, dgp_8_sim)) {
-    dgp8 = T
-  } else {
-    dgp8 = F
-  }
-  #true values
-  true = est_true(dt, i)
+  ## compute true relative period ATTs
+  # check whether to use static ATET or relative periods
+  relative = as.logical(dt$use_cum_te[1]) 
   
-  #estimate
-  if(dgp8 ==T ){
-    # give MC-NNM more CV folds and candidate lambdas for DGP 8
-    mc = est_mc(dt, i, k = 4, n_lam = 6) 
+  if (relative) {
+    true_rel_att <- get_true_relative_period_ATT(dt)  
   } else {
-    mc = est_mc(dt, i)  
+    true_rel_att <- 0
   }
   
-  did = est_canonical(dt, i)
-  cs = est_cs(es, i)
-  sa = est_sa(es, i)
-  dcdh = est_dcdh(dt, i)
-  bjs = est_bjs(dt, i)
+  # Get true values
+  true = est_true(data = dt, true_rel_att = true_rel_att, iteration = i)
+  # Estimation
+  mc = est_mc(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  did = est_twfe(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  cs = est_cs(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  sa = est_sa(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  dcdh = est_dcdh(data = dt, true_rel_att = true_rel_att, iteration = i)  
+  bjs = est_bjs(data = dt, true_rel_att = true_rel_att, iteration = i)  
   
-  results_list <- list(true, mc, did, cs, sa, dcdh, bjs)
-  names(results_list) <- c('TRUE', 'MC-NNM', 'DiD', 'CS', 'SA', 'dCdH', 'BJS')
-  
-  # convert list to long tibble
-  results_df <- tibble(
-    iteration = i,
-    estimator = names(results_list),
-    est = vapply(results_list, function(x) x$est, numeric(1)),
-    se = vapply(results_list, function(x) x$se, numeric(1)),
-    cum_est = vapply(results_list, function(x) x$cum_est, numeric(1)),
-    cum_se = vapply(results_list, function(x) x$cum_se, numeric(1))
-  )
-  
-  return(results_df)
+  results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>% 
+    select(iter, everything())
+
+  return(results_tibble)
 }
 
 ## Function to execute the simulation, not parallelized
@@ -841,7 +1053,8 @@ run_sim_parallel <- function(iterations, sim_function) {
   return(tibble(out_df))
 }
 
-### Utilities for simulating
+
+#### Utility functions for simulating ####
 # parallelization leads to errors, which leads to entire iterations missing
 # this helper counts and removes those rows
 verify_sim_results <- function(input_tibble) {
@@ -965,88 +1178,87 @@ keep_iterations <- function(sim_data, num_iterations = 500) {
 
 
 
-### Analyzing sim results
+
+#### Functions to analyze sim results ####
 
 # function to create summary tibble
-analyze_sim_results <- function(sim_results, type = "static") {
+analyze_sim_results <- function(sim_results) { #, type = "static"
   
+  results_static <- names(sim_results)[3] == "ATET"
   # keep original order
   sim_results$estimator = factor(sim_results$estimator, 
                                  levels = unique(sim_results$estimator))
   
-
-  
   # get true values for bias
   true_values = filter(sim_results, estimator == "TRUE")
-  
-  # create 'TRUE' row for summary table
-  true_summary_static = true_values %>%
-    summarise(
-      estimator = "TRUE",
-      min_est  = min(est),
-      mean_est = mean(est, na.rm = F),
-      max_est = max(est),
-      sd_est = sd(est),
-      mean_se = NA,
-      bias = NA,
-      rmse = NA,
-      .groups = 'drop'
-    )
-  
-  true_summary_dynamic = true_values %>%
-    summarise(
-      estimator = "TRUE",
-      min_est  = min(cum_est),
-      mean_est = mean(cum_est, na.rm = F),
-      max_est = max(cum_est),
-      sd_est = sd(cum_est),
-      mean_se = NA,
-      bias = NA,
-      rmse = NA,
-      .groups = 'drop'
-    )
-  
-  static_summary = sim_results %>% # summary results for static-type estimate
-    filter(estimator != "TRUE") %>%
-    group_by(estimator) %>%
-    summarise(
-      min_est  = min(est),
-      mean_est = mean(est, na.rm = F),
-      max_est = max(est),
-      sd_est = sd(est),
-      mean_se = mean(se, na.rm = F),
-      bias = mean(est) - mean(true_values$est, na.rm = F),
-      rmse = sqrt(mean((est - mean(true_values$est, 
-                                       na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for output
-    )
-  
-  dynamic_summary = sim_results %>% # summary results for dynamic-type estimate
-    filter(estimator != "TRUE") %>% filter(estimator != "dCdH") %>% 
-    group_by(estimator) %>%
-    summarise(
-      min_est  = min(cum_est),
-      mean_est = mean(cum_est, na.rm = F),
-      max_est = max(cum_est),
-      sd_est = sd(cum_est),
-      mean_se = mean(cum_se, na.rm = F),
-      bias = mean(cum_est) - mean(true_values$cum_est, na.rm = F),
-      rmse = sqrt(mean((cum_est - mean(true_values$cum_est, 
-                                       na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for output
-    )
-  
-  
-  if (type == "static") {
+
+  if (results_static) {
+    # create 'TRUE' row for summary table
+    true_summary_static = true_values %>%
+      summarise(
+        estimator = "TRUE",
+        min_est  = min(ATET),
+        mean_est = mean(ATET, na.rm = F),
+        max_est = max(ATET),
+        sd_est = sd(ATET),
+        bias = NA,
+        rmse = NA,
+        .groups = 'drop'
+      )
+    
+    static_summary = sim_results %>% # summary results for ATET ATETimates
+      filter(estimator != "TRUE") %>%
+      group_by(estimator) %>%
+      summarise(
+        min_est  = min(ATET),
+        mean_est = mean(ATET, na.rm = F),
+        max_est = max(ATET),
+        sd_est = sd(ATET),
+        bias = mean(ATET) - mean(true_values$ATET, na.rm = F), #sqrt(mean((ATET - mean(true_values$ATET, na.rm = F))^2, na.rm = F))
+        rmse = compute_rmse(true_values$ATET, ATET),
+        .groups = 'drop'  # avoid the grouped_df class for output
+      )
+    
     final_summary = bind_rows(true_summary_static, static_summary) %>% 
       select("Estimator" = estimator, 
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
-             "Mean SE" = mean_se, "Bias" = bias, "RMSE" = rmse)
-  } else if (type == "dynamic"){
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, 
+             "SD" = sd_est, "Bias" = bias, "RMSE" = rmse)
+  } else {
+    true_summary_dynamic = true_values %>%
+      summarise(
+        estimator = "TRUE",
+        min_est  = min(rel_att_0),
+        mean_est = mean(rel_att_0, na.rm = F),
+        max_est = max(rel_att_0),
+        sd_est = sd(rel_att_0),
+        bias_est = NA,
+        rmse_est = NA,
+        bias_all_rp = NA,
+        rmse_all_rp = NA,
+        .groups = 'drop'
+      )
+    
+    dynamic_summary = sim_results %>% # summary results for dynamic-type estimate
+      filter(estimator != "TRUE") %>% 
+      group_by(estimator) %>%
+      summarise(
+        min_est  = min(rel_att_0),
+        mean_est = mean(rel_att_0, na.rm = F),
+        max_est = max(rel_att_0),
+        sd_est = sd(rel_att_0),
+        bias_est = mean(rel_att_0) - mean(true_values$rel_att_0, na.rm = F),
+        rmse_est = compute_rmse(true_values$rel_att_0, rel_att_0),
+        rmse_all_rp = mean(rel_rmse),
+        bias_all_rp = mean(rel_bias),
+        .groups = 'drop'  # avoid the grouped_df class for output
+      )
+    
     final_summary = bind_rows(true_summary_dynamic, dynamic_summary) %>% 
       select("Estimator" = estimator, 
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
-             "Mean SE" = mean_se, Bias = bias, "RMSE" = rmse)
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, 
+             "SD" = sd_est, "t=0 Bias" = bias_est, "t=0 RMSE" = rmse_est,
+             "All Relative Periods Bias" = bias_all_rp,
+             "ALL Relative Periods RMSE" = rmse_all_rp)
   }
   
   return(final_summary)
@@ -1162,7 +1374,8 @@ save_table_results <- function(sumdata,
     save_kable(file = file_name)
 }
 
-### Data Plotting Functions
+
+#### Data Plotting Functions ####
 # Set Theme
 theme_set(theme_clean() + theme(plot.background = element_blank(),
                                 legend.background = element_blank()))
@@ -1173,7 +1386,19 @@ get_treat_times <- function(df) {
 }
 
 # Basic plotting function
-dgp_plot_basic <- function(df) {
+dgp_plot_basic <- function(df, sim_num = NULL) {
+  unique_groups <- sort(unique(df$group))
+  group_labels <- as.character(unique_groups)
+  names(group_labels) <- unique_groups
+  group_labels["0"] <- "Control"
+  
+  if (is.null(sim_num)) {
+    # extract the number from the df function name
+    sim_num = as.integer(gsub("[^0-9]", "", substitute(df)))
+  }
+  # set as plot title
+  plot_title = paste("Outcome Data from One Draw of Simulation", sim_num)
+  
   df %>%
     ggplot(aes(x = period, y = y, group = unit)) +
     geom_line(alpha = 0.1, color = "grey") +
@@ -1187,8 +1412,10 @@ dgp_plot_basic <- function(df) {
     theme(legend.position = 'bottom',
           axis.title = element_text(size = 14),
           axis.text = element_text(size = 12)) +
-    ggtitle("Outcome Data from Simulation") +
-    theme(plot.title = element_text(hjust = 0.5, size = 12))
+    ggtitle(plot_title) +
+    theme(plot.title = element_text(hjust = 0.5, size = 12)) +
+    scale_color_manual(values = c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F"),
+                       labels = group_labels)
 }
 
 
@@ -1200,10 +1427,10 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
   suppressWarnings({
     # get treatment times and remove the control group
     treat_times <- get_treat_times(df)
-    treat_times <- treat_times[treat_times != max(treat_times)]
+    treat_times <- treat_times[treat_times != min(treat_times)]
     
     # relabel the control group
-    control_label <- as.character(max(df$period)) # max period considered as control group
+    control_label <- as.character(0) # min period considered as control group
     
     if (is.null(sim_num)) {
       # extract the number from the df function name
@@ -1237,7 +1464,7 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
     # Add vertical lines for each treatment group
     vlines <- data.frame(xintercept = treat_times, group = treat_times)
     p = p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(group)), 
-                        size = 0.5, show.legend = FALSE)
+                        size = 0.5, linetype = "dashed", show.legend = FALSE)
     
     # Set color scale and replace treatment group 100 with "Control" in legend
     p = p + scale_color_manual(values = my_palette,
@@ -1248,71 +1475,101 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
 }
 
 # function to plot densities of estimates of each estimator
-plot_est_dens <- function(df, dynamic = F) {
+plot_est_dens <- function(df) {
+    dynamic <- names(df)[3] == "rel_att_0"
+  
   # get estimator names
-  estimators = c("MC-NNM", "DiD", "CS", "SA", "dCdH", "BJS")
-  
-  # get true mean
-  if (dynamic == T) {
-    true_v = df %>% filter(estimator == "TRUE") %>% 
-      summarize(mean_e = mean(cum_est), min_e = min(cum_est),
-                max_e = max(cum_est))
-    title = "Distributions of Event-Study Parameter Estimates"
-    cap = "Upper Panel shows all observatins from one draw of the simulation with group means. Lower panel shows for each \nestimator described in sections 4.3 and 5.5/6 densities of point estimates of the event-study parameter defined in (53). \nVertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+  if (dynamic) {
+    estimators = c("CS", "SA", "TWFE", "MC-NNM", "BJS", "TRUE") 
     
-    # filter out dCdH estimator if dynamic is TRUE 
-    if(all(is.na(df$cum_est[df$estimator == "dCdH"]))) {
-      estimators = estimators[estimators != "dCdH"]
-    }
-  } else {
+    # Define your custom color palette
+    my_palette = c("TWFE" = "#F28E2B", "CS" = "#E15759", "SA" = "#B07AA1",  #"#4E79A7" "#F28E2B" "#E15759" "#76B7B2" "#59A14F" "#EDC948" "#B07AA1" "#FF9DA7" "#9C755F" "#BAB0AC"
+                   "BJS" = scales::alpha("#59A14F", 0.8), "MC-NNM" = "#4E79A7", "TRUE" = "#BAB0AC") 
+    
+    # Define line sizes and line types
+    line_sizes <- c(0.6, 0.4, 0.4, 0.8, 0.4, 0.7)  # Thicker line for MC-NNM and TRUE
+    line_types <- c("solid", "solid", "dashed", "solid", "solid", "longdash")  # Dashed line for TRUE
+    
+    event_study_df <- df %>%
+      select(iter, estimator, `-10`:`10`) %>%
+      pivot_longer(cols = `-10`:`10`, names_to = "relative_period", values_to = "value") %>%
+      mutate(relative_period = as.numeric(relative_period),
+             estimator = factor(estimator, levels = estimators)) %>%
+      group_by(estimator, relative_period) %>%
+      summarise(value = mean(value, na.rm = TRUE), .groups = 'drop')
+    
+    title = "Deviation from True Treatment Effect"
+    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the mean of point estimates of the Treatment Effect in\nRelative Periods -10 to 10. Missing Points mean that an Estimate is not produced for that relative period."
+    
+    # Build the plot
+    p <- event_study_df %>%
+      ggplot(aes(x = relative_period, y = value, group = estimator, color = estimator)) +
+      geom_line(aes(linetype = estimator, size = estimator), na.rm = T) +  # conditional line type and size
+      geom_point(aes(shape = estimator), na.rm = T) +
+      scale_size_manual(values = line_sizes) + # define line sizes
+      scale_linetype_manual(values = line_types) + # define line types
+      scale_color_manual(values = my_palette) +  # apply color palette
+      theme_minimal() +
+      labs(x = "Relative Time Period", y = "Estimated Effect - True Effect", color = "Estimator",
+           caption = cap) +
+      scale_x_continuous(breaks = -10:10) +
+      ggtitle(title) +
+      theme(plot.title = element_text(hjust = 0.5),
+            legend.position = "bottom") +
+      guides(color = guide_legend(override.aes = list(size=3)), 
+             size = "none", linetype = "none", shape = "none")  # hide size, linetype legends
+    
+    } else {
+    estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
+    # Assign colors
+    my_palette = c("MC-NNM" = "#4E79A7", "TWFE" = "#F28E2B", "CS" = "#E15759", 
+                   "SA" = "#B07AA1", "dCdH" = "#EDC948", "BJS" = "#59A14F") 
+    
     true_v = df %>% filter(estimator == "TRUE") %>% 
-      summarize(mean_e = mean(est), min_e = min(est), max_e = max(est))
+      summarize(mean_e = mean(ATET), min_e = min(ATET), max_e = max(ATET))
+    
     title = "Distributions of ATET Estimates"
-    cap = "Upper Panel shows all observatins from one draw of the simulation with group means. \nLower panel shows for each estimator described in sections 4.3 and 5.5/6 densities of point estimates of\n the ATET as defined on p. 12. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the density of point estimates of\n the ATET. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    
+    # filter data
+    df = df %>% filter(estimator %in% estimators)
+    
+    # Create plot variable depending on 'dynamic' argument
+    plot_var = "ATET"
+    
+    # Set factor levels for estimator to control facet order
+    df$estimator = factor(df$estimator, levels = estimators)
+    
+    # Order the dataframe by estimator
+    df = df %>% arrange(estimator)
+    
+    # Build the plot
+    p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
+      geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
+      scale_color_manual(values = my_palette) +
+      geom_vline(aes(xintercept = true_v$min_e), 
+                 linetype = "dashed", color = "red", alpha = 0.45) +
+      geom_vline(aes(xintercept = true_v$mean_e), 
+                 linetype = "dashed", color = "red") +
+      geom_vline(aes(xintercept = true_v$max_e), 
+                 linetype = "dashed", color = "red", alpha = 0.45) +
+      guides(color = "none", fill = "none") +
+      facet_wrap(~ estimator, scales = "free") + 
+      theme(legend.position = 'bottom',
+            axis.title = element_text(size = 14),
+            axis.text = element_text(size = 9),
+            plot.title = element_text(hjust = 0.5, size=12),
+            plot.subtitle = element_text(hjust = 0.5),
+            legend.title = element_text(size = 12, hjust = 0.5)) +
+      ggtitle(title) + labs(x = "Point Estimate", y = "Density",
+                            caption = cap)
   }
-  
-  # filter data
-  df = df %>% filter(estimator %in% estimators)
-  
-  # Create plot variable depending on 'dynamic' argument
-  plot_var = ifelse(dynamic, "cum_est", "est")
-  
-  # Set factor levels for estimator to control facet order
-  df$estimator = factor(df$estimator, levels = estimators)
-  
-  # Order the dataframe by estimator
-  df = df %>% arrange(estimator)
-  
-  # Assign colors
-  my_palette = c("MC-NNM" = "#4E79A7", "DiD" = "#F28E2B", "CS" = "#E15759", 
-                  "SA" = "#76B7B2", "dCdH" = "#59A14F", "BJS" = "#EDC948")
-  
-  # Create the plot
-  p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
-    geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
-    scale_color_manual(values = my_palette) +
-    geom_vline(aes(xintercept = true_v$min_e), 
-               linetype = "dashed", color = "red", alpha = 0.45) +
-    geom_vline(aes(xintercept = true_v$mean_e), 
-               linetype = "dashed", color = "red") +
-    geom_vline(aes(xintercept = true_v$max_e), 
-               linetype = "dashed", color = "red", alpha = 0.45) +
-    guides(color = "none", fill = "none") +
-    facet_wrap(~ estimator, scales = "free") + 
-    theme(legend.position = 'bottom',
-          axis.title = element_text(size = 14),
-          axis.text = element_text(size = 9),
-          plot.title = element_text(hjust = 0.5, size=12),
-          plot.subtitle = element_text(hjust = 0.5),
-          legend.title = element_text(size = 12, hjust = 0.5)) +
-    ggtitle(title) + labs(x = "Point Estimate", y = "Density",
-                          caption = cap)
-  
+
   return(p)
 }
 
 ## function to combine dgp plot and densities and save
-plot_combined <- function(dgp_number, dynamic, save = F) {
+plot_combined <- function(dgp_number, save = F) {
   # Generate the DGP plot based on the number argument
   dgp_data = switch(dgp_number,
                     dgp_1_sim(),
@@ -1335,7 +1592,7 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
                     sim6,
                     sim7,
                     sim8)
-  plot_est_dens = plot_est_dens(sim_data, dynamic)
+  plot_est_dens = plot_est_dens(sim_data)
   
   # combine and arrange plots
   plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
@@ -1348,4 +1605,4 @@ plot_combined <- function(dgp_number, dynamic, save = F) {
   }
 }
 
-writeLines("Ready")
+writeLines("Done!")
