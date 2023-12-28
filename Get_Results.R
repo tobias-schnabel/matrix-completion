@@ -19,31 +19,31 @@ if (sim_bool == 0) {
   # but also more dropped iterations
   
   # DGP 1
-  sim1_par_out = run_sim_parallel(1:550, dgp_1_sim)
+  sim1_par_out = run_sim_parallel(1:505, dgp_1_sim)
   sim1_par = verify_sim_results(sim1_par_out)
   verify_iteration_counts(sim1_par)
   save_sim_results(sim1_par, "Sim_1")
   
   # DGP 2
-  sim2_par_out = run_sim_parallel(1:550, dgp_2_sim)
+  sim2_par_out = run_sim_parallel(1:505, dgp_2_sim)
   sim2_par = verify_sim_results(sim2_par_out)
   verify_iteration_counts(sim2_par)
   save_sim_results(sim2_par, "Sim_2")
   
   # DGP 3
-  sim3_par_out = run_sim_parallel(1:550, dgp_3_sim)
+  sim3_par_out = run_sim_parallel(1:505, dgp_3_sim)
   sim3_par = verify_sim_results(sim3_par_out)
   verify_iteration_counts(sim3_par)
   save_sim_results(sim3_par, "Sim_3")
   
   # DGP 4
-  sim4_par_out = run_sim_parallel(1:550, dgp_4_sim)
+  sim4_par_out = run_sim_parallel(1:505, dgp_4_sim)
   sim4_par = verify_sim_results(sim4_par_out)
   verify_iteration_counts(sim4_par)
   save_sim_results(sim4_par, "Sim_4")
   
   # DGP 5
-  sim5_par_out = run_sim_parallel(1:550, dgp_5_sim)
+  sim5_par_out = run_sim_parallel(1:505, dgp_5_sim)
   sim5_par = verify_sim_results(sim5_par_out)
   verify_iteration_counts(sim5_par)
   save_sim_results(sim5_par, "Sim_5")
