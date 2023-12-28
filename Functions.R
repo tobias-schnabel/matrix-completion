@@ -7,7 +7,7 @@ writeLines("Seed set : 1234")
 #### DGP simulation functions ####
 
 ## DGP 1 One Treatment Group, Time-Invariant Treatment Effects
-dgp_1_sim <- function(nobs = 1000, 
+dgp_1_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treated.period = 50) {
@@ -67,7 +67,7 @@ dgp_1_sim <- function(nobs = 1000,
 }
 
 ## DGP 2 One Treatment Group, Time-Varying Treatment Effects
-dgp_2_sim <- function(nobs = 1000, 
+dgp_2_sim <- function(nobs = 500, 
                   nperiods = 100,
                   nobsgroups = 50,
                   treated.period = 50) {
@@ -126,7 +126,7 @@ dgp_2_sim <- function(nobs = 1000,
 
 ## DGP 3 Multiple Treatment Groups, Time-Invariant Homogeneous Treatment Effects
 
-dgp_3_sim <- function(nobs = 1000, 
+dgp_3_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
@@ -188,7 +188,7 @@ dgp_3_sim <- function(nobs = 1000,
 }
 
 ## DGP 4 Multiple Treatment Groups,Time-Invariant Heterogeneous Treatment Effects
-dgp_4_sim <- function(nobs = 1000, 
+dgp_4_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
@@ -250,7 +250,7 @@ dgp_4_sim <- function(nobs = 1000,
 }
 
 ## DGP 5 Multiple Treatment Groups, Time-Varying Homogeneous Treatment Effects
-dgp_5_sim <- function(nobs = 1000, 
+dgp_5_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
@@ -309,7 +309,7 @@ dgp_5_sim <- function(nobs = 1000,
 }
 
 ## DGP 6  Multiple Treatment Groups, Time-Varying Heterogeneous Treatment Effects
-dgp_6_sim <- function(nobs = 1000, 
+dgp_6_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
@@ -372,7 +372,7 @@ dgp_6_sim <- function(nobs = 1000,
 
 ## DGP 7  Multiple Treatment Groups, Time-Varying Heterogeneous TE, 
 # CONDITIONAL PARALLEL TRENDS
-dgp_7_sim <- function(nobs = 1000, 
+dgp_7_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))) {
