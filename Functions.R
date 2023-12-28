@@ -1271,89 +1271,88 @@ results_html <- function(sim_results, type = "static") {
   sim_results$estimator = factor(sim_results$estimator, 
                                  levels = unique(sim_results$estimator))
   
-  
-  
   # get true values for bias
   true_values = filter(sim_results, estimator == "TRUE")
+  results_static <- names(sim_results)[3] == "ATET"
   
-  # create 'TRUE' row for summary table
-  true_summary_static = true_values %>%
-    summarise(
-      estimator = "TRUE",
-      min_est  = min(est),
-      mean_est = mean(est, na.rm = F),
-      max_est = max(est),
-      sd_est = sd(est),
-      mean_se = NA,
-      bias = NA,
-      rmse = NA,
-      .groups = 'drop'
-    )
-  
-  true_summary_dynamic = true_values %>%
-    summarise(
-      estimator = "TRUE",
-      min_est  = min(cum_est),
-      mean_est = mean(cum_est, na.rm = F),
-      max_est = max(cum_est),
-      sd_est = sd(cum_est),
-      mean_se = NA,
-      bias = NA,
-      rmse = NA,
-      .groups = 'drop'
-    )
-  
-  static_summary = sim_results %>% # summary results for static-type estimate
-    filter(estimator != "TRUE") %>%
-    group_by(estimator) %>%
-    summarise(
-      min_est  = min(est),
-      mean_est = mean(est, na.rm = F),
-      max_est = max(est),
-      sd_est = sd(est),
-      mean_se = mean(se, na.rm = F),
-      bias = mean(est) - mean(true_values$est, na.rm = F),
-      rmse = sqrt(mean((est - mean(true_values$est, 
-                                   na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for output
-    )
-  
-  dynamic_summary = sim_results %>% # summary results for dynamic-type estimate
-    filter(estimator != "TRUE") %>% filter(estimator != "dCdH") %>% 
-    group_by(estimator) %>%
-    summarise(
-      min_est  = min(cum_est),
-      mean_est = mean(cum_est, na.rm = F),
-      max_est = max(cum_est),
-      sd_est = sd(cum_est),
-      mean_se = mean(cum_se, na.rm = F),
-      bias = mean(cum_est) - mean(true_values$cum_est, na.rm = F),
-      rmse = sqrt(mean((cum_est - mean(true_values$cum_est, 
-                                       na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for output
-    )
-  
-  
-  if (type == "static") {
+  if (results_static) {
+    # create 'TRUE' row for summary table (static)
+    true_summary_static = true_values %>%
+      summarise(
+        estimator = "TRUE",
+        min_est  = min(ATET),
+        mean_est = mean(ATET, na.rm = F),
+        max_est = max(ATET),
+        sd_est = sd(ATET),
+        bias = NA,
+        rmse = NA,
+        .groups = 'drop'
+      )
+    
+    static_summary = sim_results %>% 
+      filter(estimator != "TRUE") %>%
+      group_by(estimator) %>%
+      summarise(
+        min_est  = min(ATET),
+        mean_est = mean(ATET, na.rm = F),
+        max_est = max(ATET),
+        sd_est = sd(ATET),
+        bias = mean(ATET) - mean(true_values$ATET, na.rm = F),
+        rmse = compute_rmse(true_values$ATET, ATET),
+        .groups = 'drop'
+      )
+    
     final_summary = bind_rows(true_summary_static, static_summary) %>% 
-      select("Estimator" = estimator, Bias = bias, "RMSE" = rmse,
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
-             "Mean SE" = mean_se, "Bias" = bias, "RMSE" = rmse)
-  } else if (type == "dynamic"){
+      select("Estimator" = estimator, "Min" = min_est, "Mean" = mean_est, "Max" = max_est, 
+             "SD" = sd_est, "Bias" = bias, "RMSE" = rmse)
+    
+  } else {
+    # create 'TRUE' row for summary table (dynamic)
+    true_summary_dynamic = true_values %>%
+      summarise(
+        estimator = "TRUE",
+        min_est  = min(rel_att_0),
+        mean_est = mean(rel_att_0, na.rm = F),
+        max_est = max(rel_att_0),
+        sd_est = sd(rel_att_0),
+        bias_est = NA,
+        rmse_est = NA,
+        bias_all_rp = NA,
+        rmse_all_rp = NA,
+        .groups = 'drop'
+      )
+    
+    dynamic_summary = sim_results %>% 
+      filter(estimator != "TRUE") %>% 
+      group_by(estimator) %>%
+      summarise(
+        min_est  = min(rel_att_0),
+        mean_est = mean(rel_att_0, na.rm = F),
+        max_est = max(rel_att_0),
+        sd_est = sd(rel_att_0),
+        bias_est = mean(rel_att_0) - mean(true_values$rel_att_0, na.rm = F),
+        rmse_est = compute_rmse(true_values$rel_att_0, rel_att_0),
+        rmse_all_rp = mean(rel_rmse),
+        bias_all_rp = mean(rel_bias),
+        .groups = 'drop'
+      )
+    
     final_summary = bind_rows(true_summary_dynamic, dynamic_summary) %>% 
-      select("Estimator" = estimator, Bias = bias, "RMSE" = rmse,
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
-             "Mean SE" = mean_se)
+      select("Estimator" = estimator, 
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, 
+             "SD" = sd_est, "t=0 Bias" = bias_est, "t=0 RMSE" = rmse_est,
+             "All Relative Periods Bias" = bias_all_rp,
+             "ALL Relative Periods RMSE" = rmse_all_rp)
   }
   
   # round numeric columns to 3 digits
   numeric_columns <- sapply(final_summary, is.numeric)
   final_summary <- datatable(final_summary, options = list(autoWidth = TRUE, scrollX = TRUE, dom = 't')) %>% 
-    formatRound(columns = which(numeric_columns), digits = 3)
+    DT::formatRound(columns = which(numeric_columns), digits = 3)
   
   return(final_summary)
-  
 }
+
 
 # function to save results tables to latex
 options(knitr.kable.NA = '-')
