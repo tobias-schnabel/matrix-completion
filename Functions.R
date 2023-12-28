@@ -10,7 +10,7 @@ writeLines("Seed set : 1234")
 dgp_1_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
-                      treated.period = 50) {
+                      treated.period = nperiods / 2) {
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
@@ -70,7 +70,7 @@ dgp_1_sim <- function(nobs = 500,
 dgp_2_sim <- function(nobs = 500, 
                   nperiods = 100,
                   nobsgroups = 50,
-                  treated.period = 50) {
+                  treated.period = nperiods / 2) {
   
   # Unit Fixed Effects
   unit <- tibble(
@@ -980,13 +980,14 @@ timer <- function(func, ...){
 }
 
 ## Function to compare estimators in an iteration
-run_sim <- function(i, fun, quiet = T) {
+run_sim <- function(i, fun, n = 500, t = 100, quiet = T) {
   # print progress
   if (quiet == F) {
     cat(" ", i, "...")
   }
   # make data from function
-  dt = withr::with_seed(i, fun()) # use with_seed to guarantee reproducibility
+  # use with_seed to ensure reproducibility
+  dt = withr::with_seed(i, fun(nobs = n, nperiods = t))
   
   ## compute true relative period ATTs
   # check whether to use static ATET or relative periods
@@ -1008,7 +1009,8 @@ run_sim <- function(i, fun, quiet = T) {
   dcdh = est_dcdh(data = dt, true_rel_att = true_rel_att, iteration = i)  
   bjs = est_bjs(data = dt, true_rel_att = true_rel_att, iteration = i)  
   
-  results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>% 
+  results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>%
+    mutate(nperiods = get_num_periods(dt)) %>% 
     select(iter, everything())
 
   return(results_tibble)
@@ -1058,30 +1060,45 @@ run_sim_parallel <- function(iterations, sim_function) {
 # parallelization leads to errors, which leads to entire iterations missing
 # this helper counts and removes those rows
 verify_sim_results <- function(input_tibble) {
-  error_count <- sum(grepl("error|Error", input_tibble$iteration)) 
+  error_count <- sum(grepl("error|Error", input_tibble$iter)) 
   
-  clean_tibble <- input_tibble[!(grepl("error|Error", input_tibble$iteration, ignore.case = TRUE)), ]
+  clean_tibble <- input_tibble[!(grepl("error|Error", input_tibble$iter, ignore.case = TRUE)), ]
   
   cat("Number of corrupted rows:", error_count, "\n")
   return(clean_tibble)
 }
 
 verify_iteration_counts <- function(input_tibble) {
-  iteration_counts <- table(input_tibble$iteration)
-  incorrect_iterations <- iteration_counts[iteration_counts != 7]
+  iteration_counts <- table(input_tibble$iter)
   
-  if (length(incorrect_iterations) == 0) {
-    cat("All iterations appear exactly 7 times.\n")
+  results_static <- names(input_tibble)[3] == "ATET"
+  if (results_static) {
+    incorrect_iterations <- iteration_counts[iteration_counts != 7]
+    if (length(incorrect_iterations) == 0) {
+      cat("All iterations appear exactly 7 times.\n")
+    } else {
+      cat("Incorrect iteration counts:\n")
+      print(incorrect_iterations)
+    }
   } else {
-    cat("Incorrect iteration counts:\n")
-    print(incorrect_iterations)
+    incorrect_iterations <- iteration_counts[iteration_counts != 6]
+    if (length(incorrect_iterations) == 0) {
+      cat("All iterations appear exactly 6 times.\n")
+    } else {
+      cat("Incorrect iteration counts:\n")
+      print(incorrect_iterations)
+    }
   }
+  
 }
 
 # function to save sim results to RDS
 save_sim_results <- function(input_tibble, file_name = "test") {
   # get the current date and time
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+  
+  # Get number of periods
+  nperiods = 
   
   # create the file name with the custom name and current date and time
   full_file_name <- paste0(file_name, "_", current_time, ".rds")
