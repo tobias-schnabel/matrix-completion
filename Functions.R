@@ -425,8 +425,8 @@ dgp_7_sim <- function(nobs = 500,
 
 ## DGP 8  Multiple Treatment Groups, Time-Varying Heterogeneous TE, 
 # NO PARALLEL TRENDS
-dgp_8_sim <- function(){
-  data = dgp_7_sim()
+dgp_8_sim <- function(nobs = 500, nperiods = 100){
+  data = dgp_7_sim(nobs = nobs, nperiods = nperiods)
   # set flag to false so that estimators do not use nuisance covariate
   data$use_cov = F 
   
@@ -590,7 +590,7 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
   nperiods = get_num_periods(data)
   cohorts = get_cohorts(data) # helper function to label cohorts for fect
   # check whether we should use covariates in estimation
-  use_covariates = as.logical(data$use_cov[1]) 
+  use_covariates = as.logical(cohorts$use_cov[1]) 
   # adjust estimation formula to include covariates for dgp 7, 8
   if (use_covariates) {
     form = y ~ treat + nuisance
@@ -604,11 +604,11 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
                                     normalize = T)) # normalize to speed up
   
   # Check whether to use static ATET or relative periods
-  relative = as.logical(data$use_cum_te[1]) 
+  relative = as.logical(cohorts$use_cum_te[1]) 
   
   if(relative) {
     # Subset to keep relative period estimates of interest
-    indices = get_rel_indices(data)
+    indices = get_rel_indices(cohorts)
     negative_index = indices$neg
     positive_index = indices$pos
     rel_att = tail(out$att, indices$len) # get relative period effect estimates incl. 0
@@ -1009,10 +1009,16 @@ run_sim <- function(i, fun, n = 500, t = 100, quiet = T) {
   dcdh = est_dcdh(data = dt, true_rel_att = true_rel_att, iteration = i)  
   bjs = est_bjs(data = dt, true_rel_att = true_rel_att, iteration = i)  
   
-  results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>%
-    mutate(nperiods = get_num_periods(dt)) %>% 
-    select(iter, everything())
-
+  if (relative) {
+    results_tibble <- rbind(true, mc, did, cs, sa, bjs) %>%
+      mutate(nperiods = get_num_periods(dt)) %>% 
+      select(iter, everything())
+  } else {
+    results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>%
+      mutate(nperiods = get_num_periods(dt)) %>% 
+      select(iter, everything())
+  }
+  
   return(results_tibble)
 }
 
