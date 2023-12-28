@@ -10,7 +10,7 @@ writeLines("Seed set : 1234")
 dgp_1_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
-                      treated.period = nperiods / 2) {
+                      treated.period = floor(nperiods / 2)) {
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
@@ -70,7 +70,7 @@ dgp_1_sim <- function(nobs = 500,
 dgp_2_sim <- function(nobs = 500, 
                   nperiods = 100,
                   nobsgroups = 50,
-                  treated.period = nperiods / 2) {
+                  treated.period = floor(nperiods / 2)) {
   
   # Unit Fixed Effects
   unit <- tibble(
@@ -1042,14 +1042,16 @@ run_sim_map <- function(iterations, sim_function) {
 
 
 ## Function to execute the simulation, parallelized using mclapply
-run_sim_parallel <- function(iterations, sim_function) {
+run_sim_parallel <- function(iterations, sim_function, n = 500, t = 100) {
   cat("Simulating ", deparse(substitute(sim_function)), ", ",
       length(iterations), "Iterations:\n")
   # Use mclapply() to run simulations in parallel
   start_time = Sys.time()
   out = suppressWarnings(
     mclapply(
-      iterations, function(i) run_sim(i, sim_function, quiet = F), mc.cores = globalcores)
+      iterations, function(i) run_sim(i, sim_function, 
+                                      n = n, t = t,
+                                      quiet = F), mc.cores = globalcores)
   )
   
   # Bind all the output data frames into a single data frame
