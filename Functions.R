@@ -1127,13 +1127,13 @@ save_sim_results <- function(input_tibble, file_name = "test") {
 }
 
 # function to load most recently saved version of each DGP results
-load_sim_results <- function(file_name = "test", number_periods) { 
+load_sim_results <- function(file_name = "test", periods) { 
   # specify directory 
   directory <- 'SimResults'
   
   # use a pattern match to filter 
   # pattern <- paste0('^', file_name, '.*\\.rds$')
-  pattern <- paste0('^', file_name, '-', number_periods, '-periods_.*\\.rds$') 
+  pattern <- paste0('^', file_name, '-', periods, '-periods_.*\\.rds$') 
   
   # list all files in dir that match the pattern
   files <- list.files(path = directory, pattern = pattern)
@@ -1176,16 +1176,25 @@ load_sim_results <- function(file_name = "test", number_periods) {
 
 # function to load all results and trim to 500 iterations
 load_all_results <- function(){
-  writeLines("Loading saved results")
-  sim1 <<- keep_iterations(load_sim_results("Sim_1"), 500)
-  sim2 <<- keep_iterations(load_sim_results("Sim_2"), 500)
-  sim3 <<- keep_iterations(load_sim_results("Sim_3"), 500)
-  sim4 <<- keep_iterations(load_sim_results("Sim_4"), 500)
-  sim5 <<- keep_iterations(load_sim_results("Sim_5"), 500)
-  sim6 <<- keep_iterations(load_sim_results("Sim_6"), 500)
-  sim7 <<- keep_iterations(load_sim_results("Sim_7"), 500)
-  sim8 <<- keep_iterations(load_sim_results("Sim_8"), 500)
-  writeLines("Results loaded succesfully")
+  writeLines("Loading saved results for 100 periods")
+  sim1_100 <<- keep_iterations(load_sim_results("DGP-1", periods = 100), 500)
+  sim2_100 <<- keep_iterations(load_sim_results("DGP-2", periods = 100), 500)
+  sim3_100 <<- keep_iterations(load_sim_results("DGP-3", periods = 100), 500)
+  sim4_100 <<- keep_iterations(load_sim_results("DGP-4", periods = 100), 500)
+  sim5_100 <<- keep_iterations(load_sim_results("DGP-5", periods = 100), 500)
+  sim6_100 <<- keep_iterations(load_sim_results("DGP-6", periods = 100), 500)
+  sim7_100 <<- keep_iterations(load_sim_results("DGP-7", periods = 100), 500)
+  sim8_100 <<- keep_iterations(load_sim_results("DGP-8", periods = 100), 500)
+  writeLines("Loading saved results for 55 periods")
+  sim1_55 <<- keep_iterations(load_sim_results("DGP-1", periods = 55), 500)
+  sim2_55 <<- keep_iterations(load_sim_results("DGP-2", periods = 55), 500)
+  sim3_55 <<- keep_iterations(load_sim_results("DGP-3", periods = 55), 500)
+  sim4_55 <<- keep_iterations(load_sim_results("DGP-4", periods = 55), 500)
+  sim5_55 <<- keep_iterations(load_sim_results("DGP-5", periods = 55), 500)
+  sim6_55 <<- keep_iterations(load_sim_results("DGP-6", periods = 55), 500)
+  sim7_55 <<- keep_iterations(load_sim_results("DGP-7", periods = 55), 500)
+  sim8_55 <<- keep_iterations(load_sim_results("DGP-8", periods = 55), 500)
+  writeLines("All Results loaded succesfully")
   
 }
 
@@ -1193,19 +1202,17 @@ load_all_results <- function(){
 # function to trim excess iterations
 keep_iterations <- function(sim_data, num_iterations = 500) {
   
-  if (length(unique(sim_data$iteration)) == num_iterations) {
+  if (length(unique(sim_data$iter)) == num_iterations) {
     out = sim_data
-  } else if(length(unique(sim_data$iteration)) > num_iterations){
+  } else if(length(unique(sim_data$iter)) > num_iterations){
     it = rep(1:500, each = 7, length.out = 7 * num_iterations)
-    out = sim_data[sim_data$iteration %in% it, ]
+    out = sim_data[sim_data$iter %in% it, ]
   } else {
     out = "Not enough complete iterations present"
   }
   
   return(out)
 }
-
-
 
 
 #### Functions to analyze sim results ####
