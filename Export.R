@@ -1,8 +1,11 @@
 ### This script copies all figures and tables into Overleaf
 
-### Tables
-setwd("/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Tables")
+#### Tables ####
+setwd("/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/MC Paper/Tables")
 
+for (table in table_objects) {
+  
+}
 ## DGP 1
 save_table_results(sim1_table1, 
                    caption = "Simulation 1, Point Estimates of  $\\tau$", 
@@ -66,6 +69,51 @@ save_table_results(sim8_table1,
 save_table_results(sim8_table2, 
                    caption = "Simulation 8, Point Estimates of  $\\tau^{ES}$", 
                    file_name = "Sim8_dyn.tex")
+
+#### Figures ####
+setwd("/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/MC Paper/Figures")
+# simulate one of each DGP used for DGP plots
+periods <- c(55, 100)
+dgp_functions <- list(dgp_1_sim = dgp_1_sim, 
+                      dgp_2_sim = dgp_2_sim, 
+                      dgp_3_sim = dgp_3_sim, 
+                      dgp_4_sim = dgp_4_sim, 
+                      dgp_5_sim = dgp_5_sim, 
+                      dgp_6_sim = dgp_6_sim, 
+                      dgp_7_sim = dgp_7_sim, 
+                      dgp_8_sim = dgp_8_sim)
+
+# Loop over each DGP function and period to generate the simulations
+for (dgp in names(dgp_functions)) {
+  for (p in periods) {
+    # Create the variable name
+    var_name <- paste0("dgp", sub("dgp_", "", dgp), "_", p)
+    
+    # Generate the simulation and assign it to the variable
+    assign(var_name, dgp_functions[[dgp]](nobs = 500, nperiods = p))
+  }
+}
+
+# Collect simulations in list
+pattern <- "^dgp[0-9]+_sim_[0-9]+$"
+object_names <- ls(pattern = pattern)
+object_list <- mget(object_names)
+
+## Plot and export each
+for (name in names(object_list)) {
+  dgp_num = as.numeric(substring(as.character(name), 4, 4))
+  plot <- dgp_plot(object_list[[name]], sim_num = dgp_num)
+  
+  # Construct the filename for the plot
+  fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/MC Paper/Figures"
+  filename = paste0(name, ".png")
+  ggsave(filename, plot = plot, path = fp,
+         width = 18, height = 10, units = "cm")
+}
+
+
+# Remove the objects from the global environment
+rm(list = object_names)
 
 
 ### Export Package References
