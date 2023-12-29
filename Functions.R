@@ -1566,7 +1566,8 @@ plot_est_dev <- function(df) {
 
 # function to plot densities of estimates of each estimator
 plot_est_dens <- function(df) {
-  dynamic <- names(df)[3] == "rel_att_0"
+  nperiods = df$nperiods[1]
+  dynamic = names(df)[3] == "rel_att_0"
   
   if (dynamic) {
     # get estimator names
@@ -1579,6 +1580,7 @@ plot_est_dens <- function(df) {
       summarize(mean_e = mean(rel_att_0), min_e = min(rel_att_0), max_e = max(rel_att_0))
     
     title = "Distributions of Relative Period 0 Effect Estimates"
+    plot_title = paste0(title, ", ", nperiods, " Periods")
     cap = "Density of point estimates of the treatment effect in relative period 0 for each estimator. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
     
     # filter data
@@ -1611,7 +1613,7 @@ plot_est_dens <- function(df) {
             plot.title = element_text(hjust = 0.5, size=12),
             plot.subtitle = element_text(hjust = 0.5),
             legend.title = element_text(size = 12, hjust = 0.5)) +
-      ggtitle(title) + labs(x = "Point Estimate", y = "Density",
+      ggtitle(plot_title) + labs(x = "Point Estimate", y = "Density",
                             caption = cap)
     
     } else {
@@ -1624,6 +1626,7 @@ plot_est_dens <- function(df) {
       summarize(mean_e = mean(ATET), min_e = min(ATET), max_e = max(ATET))
     
     title = "Distributions of ATET Estimates"
+    plot_title = paste0(title, ", ", nperiods, " Periods")
     cap = "Density of point estimates of the ATET for each estimator. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value, if only one is visible, the true value does not vary."
     
     # filter data
@@ -1656,7 +1659,7 @@ plot_est_dens <- function(df) {
             plot.title = element_text(hjust = 0.5, size=12),
             plot.subtitle = element_text(hjust = 0.5),
             legend.title = element_text(size = 12, hjust = 0.5)) +
-      ggtitle(title) + labs(x = "Point Estimate", y = "Density",
+      ggtitle(plot_title) + labs(x = "Point Estimate", y = "Density",
                             caption = cap)
   }
 
