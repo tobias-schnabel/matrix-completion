@@ -1474,6 +1474,7 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
     }
     # set as plot title
     plot_title = paste("Outcome Data from One Draw of Simulation", sim_num)
+    cap = "All observations from one draw of the simulation, colored lines represent group means for each treatment group."
     
     p = df %>% 
       ggplot(aes(x = period, y = y, group = unit)) + 
@@ -1494,7 +1495,7 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
             legend.title = element_text(size = 12, hjust = 0.5)) +
       guides(color = guide_legend(title.position = "top")) +
       ggtitle(plot_title) +
-      labs(subtitle = subtitle) +
+      labs(subtitle = subtitle, caption = cap) +
       scale_x_continuous(breaks = seq(0, 100, 20))  # ticks at 20, 40, 60, 80, 100
     
     # Add vertical lines for each treatment group
@@ -1511,16 +1512,11 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
 }
 
 # Function to plot deviations from true Effect
-plot_st_dev <- function(df) {
+plot_est_dev <- function(df) {
+  dynamic <- names(df)[3] == "rel_att_0"
   
-}
-
-# function to plot densities of estimates of each estimator
-plot_est_dens <- function(df) {
-    dynamic <- names(df)[3] == "rel_att_0"
-  
-  # get estimator names
   if (dynamic) {
+    # get estimator names
     estimators = c("CS", "SA", "TWFE", "MC-NNM", "BJS", "TRUE") 
     
     # Define your custom color palette
@@ -1542,7 +1538,7 @@ plot_est_dens <- function(df) {
     title = "Deviation from True Treatment Effect"
     cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the mean of point estimates of the Treatment Effect in\nRelative Periods -10 to 10. Missing Points mean that an Estimate is not produced for that relative period."
     
-    # Build the plot
+    # Build plot
     p <- event_study_df %>%
       ggplot(aes(x = relative_period, y = value, group = estimator, color = estimator)) +
       geom_line(aes(linetype = estimator, size = estimator), na.rm = T) +  # conditional line type and size
@@ -1559,6 +1555,26 @@ plot_est_dens <- function(df) {
             legend.position = "bottom") +
       guides(color = guide_legend(override.aes = list(size=3)), 
              size = "none", linetype = "none", shape = "none")  # hide size, linetype legends
+  } else {
+    estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
+    # Assign colors
+    my_palette = c("MC-NNM" = "#4E79A7", "TWFE" = "#F28E2B", "CS" = "#E15759", 
+                   "SA" = "#B07AA1", "dCdH" = "#EDC948", "BJS" = "#59A14F") 
+    
+  }
+}
+
+# function to plot densities of estimates of each estimator
+plot_est_dens <- function(df) {
+  dynamic <- names(df)[3] == "rel_att_0"
+  
+  if (dynamic) {
+    true_v = df %>% filter(estimator == "TRUE") %>% 
+      summarize(mean_e = mean(rel_att_0), min_e = min(rel_att_0), max_e = max(rel_att_0))
+    
+    title = "Distributions of relative period t=0 Effect Estimates"
+    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the density of point estimates of\n the ATET. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    
     
     } else {
     estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
