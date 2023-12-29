@@ -1023,12 +1023,13 @@ run_sim <- function(i, fun, n = 500, t = 100, quiet = T) {
 }
 
 ## Function to execute the simulation, not parallelized
-run_sim_map <- function(iterations, sim_function) {
+run_sim_map <- function(iterations, sim_function, n = 500, t = 100) {
   cat("Simulating ", deparse(substitute(sim_function)), ", ",
       length(iterations), "Iterations\n", "Iteration: ")
   # Use purrr:map() to run simulations 
   start_time = Sys.time()
-  out_list <- purrr::map(iterations, ~run_sim(.x, sim_function, quiet = F))
+  out_list <- purrr::map(iterations, ~run_sim(.x, sim_function, 
+                                              n = n, t = t, quiet = F))
   
   # Combine the list of data frames into a single data frame
   out_df <- dplyr::bind_rows(out_list)
