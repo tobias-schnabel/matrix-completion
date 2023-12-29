@@ -106,3 +106,5 @@ writeLines(modified_entries, con = bib_file)
 setwd("~/Git/matrix-completion")
 file.copy("truevals.R", "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Tex/truevals.R",
           overwrite = T) # copy code to overleaf
+
+setwd("/Users/ts/Git/matrix-completion")
