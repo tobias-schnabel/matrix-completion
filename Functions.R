@@ -10,7 +10,7 @@ writeLines("Seed set : 1234")
 dgp_1_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
-                      treated.period = 50) {
+                      treated.period = floor(nperiods / 2)) {
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
@@ -70,7 +70,7 @@ dgp_1_sim <- function(nobs = 500,
 dgp_2_sim <- function(nobs = 500, 
                   nperiods = 100,
                   nobsgroups = 50,
-                  treated.period = 50) {
+                  treated.period = floor(nperiods / 2)) {
   
   # Unit Fixed Effects
   unit <- tibble(
@@ -425,8 +425,8 @@ dgp_7_sim <- function(nobs = 500,
 
 ## DGP 8  Multiple Treatment Groups, Time-Varying Heterogeneous TE, 
 # NO PARALLEL TRENDS
-dgp_8_sim <- function(){
-  data = dgp_7_sim()
+dgp_8_sim <- function(nobs = 500, nperiods = 100){
+  data = dgp_7_sim(nobs = nobs, nperiods = nperiods)
   # set flag to false so that estimators do not use nuisance covariate
   data$use_cov = F 
   
@@ -590,7 +590,7 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
   nperiods = get_num_periods(data)
   cohorts = get_cohorts(data) # helper function to label cohorts for fect
   # check whether we should use covariates in estimation
-  use_covariates = as.logical(data$use_cov[1]) 
+  use_covariates = as.logical(cohorts$use_cov[1]) 
   # adjust estimation formula to include covariates for dgp 7, 8
   if (use_covariates) {
     form = y ~ treat + nuisance
@@ -604,11 +604,11 @@ est_mc <- function(data, true_rel_att, iteration = 0, k = 2, n_lam = 5){
                                     normalize = T)) # normalize to speed up
   
   # Check whether to use static ATET or relative periods
-  relative = as.logical(data$use_cum_te[1]) 
+  relative = as.logical(cohorts$use_cum_te[1]) 
   
   if(relative) {
     # Subset to keep relative period estimates of interest
-    indices = get_rel_indices(data)
+    indices = get_rel_indices(cohorts)
     negative_index = indices$neg
     positive_index = indices$pos
     rel_att = tail(out$att, indices$len) # get relative period effect estimates incl. 0
@@ -980,13 +980,14 @@ timer <- function(func, ...){
 }
 
 ## Function to compare estimators in an iteration
-run_sim <- function(i, fun, quiet = T) {
+run_sim <- function(i, fun, n = 500, t = 100, quiet = T) {
   # print progress
   if (quiet == F) {
     cat(" ", i, "...")
   }
   # make data from function
-  dt = withr::with_seed(i, fun()) # use with_seed to guarantee reproducibility
+  # use with_seed to ensure reproducibility
+  dt = withr::with_seed(i, fun(nobs = n, nperiods = t))
   
   ## compute true relative period ATTs
   # check whether to use static ATET or relative periods
@@ -1008,19 +1009,51 @@ run_sim <- function(i, fun, quiet = T) {
   dcdh = est_dcdh(data = dt, true_rel_att = true_rel_att, iteration = i)  
   bjs = est_bjs(data = dt, true_rel_att = true_rel_att, iteration = i)  
   
-  results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>% 
-    select(iter, everything())
-
+  if (relative) {
+    results_tibble <- rbind(true, mc, did, cs, sa, bjs) %>%
+      mutate(nperiods = get_num_periods(dt)) %>% 
+      select(iter, everything())
+  } else {
+    results_tibble <- rbind(true, mc, did, cs, sa, dcdh, bjs) %>%
+      mutate(nperiods = get_num_periods(dt)) %>% 
+      select(iter, everything())
+  }
+  
   return(results_tibble)
 }
 
+## Function to execute simulations, parallelized with progress bar
+run_sim_parallel <- function(iterations, sim_function, n = 500, t = 100) {
+  cat("Simulating ", deparse(substitute(sim_function)), ", ", 
+      paste0("N = ", n , ", T = ", t, " "),
+      length(iterations), "Iterations:\n")
+  
+  start_time = Sys.time()
+  
+  # Use pbmclapply() for parallel execution with a progress bar
+    out = suppressWarnings(
+      pbmcapply::pbmclapply(iterations, 
+                 function(i) run_sim(i, sim_function, n = n, t = t))
+    )  
+  
+  # Bind all the output data frames into a single data frame
+  out_df <- do.call(rbind, out)
+  
+  end_time = Sys.time()
+  cat("Elapsed time: ", round(end_time - start_time, digits = 1), "\n")
+  cat("Simulation of  ", deparse(substitute(sim_function)), " with ", 
+      paste0("N = ", n , ", T = ", t, " ")," complete \n")
+  
+  return(tibble(out_df))
+}
 ## Function to execute the simulation, not parallelized
-run_sim_map <- function(iterations, sim_function) {
+run_sim_map <- function(iterations, sim_function, n = 500, t = 100) {
   cat("Simulating ", deparse(substitute(sim_function)), ", ",
       length(iterations), "Iterations\n", "Iteration: ")
   # Use purrr:map() to run simulations 
   start_time = Sys.time()
-  out_list <- purrr::map(iterations, ~run_sim(.x, sim_function, quiet = F))
+  out_list <- purrr::map(iterations, ~run_sim(.x, sim_function, 
+                                              n = n, t = t, quiet = F))
   
   # Combine the list of data frames into a single data frame
   out_df <- dplyr::bind_rows(out_list)
@@ -1033,49 +1066,41 @@ run_sim_map <- function(iterations, sim_function) {
 }
 
 
-## Function to execute the simulation, parallelized using mclapply
-run_sim_parallel <- function(iterations, sim_function) {
-  cat("Simulating ", deparse(substitute(sim_function)), ", ",
-      length(iterations), "Iterations:\n")
-  # Use mclapply() to run simulations in parallel
-  start_time = Sys.time()
-  out = suppressWarnings(
-    mclapply(
-      iterations, function(i) run_sim(i, sim_function, quiet = F), mc.cores = globalcores)
-  )
-  
-  # Bind all the output data frames into a single data frame
-  out_df <- do.call(rbind, out)
-    end_time = Sys.time()
-    cat("Elapsed time: ", round(end_time - start_time, digits = 1), "\n")
-    cat("Simulation of  ", deparse(substitute(sim_function)), " complete \n")
-  # Return the combined data frame
-  return(tibble(out_df))
-}
-
 
 #### Utility functions for simulating ####
 # parallelization leads to errors, which leads to entire iterations missing
 # this helper counts and removes those rows
 verify_sim_results <- function(input_tibble) {
-  error_count <- sum(grepl("error|Error", input_tibble$iteration)) 
+  error_count <- sum(grepl("error|Error", input_tibble$iter)) 
   
-  clean_tibble <- input_tibble[!(grepl("error|Error", input_tibble$iteration, ignore.case = TRUE)), ]
+  clean_tibble <- input_tibble[!(grepl("error|Error", input_tibble$iter, ignore.case = TRUE)), ]
   
   cat("Number of corrupted rows:", error_count, "\n")
   return(clean_tibble)
 }
 
 verify_iteration_counts <- function(input_tibble) {
-  iteration_counts <- table(input_tibble$iteration)
-  incorrect_iterations <- iteration_counts[iteration_counts != 7]
+  iteration_counts <- table(input_tibble$iter)
   
-  if (length(incorrect_iterations) == 0) {
-    cat("All iterations appear exactly 7 times.\n")
+  results_static <- names(input_tibble)[3] == "ATET"
+  if (results_static) {
+    incorrect_iterations <- iteration_counts[iteration_counts != 7]
+    if (length(incorrect_iterations) == 0) {
+      cat("All iterations appear exactly 7 times.\n")
+    } else {
+      cat("Incorrect iteration counts:\n")
+      print(incorrect_iterations)
+    }
   } else {
-    cat("Incorrect iteration counts:\n")
-    print(incorrect_iterations)
+    incorrect_iterations <- iteration_counts[iteration_counts != 6]
+    if (length(incorrect_iterations) == 0) {
+      cat("All iterations appear exactly 6 times.\n")
+    } else {
+      cat("Incorrect iteration counts:\n")
+      print(incorrect_iterations)
+    }
   }
+  
 }
 
 # function to save sim results to RDS
@@ -1083,8 +1108,11 @@ save_sim_results <- function(input_tibble, file_name = "test") {
   # get the current date and time
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
   
+  # Get number of periods
+  nperiods = input_tibble$nperiods[1]
+  
   # create the file name with the custom name and current date and time
-  full_file_name <- paste0(file_name, "_", current_time, ".rds")
+  full_file_name <- paste0(file_name, "-", nperiods, "-periods_", current_time, ".rds")
   
   # construct the relative file path
   file_path <- file.path('SimResults', full_file_name)
@@ -1102,12 +1130,13 @@ save_sim_results <- function(input_tibble, file_name = "test") {
 }
 
 # function to load most recently saved version of each DGP results
-load_sim_results <- function(file_name = "test") {
+load_sim_results <- function(file_name = "test", periods) { 
   # specify directory 
   directory <- 'SimResults'
   
   # use a pattern match to filter 
-  pattern <- paste0('^', file_name, '.*\\.rds$')
+  # pattern <- paste0('^', file_name, '.*\\.rds$')
+  pattern <- paste0('^', file_name, '-', periods, '-periods_.*\\.rds$') 
   
   # list all files in dir that match the pattern
   files <- list.files(path = directory, pattern = pattern)
@@ -1133,11 +1162,14 @@ load_sim_results <- function(file_name = "test") {
   loaded_data = readRDS(most_recent_file) # load most recent file
   
   # make sure numeric values are numeric
-  loaded_data$iteration = as.numeric(loaded_data$iteration)
-  loaded_data$est = as.numeric(loaded_data$est)
-  loaded_data$se = as.numeric(loaded_data$se)
-  loaded_data$cum_est = as.numeric(loaded_data$cum_est)
-  loaded_data$cum_se = as.numeric(loaded_data$cum_se)
+  results_static <- names(loaded_data)[3] == "ATET"
+  if (results_static) {
+    loaded_data = loaded_data %>% mutate(ATET = as.numeric(ATET),
+                           nperiods = as.numeric(nperiods))
+  } else {
+    loaded_data = loaded_data %>%
+      mutate_if(~ names(.x) != "estimator", as.numeric)
+    }
   
   cat("Loaded file:", sorted_files[1], "\n") # print confirmation
   
@@ -1146,37 +1178,54 @@ load_sim_results <- function(file_name = "test") {
 }
 
 # function to load all results and trim to 500 iterations
-load_all_results <- function(){
-  writeLines("Loading saved results")
-  sim1 <<- keep_iterations(load_sim_results("Sim_1"), 500)
-  sim2 <<- keep_iterations(load_sim_results("Sim_2"), 500)
-  sim3 <<- keep_iterations(load_sim_results("Sim_3"), 500)
-  sim4 <<- keep_iterations(load_sim_results("Sim_4"), 500)
-  sim5 <<- keep_iterations(load_sim_results("Sim_5"), 500)
-  sim6 <<- keep_iterations(load_sim_results("Sim_6"), 500)
-  sim7 <<- keep_iterations(load_sim_results("Sim_7"), 500)
-  sim8 <<- keep_iterations(load_sim_results("Sim_8"), 500)
-  writeLines("Results loaded succesfully")
+load_all_results <- function() {
+  writeLines("Loading saved results for 100 periods")
   
+  # Load and assign results for 100 periods
+  sim1_100 <<- keep_iterations(load_sim_results("DGP-1", periods = 100), 500)
+  sim2_100 <<- keep_iterations(load_sim_results("DGP-2", periods = 100), 500)
+  sim3_100 <<- keep_iterations(load_sim_results("DGP-3", periods = 100), 500)
+  sim4_100 <<- keep_iterations(load_sim_results("DGP-4", periods = 100), 500)
+  sim5_100 <<- keep_iterations(load_sim_results("DGP-5", periods = 100), 500)
+  sim6_100 <<- keep_iterations(load_sim_results("DGP-6", periods = 100), 500)
+  sim7_100 <<- keep_iterations(load_sim_results("DGP-7", periods = 100), 500)
+  sim8_100 <<- keep_iterations(load_sim_results("DGP-8", periods = 100), 500)
+  
+  writeLines("Loading saved results for 55 periods")
+  
+  # Load and assign results for 55 periods
+  sim1_55 <<- keep_iterations(load_sim_results("DGP-1", periods = 55), 500)
+  sim2_55 <<- keep_iterations(load_sim_results("DGP-2", periods = 55), 500)
+  sim3_55 <<- keep_iterations(load_sim_results("DGP-3", periods = 55), 500)
+  sim4_55 <<- keep_iterations(load_sim_results("DGP-4", periods = 55), 500)
+  sim5_55 <<- keep_iterations(load_sim_results("DGP-5", periods = 55), 500)
+  sim6_55 <<- keep_iterations(load_sim_results("DGP-6", periods = 55), 500)
+  sim7_55 <<- keep_iterations(load_sim_results("DGP-7", periods = 55), 500)
+  sim8_55 <<- keep_iterations(load_sim_results("DGP-8", periods = 55), 500)
+  
+  writeLines("All Results loaded successfully")
+  
+  # Return the names of the loaded results
+  resultlist <<-list(sim1_100, sim2_100, sim3_100, sim4_100, sim5_100, sim6_100, sim7_100, sim8_100,
+           sim1_55, sim2_55, sim3_55, sim4_55, sim5_55, sim6_55, sim7_55, sim8_55)
 }
+
 
 
 # function to trim excess iterations
 keep_iterations <- function(sim_data, num_iterations = 500) {
   
-  if (length(unique(sim_data$iteration)) == num_iterations) {
+  if (length(unique(sim_data$iter)) == num_iterations) {
     out = sim_data
-  } else if(length(unique(sim_data$iteration)) > num_iterations){
+  } else if(length(unique(sim_data$iter)) > num_iterations){
     it = rep(1:500, each = 7, length.out = 7 * num_iterations)
-    out = sim_data[sim_data$iteration %in% it, ]
+    out = sim_data[sim_data$iter %in% it, ]
   } else {
     out = "Not enough complete iterations present"
   }
   
   return(out)
 }
-
-
 
 
 #### Functions to analyze sim results ####
@@ -1271,89 +1320,88 @@ results_html <- function(sim_results, type = "static") {
   sim_results$estimator = factor(sim_results$estimator, 
                                  levels = unique(sim_results$estimator))
   
-  
-  
   # get true values for bias
   true_values = filter(sim_results, estimator == "TRUE")
+  results_static <- names(sim_results)[3] == "ATET"
   
-  # create 'TRUE' row for summary table
-  true_summary_static = true_values %>%
-    summarise(
-      estimator = "TRUE",
-      min_est  = min(est),
-      mean_est = mean(est, na.rm = F),
-      max_est = max(est),
-      sd_est = sd(est),
-      mean_se = NA,
-      bias = NA,
-      rmse = NA,
-      .groups = 'drop'
-    )
-  
-  true_summary_dynamic = true_values %>%
-    summarise(
-      estimator = "TRUE",
-      min_est  = min(cum_est),
-      mean_est = mean(cum_est, na.rm = F),
-      max_est = max(cum_est),
-      sd_est = sd(cum_est),
-      mean_se = NA,
-      bias = NA,
-      rmse = NA,
-      .groups = 'drop'
-    )
-  
-  static_summary = sim_results %>% # summary results for static-type estimate
-    filter(estimator != "TRUE") %>%
-    group_by(estimator) %>%
-    summarise(
-      min_est  = min(est),
-      mean_est = mean(est, na.rm = F),
-      max_est = max(est),
-      sd_est = sd(est),
-      mean_se = mean(se, na.rm = F),
-      bias = mean(est) - mean(true_values$est, na.rm = F),
-      rmse = sqrt(mean((est - mean(true_values$est, 
-                                   na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for output
-    )
-  
-  dynamic_summary = sim_results %>% # summary results for dynamic-type estimate
-    filter(estimator != "TRUE") %>% filter(estimator != "dCdH") %>% 
-    group_by(estimator) %>%
-    summarise(
-      min_est  = min(cum_est),
-      mean_est = mean(cum_est, na.rm = F),
-      max_est = max(cum_est),
-      sd_est = sd(cum_est),
-      mean_se = mean(cum_se, na.rm = F),
-      bias = mean(cum_est) - mean(true_values$cum_est, na.rm = F),
-      rmse = sqrt(mean((cum_est - mean(true_values$cum_est, 
-                                       na.rm = F))^2, na.rm = F)),
-      .groups = 'drop'  # avoid the grouped_df class for output
-    )
-  
-  
-  if (type == "static") {
+  if (results_static) {
+    # create 'TRUE' row for summary table (static)
+    true_summary_static = true_values %>%
+      summarise(
+        estimator = "TRUE",
+        min_est  = min(ATET),
+        mean_est = mean(ATET, na.rm = F),
+        max_est = max(ATET),
+        sd_est = sd(ATET),
+        bias = NA,
+        rmse = NA,
+        .groups = 'drop'
+      )
+    
+    static_summary = sim_results %>% 
+      filter(estimator != "TRUE") %>%
+      group_by(estimator) %>%
+      summarise(
+        min_est  = min(ATET),
+        mean_est = mean(ATET, na.rm = F),
+        max_est = max(ATET),
+        sd_est = sd(ATET),
+        bias = mean(ATET) - mean(true_values$ATET, na.rm = F),
+        rmse = compute_rmse(true_values$ATET, ATET),
+        .groups = 'drop'
+      )
+    
     final_summary = bind_rows(true_summary_static, static_summary) %>% 
-      select("Estimator" = estimator, Bias = bias, "RMSE" = rmse,
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
-             "Mean SE" = mean_se, "Bias" = bias, "RMSE" = rmse)
-  } else if (type == "dynamic"){
+      select("Estimator" = estimator, "Min" = min_est, "Mean" = mean_est, "Max" = max_est, 
+             "SD" = sd_est, "Bias" = bias, "RMSE" = rmse)
+    
+  } else {
+    # create 'TRUE' row for summary table (dynamic)
+    true_summary_dynamic = true_values %>%
+      summarise(
+        estimator = "TRUE",
+        min_est  = min(rel_att_0),
+        mean_est = mean(rel_att_0, na.rm = F),
+        max_est = max(rel_att_0),
+        sd_est = sd(rel_att_0),
+        bias_est = NA,
+        rmse_est = NA,
+        bias_all_rp = NA,
+        rmse_all_rp = NA,
+        .groups = 'drop'
+      )
+    
+    dynamic_summary = sim_results %>% 
+      filter(estimator != "TRUE") %>% 
+      group_by(estimator) %>%
+      summarise(
+        min_est  = min(rel_att_0),
+        mean_est = mean(rel_att_0, na.rm = F),
+        max_est = max(rel_att_0),
+        sd_est = sd(rel_att_0),
+        bias_est = mean(rel_att_0) - mean(true_values$rel_att_0, na.rm = F),
+        rmse_est = compute_rmse(true_values$rel_att_0, rel_att_0),
+        rmse_all_rp = mean(rel_rmse),
+        bias_all_rp = mean(rel_bias),
+        .groups = 'drop'
+      )
+    
     final_summary = bind_rows(true_summary_dynamic, dynamic_summary) %>% 
-      select("Estimator" = estimator, Bias = bias, "RMSE" = rmse,
-             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, "SD" = sd_est,
-             "Mean SE" = mean_se)
+      select("Estimator" = estimator, 
+             "Min" = min_est, "Mean" = mean_est, "Max" = max_est, 
+             "SD" = sd_est, "t=0 Bias" = bias_est, "t=0 RMSE" = rmse_est,
+             "All Relative Periods Bias" = bias_all_rp,
+             "ALL Relative Periods RMSE" = rmse_all_rp)
   }
   
   # round numeric columns to 3 digits
   numeric_columns <- sapply(final_summary, is.numeric)
   final_summary <- datatable(final_summary, options = list(autoWidth = TRUE, scrollX = TRUE, dom = 't')) %>% 
-    formatRound(columns = which(numeric_columns), digits = 3)
+    DT::formatRound(columns = which(numeric_columns), digits = 3)
   
   return(final_summary)
-  
 }
+
 
 # function to save results tables to latex
 options(knitr.kable.NA = '-')
@@ -1434,10 +1482,13 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
     
     if (is.null(sim_num)) {
       # extract the number from the df function name
-      sim_num = as.integer(gsub("[^0-9]", "", substitute(df)))
+      df_name <- deparse(substitute(df))
+      sim_num <- as.integer(sub("^.*?(\\d+).*", "\\1", df_name))
     }
     # set as plot title
-    plot_title = paste("Outcome Data from One Draw of Simulation", sim_num)
+    plot_title = paste0("Outcome Data from One Draw of Simulation ", sim_num, " with ",
+                        get_num_periods(df), " Periods")
+    cap = "All observations from one draw of the simulation, colored lines represent group means for each treatment group."
     
     p = df %>% 
       ggplot(aes(x = period, y = y, group = unit)) + 
@@ -1458,13 +1509,13 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
             legend.title = element_text(size = 12, hjust = 0.5)) +
       guides(color = guide_legend(title.position = "top")) +
       ggtitle(plot_title) +
-      labs(subtitle = subtitle) +
+      labs(subtitle = subtitle, caption = cap) +
       scale_x_continuous(breaks = seq(0, 100, 20))  # ticks at 20, 40, 60, 80, 100
     
     # Add vertical lines for each treatment group
     vlines <- data.frame(xintercept = treat_times, group = treat_times)
     p = p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(group)), 
-                        size = 0.5, linetype = "dashed", show.legend = FALSE)
+                        linewidth = 0.5, linetype = "dashed", show.legend = FALSE)
     
     # Set color scale and replace treatment group 100 with "Control" in legend
     p = p + scale_color_manual(values = my_palette,
@@ -1474,12 +1525,13 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
   })
 }
 
-# function to plot densities of estimates of each estimator
-plot_est_dens <- function(df) {
-    dynamic <- names(df)[3] == "rel_att_0"
+# Function to plot deviations from true Effect
+plot_est_dev <- function(df) {
+  nperiods = df$nperiods[1]
+  dynamic <- names(df)[3] == "rel_att_0"
   
-  # get estimator names
   if (dynamic) {
+    # get estimator names
     estimators = c("CS", "SA", "TWFE", "MC-NNM", "BJS", "TRUE") 
     
     # Define your custom color palette
@@ -1499,9 +1551,11 @@ plot_est_dens <- function(df) {
       summarise(value = mean(value, na.rm = TRUE), .groups = 'drop')
     
     title = "Deviation from True Treatment Effect"
-    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the mean of point estimates of the Treatment Effect in\nRelative Periods -10 to 10. Missing Points mean that an Estimate is not produced for that relative period."
+    plot_title = paste0(title, ", ", nperiods, " Periods")
+    cap = paste0("Mean of point estimates of the Treatment Effect for each estimator in Relative Periods -10 to 10 over ", max(df$iter), " iterations ", 
+                 ". Missing Points mean that an Estimate is not produced for that relative period.")
     
-    # Build the plot
+    # Build plot
     p <- event_study_df %>%
       ggplot(aes(x = relative_period, y = value, group = estimator, color = estimator)) +
       geom_line(aes(linetype = estimator, size = estimator), na.rm = T) +  # conditional line type and size
@@ -1513,11 +1567,99 @@ plot_est_dens <- function(df) {
       labs(x = "Relative Time Period", y = "Estimated Effect - True Effect", color = "Estimator",
            caption = cap) +
       scale_x_continuous(breaks = -10:10) +
-      ggtitle(title) +
+      ggtitle(plot_title) +
       theme(plot.title = element_text(hjust = 0.5),
             legend.position = "bottom") +
       guides(color = guide_legend(override.aes = list(size=3)), 
              size = "none", linetype = "none", shape = "none")  # hide size, linetype legends
+  } else {
+    estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
+    # Assign colors
+    my_palette = c("MC-NNM" = "#4E79A7", "TWFE" = "#F28E2B", "CS" = "#E15759", 
+                   "SA" = "#B07AA1", "dCdH" = "#EDC948", "BJS" = "#59A14F") 
+    
+    # Extract the true value
+    true_atet <- df %>% filter(estimator == "TRUE") %>% summarize(ATET = mean(ATET)) %>% pull(ATET)
+    
+    # Calculate bias for each estimator
+    box <- df %>%
+      filter(estimator %in% estimators) %>%
+      mutate(bias = ATET - true_atet, 
+             estimator = factor(estimator, levels = estimators))
+    
+    title = "Deviation from True Treatment Effect"
+    plot_title = paste0(title, ", ", nperiods, " Periods")
+    cap = paste0("Distribution of the bias of each estimator over ", 
+                 max(box$iter), " iterations")
+    
+    # Plot
+    p <- ggplot(box, aes(x = estimator, y = bias, fill = estimator)) +
+      geom_boxplot() +
+      scale_fill_manual(values = my_palette) +
+      theme_minimal() +
+      ggtitle(plot_title) +
+      labs(x = "Estimator", y = "Bias (Estimated ATET - True ATET)", 
+           fill = "Estimator", caption = cap) +
+      theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5))
+    
+    # Display the plot
+    p
+    }
+  
+  return(p)
+}
+
+# function to plot densities of estimates of each estimator
+plot_est_dens <- function(df) {
+  nperiods = df$nperiods[1]
+  dynamic = names(df)[3] == "rel_att_0"
+  
+  if (dynamic) {
+    # get estimator names
+    estimators = c("CS", "SA", "TWFE", "MC-NNM", "BJS") #, "TRUE" 
+    
+    # Define your custom color palette
+    my_palette = c("TWFE" = "#F28E2B", "CS" = "#E15759", "SA" = "#B07AA1",  #"#4E79A7" "#F28E2B" "#E15759" "#76B7B2" "#59A14F" "#EDC948" "#B07AA1" "#FF9DA7" "#9C755F" "#BAB0AC"
+                   "BJS" = "#59A14F", "MC-NNM" = "#4E79A7") # , "TRUE" = "#BAB0AC"
+    true_v = df %>% filter(estimator == "TRUE") %>% 
+      summarize(mean_e = mean(rel_att_0), min_e = min(rel_att_0), max_e = max(rel_att_0))
+    
+    title = "Distributions of Relative Period 0 Effect Estimates"
+    plot_title = paste0(title, ", ", nperiods, " Periods")
+    cap = "Density of point estimates of the treatment effect in relative period 0 for each estimator. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    
+    # filter data
+    df = df %>% filter(estimator %in% estimators)
+    
+    # Create plot variable depending on 'dynamic' argument
+    plot_var = "rel_att_0"
+    
+    # Set factor levels for estimator to control facet order
+    df$estimator = factor(df$estimator, levels = estimators)
+    
+    # Order the dataframe by estimator
+    df = df %>% arrange(estimator)
+    
+    # Build the plot
+    p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
+      geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
+      scale_color_manual(values = my_palette) +
+      geom_vline(aes(xintercept = true_v$min_e), 
+                 linetype = "dashed", color = "red", alpha = 0.45) +
+      geom_vline(aes(xintercept = true_v$mean_e), 
+                 linetype = "dashed", color = "red") +
+      geom_vline(aes(xintercept = true_v$max_e), 
+                 linetype = "dashed", color = "red", alpha = 0.45) +
+      guides(color = "none", fill = "none") +
+      facet_wrap(~ estimator, scales = "free") + 
+      theme(legend.position = 'bottom',
+            axis.title = element_text(size = 14),
+            axis.text = element_text(size = 9),
+            plot.title = element_text(hjust = 0.5, size=12),
+            plot.subtitle = element_text(hjust = 0.5),
+            legend.title = element_text(size = 12, hjust = 0.5)) +
+      ggtitle(plot_title) + labs(x = "Point Estimate", y = "Density",
+                            caption = cap)
     
     } else {
     estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
@@ -1529,7 +1671,8 @@ plot_est_dens <- function(df) {
       summarize(mean_e = mean(ATET), min_e = min(ATET), max_e = max(ATET))
     
     title = "Distributions of ATET Estimates"
-    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the density of point estimates of\n the ATET. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    plot_title = paste0(title, ", ", nperiods, " Periods")
+    cap = "Density of point estimates of the ATET for each estimator. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value, if only one is visible, the true value does not vary."
     
     # filter data
     df = df %>% filter(estimator %in% estimators)
@@ -1561,7 +1704,7 @@ plot_est_dens <- function(df) {
             plot.title = element_text(hjust = 0.5, size=12),
             plot.subtitle = element_text(hjust = 0.5),
             legend.title = element_text(size = 12, hjust = 0.5)) +
-      ggtitle(title) + labs(x = "Point Estimate", y = "Density",
+      ggtitle(plot_title) + labs(x = "Point Estimate", y = "Density",
                             caption = cap)
   }
 
@@ -1569,40 +1712,23 @@ plot_est_dens <- function(df) {
 }
 
 ## function to combine dgp plot and densities and save
-plot_combined <- function(dgp_number, save = F) {
-  # Generate the DGP plot based on the number argument
-  dgp_data = switch(dgp_number,
-                    dgp_1_sim(),
-                    dgp_2_sim(),
-                    dgp_3_sim(),
-                    dgp_4_sim(),
-                    dgp_5_sim(),
-                    dgp_6_sim(),
-                    dgp_7_sim(),
-                    dgp_8_sim())
-  dgp_plot = dgp_plot(dgp_data, "",  sim_num = dgp_number)
-  
-  # Generate the density plot based on the number argument
-  sim_data = switch(dgp_number,
-                    sim1,
-                    sim2,
-                    sim3,
-                    sim4,
-                    sim5,
-                    sim6,
-                    sim7,
-                    sim8)
+plot_combined <- function(sim_data, save = F) {
+  # Generate the density plot and deviation plot
   plot_est_dens = plot_est_dens(sim_data)
+  plot_est_dev = plot_est_dev(sim_data)
   
   # combine and arrange plots
-  plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
+  plot_combined <- grid.arrange(plot_est_dev, plot_est_dens, ncol = 1)
+  
+  # Get DGP number
+  dgp_num = as.numeric(substring(as.character(current_name), 4, 4))
  
   if (save ==T & Sys.info()[7] == "ts") {
-    fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Figures"
-    filename = paste0("Sim_", dgp_number, ".png")
+    fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/MC Paper/Figures/combined"
+    filename = paste0("Sim_", ".png")
     ggsave(filename, plot = plot_combined, path = fp,
            width = 18, height = 20, units = "cm")
   }
 }
 
-writeLines("Done!")
+writeLines("Ready")
