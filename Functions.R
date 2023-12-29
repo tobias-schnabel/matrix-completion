@@ -1106,10 +1106,10 @@ save_sim_results <- function(input_tibble, file_name = "test") {
   current_time <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
   
   # Get number of periods
-  nperiods = 
+  nperiods = input_tibble$nperiods[1]
   
   # create the file name with the custom name and current date and time
-  full_file_name <- paste0(file_name, "_", current_time, ".rds")
+  full_file_name <- paste0(file_name, "-", nperiods, "-periods_", current_time, ".rds")
   
   # construct the relative file path
   file_path <- file.path('SimResults', full_file_name)
@@ -1127,7 +1127,7 @@ save_sim_results <- function(input_tibble, file_name = "test") {
 }
 
 # function to load most recently saved version of each DGP results
-load_sim_results <- function(file_name = "test") {
+load_sim_results <- function(file_name = "test", number_periods = 100) {
   # specify directory 
   directory <- 'SimResults'
   
