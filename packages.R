@@ -82,6 +82,7 @@ base::remove(CRAN_packages, github_packages, installed_packages_cran,
   suppressMessages(suppressWarnings(library(parallel)))
   suppressMessages(suppressWarnings(library(did2s)))
   suppressMessages(suppressWarnings(library(gridExtra)))
+  suppressMessages(suppressWarnings(library(pbmcapply)))
   writeLines("All required CRAN packages are loaded")
 
   suppressMessages(suppressWarnings(library(DIDmultiplegt)))
