@@ -1033,7 +1033,8 @@ run_sim_parallel <- function(iterations, sim_function, n = 500, t = 100) {
   # Use pbmclapply() for parallel execution with a progress bar
     out = suppressWarnings(
       pbmcapply::pbmclapply(iterations, 
-                 function(i) run_sim(i, sim_function, n = n, t = t))
+                 function(i) run_sim(i, sim_function, n = n, t = t),
+                 mc.cores = globalcores)
     )  
   
   # Bind all the output data frames into a single data frame
