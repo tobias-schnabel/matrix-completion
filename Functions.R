@@ -1480,10 +1480,12 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
     
     if (is.null(sim_num)) {
       # extract the number from the df function name
-      sim_num = as.integer(gsub("[^0-9]", "", substitute(df)))
+      df_name <- deparse(substitute(df))
+      sim_num <- as.integer(sub("^.*?(\\d+).*", "\\1", df_name))
     }
     # set as plot title
-    plot_title = paste("Outcome Data from One Draw of Simulation", sim_num)
+    plot_title = paste0("Outcome Data from One Draw of Simulation ", sim_num, " with ",
+                        get_num_periods(df), " Periods")
     cap = "All observations from one draw of the simulation, colored lines represent group means for each treatment group."
     
     p = df %>% 
@@ -1715,10 +1717,13 @@ plot_combined <- function(sim_data, save = F) {
   
   # combine and arrange plots
   plot_combined <- grid.arrange(plot_est_dev, plot_est_dens, ncol = 1)
+  
+  # Get DGP number
+  dgp_num = as.numeric(substring(as.character(current_name), 4, 4))
  
   if (save ==T & Sys.info()[7] == "ts") {
-    fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/MC Paper/Figures"
-    filename = paste0("Sim_", dgp_number, ".png")
+    fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/MC Paper/Figures/combined"
+    filename = paste0("Sim_", ".png")
     ggsave(filename, plot = plot_combined, path = fp,
            width = 18, height = 20, units = "cm")
   }
