@@ -1569,12 +1569,50 @@ plot_est_dens <- function(df) {
   dynamic <- names(df)[3] == "rel_att_0"
   
   if (dynamic) {
+    # get estimator names
+    estimators = c("CS", "SA", "TWFE", "MC-NNM", "BJS") #, "TRUE" 
+    
+    # Define your custom color palette
+    my_palette = c("TWFE" = "#F28E2B", "CS" = "#E15759", "SA" = "#B07AA1",  #"#4E79A7" "#F28E2B" "#E15759" "#76B7B2" "#59A14F" "#EDC948" "#B07AA1" "#FF9DA7" "#9C755F" "#BAB0AC"
+                   "BJS" = "#59A14F", "MC-NNM" = "#4E79A7") # , "TRUE" = "#BAB0AC"
     true_v = df %>% filter(estimator == "TRUE") %>% 
       summarize(mean_e = mean(rel_att_0), min_e = min(rel_att_0), max_e = max(rel_att_0))
     
-    title = "Distributions of relative period t=0 Effect Estimates"
-    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the density of point estimates of\n the ATET. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    title = "Distributions of Relative Period 0 Effect Estimates"
+    cap = "Density of point estimates of the treatment effect in relative period 0 for each estimator. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
     
+    # filter data
+    df = df %>% filter(estimator %in% estimators)
+    
+    # Create plot variable depending on 'dynamic' argument
+    plot_var = "rel_att_0"
+    
+    # Set factor levels for estimator to control facet order
+    df$estimator = factor(df$estimator, levels = estimators)
+    
+    # Order the dataframe by estimator
+    df = df %>% arrange(estimator)
+    
+    # Build the plot
+    p = ggplot(df, aes(x = get(plot_var), color = factor(estimator))) +
+      geom_density(fill = "grey", alpha = 0.5) +  # fill color is grey
+      scale_color_manual(values = my_palette) +
+      geom_vline(aes(xintercept = true_v$min_e), 
+                 linetype = "dashed", color = "red", alpha = 0.45) +
+      geom_vline(aes(xintercept = true_v$mean_e), 
+                 linetype = "dashed", color = "red") +
+      geom_vline(aes(xintercept = true_v$max_e), 
+                 linetype = "dashed", color = "red", alpha = 0.45) +
+      guides(color = "none", fill = "none") +
+      facet_wrap(~ estimator, scales = "free") + 
+      theme(legend.position = 'bottom',
+            axis.title = element_text(size = 14),
+            axis.text = element_text(size = 9),
+            plot.title = element_text(hjust = 0.5, size=12),
+            plot.subtitle = element_text(hjust = 0.5),
+            legend.title = element_text(size = 12, hjust = 0.5)) +
+      ggtitle(title) + labs(x = "Point Estimate", y = "Density",
+                            caption = cap)
     
     } else {
     estimators = c("MC-NNM", "TWFE", "CS", "SA", "dCdH", "BJS")
@@ -1586,7 +1624,7 @@ plot_est_dens <- function(df) {
       summarize(mean_e = mean(ATET), min_e = min(ATET), max_e = max(ATET))
     
     title = "Distributions of ATET Estimates"
-    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the density of point estimates of\n the ATET. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    cap = "Density of point estimates of the ATET for each estimator. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value, if only one is visible, the true value does not vary."
     
     # filter data
     df = df %>% filter(estimator %in% estimators)
