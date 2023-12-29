@@ -1130,6 +1130,22 @@ save_sim_results <- function(input_tibble, file_name = "test") {
   cat("Tibble saved as:", full_file_name, "\n\n")
 }
 
+# function to git -add, -commit, and -push sim results
+push_sim_results <- function() {
+  if (Sys.info()[7] == "ts") {
+    current_date <- Sys.Date() # Get the current date in YYYY-MM-DD format
+    
+    system("git add SimResults/*.rds") # Add files in the SimResults folder
+    
+    system(paste("git commit -m 'Update on", current_date, "'")) # Commit
+    
+    # Find the current branch name and push
+    current_branch <- system("git rev-parse --abbrev-ref HEAD", intern = TRUE)
+    system(paste("git push origin", current_branch))
+    
+  }
+}
+
 # function to load most recently saved version of each DGP results
 load_sim_results <- function(file_name = "test", periods) { 
   # specify directory 

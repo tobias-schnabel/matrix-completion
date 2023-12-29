@@ -116,6 +116,8 @@ if (sim_bool == 0) {
   verify_iteration_counts(sim8_100)
   save_sim_results(sim8_100, "DGP-8")
   
+  # Push new results
+  push_sim_results()
   stop("Simulations Done!")
   
 } else if (sim_bool == 2) {
@@ -220,6 +222,9 @@ if (sim_bool == 0) {
   verify_iteration_counts(sim8_100)
   save_sim_results(sim8_100, "DGP-8")
   
+  # Push new results
+  push_sim_results()
+  
   # load results
   load_all_results()
   
@@ -275,6 +280,9 @@ if (sim_bool == 0) {
   sim8 = verify_sim_results(sim8_out)
   verify_iteration_counts(sim8)
   save_sim_results(sim8, "Sim_8")
+  
+  # Push new results
+  push_sim_results()
   
   # load all results
   load_all_results()
