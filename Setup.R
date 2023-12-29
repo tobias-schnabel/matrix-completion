@@ -6,6 +6,9 @@ source("packages.R") ## load packages
 source("Functions.R") ## load functions
 
 source("Get_Results.R") ## get results
+names(resultlist) <- c("sim1_100", "sim2_100", "sim3_100", "sim4_100", "sim5_100", 
+                       "sim6_100", "sim7_100", "sim8_100", "sim1_55", "sim2_55", 
+                       "sim3_55", "sim4_55", "sim5_55", "sim6_55", "sim7_55", "sim8_55")
 
 rmarkdown::render("Results.Rmd") # make results notebook
 
@@ -20,20 +23,20 @@ plot_combined(7, T) # dgp 7
 plot_combined(8, T) # dgp 8
 
 ## Make Tables
-analysis_types = c("static", "dynamic") # define analysis types
+numbers_of_periods = c(55, 100) # define analysis types
 
-for (i in 1:8) { # loop over DGPs and types, assign and print
+for (result in resultlist) { # loop over DGPs and types, assign and print
+  
+  # Get DGP number for DGP plotting
+  dgp_number <- substring(as.character(), 4, 4)
   dgp <- get(paste0("sim", i))
   
-  # Loop over analysis types
-  for (analysis_type in analysis_types) {
-    table_name <- paste0("sim", i, "_table", ifelse(analysis_type == "static", "1", "2"))
-    table <- analyze_sim_results(dgp, analysis_type)
-    
-    # assign to ibject for exporting
-    assign(table_name, table)
-    print.data.frame(table)
-  }
+  table_name <- paste0("sim", i, "_table", ifelse(analysis_type == "static", "1", "2"))
+  table <- analyze_sim_results(dgp, analysis_type)
+  
+  # assign to object for exporting
+  assign(table_name, table)
+  print.data.frame(table)
 }
 
 # On my machine only, export figures and tables into Overleaf
