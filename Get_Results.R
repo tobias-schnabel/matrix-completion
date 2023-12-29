@@ -9,10 +9,115 @@ writeLines("-----------------------------------------------------------------")
 writeLines("Press 0 to load results from disk to replicate tables and figures")
 writeLines("-----------------------------------------------------------------")
 sim_bool = utils::menu(c("Single-core (takes around 6h per simulation)", 
-                          "Parallelized (recommended, substantially faster but takes up 100% CPU)"), 
+                          "Parallelized (recommended, substantially faster but takes up 100% CPU)",
+                          "Parallelized, simulate only (does not generate tables/ figures, intended for remote machine)"), 
                         title = "Press 0 to abort and load saved data" )
 if (sim_bool == 0) {
   load_all_results()
+} else if (sim_bool == 3) {
+  ## Simulate using mclapply, save results and stop
+  
+  ## 55 periods ##
+  # DGP 1
+  sim1_55_out = run_sim_parallel(1:505, dgp_1_sim, n = 500, t = 55)
+  sim1_55 = verify_sim_results(sim1_55_out)
+  verify_iteration_counts(sim1_55)
+  save_sim_results(sim1_55, "DGP-1")
+  
+  # DGP 2
+  sim2_55_out = run_sim_parallel(1:505, dgp_2_sim, n = 500, t = 55)
+  sim2_55 = verify_sim_results(sim2_55_out)
+  verify_iteration_counts(sim2_55)
+  save_sim_results(sim2_55, "DGP-2")
+  
+  # DGP 3
+  sim3_55_out = run_sim_parallel(1:505, dgp_3_sim, n = 500, t = 55)
+  sim3_55 = verify_sim_results(sim3_55_out)
+  verify_iteration_counts(sim3_55)
+  save_sim_results(sim3_55, "DGP-3")
+  
+  # DGP 4
+  sim4_55_out = run_sim_parallel(1:505, dgp_4_sim, n = 500, t = 55)
+  sim4_55 = verify_sim_results(sim4_55_out)
+  verify_iteration_counts(sim4_55)
+  save_sim_results(sim4_55, "DGP-4")
+  
+  # DGP 5
+  sim5_55_out = run_sim_parallel(1:505, dgp_5_sim, n = 500, t = 55)
+  sim5_55 = verify_sim_results(sim5_55_out)
+  verify_iteration_counts(sim5_55)
+  save_sim_results(sim5_55, "DGP-5")
+  
+  # DGP 6
+  sim6_55_out = run_sim_parallel(1:505, dgp_6_sim, n = 500, t = 55)
+  sim6_55 = verify_sim_results(sim6_55_out)
+  verify_iteration_counts(sim6_55)
+  save_sim_results(sim6_55, "DGP-6")
+  
+  # DGP 7
+  sim7_55_out = run_sim_parallel(1:505, dgp_7_sim, n = 500, t = 55)
+  sim7_55 = verify_sim_results(sim7_55_out)
+  verify_iteration_counts(sim7_55)
+  save_sim_results(sim7_55, "DGP-7")
+  
+  # DGP 8
+  sim8_55_out = run_sim_parallel(1:505, dgp_8_sim, n = 500, t = 55)
+  sim8_55 = verify_sim_results(sim8_55_out)
+  verify_iteration_counts(sim8_55)
+  save_sim_results(sim8_55, "DGP-8")
+  
+  
+  ## 100 periods ##
+  # DGP 1
+  sim1_100_out = run_sim_parallel(1:505, dgp_1_sim, n = 500, t = 100)
+  sim1_100 = verify_sim_results(sim1_100_out)
+  verify_iteration_counts(sim1_100)
+  save_sim_results(sim1_100, "DGP-1")
+  
+  # DGP 2
+  sim2_100_out = run_sim_parallel(1:505, dgp_2_sim, n = 500, t = 100)
+  sim2_100 = verify_sim_results(sim2_100_out)
+  verify_iteration_counts(sim2_100)
+  save_sim_results(sim2_100, "DGP-2")
+  
+  # DGP 3
+  sim3_100_out = run_sim_parallel(1:505, dgp_3_sim, n = 500, t = 100)
+  sim3_100 = verify_sim_results(sim3_100_out)
+  verify_iteration_counts(sim3_100)
+  save_sim_results(sim3_100, "DGP-3")
+  
+  # DGP 4
+  sim4_100_out = run_sim_parallel(1:505, dgp_4_sim, n = 500, t = 100)
+  sim4_100 = verify_sim_results(sim4_100_out)
+  verify_iteration_counts(sim4_100)
+  save_sim_results(sim4_100, "DGP-4")
+  
+  # DGP 5
+  sim5_100_out = run_sim_parallel(1:505, dgp_5_sim, n = 500, t = 100)
+  sim5_100 = verify_sim_results(sim5_100_out)
+  verify_iteration_counts(sim5_100)
+  save_sim_results(sim5_100, "DGP-5")
+  
+  # DGP 6
+  sim6_100_out = run_sim_parallel(1:505, dgp_6_sim, n = 500, t = 100)
+  sim6_100 = verify_sim_results(sim6_100_out)
+  verify_iteration_counts(sim6_100)
+  save_sim_results(sim6_100, "DGP-6")
+  
+  # DGP 7
+  sim7_100_out = run_sim_parallel(1:505, dgp_7_sim, n = 500, t = 100)
+  sim7_100 = verify_sim_results(sim7_100_out)
+  verify_iteration_counts(sim7_100)
+  save_sim_results(sim7_100, "DGP-7")
+  
+  # DGP 8
+  sim8_100_out = run_sim_parallel(1:505, dgp_8_sim, n = 500, t = 100)
+  sim8_100 = verify_sim_results(sim8_100_out)
+  verify_iteration_counts(sim8_100)
+  save_sim_results(sim8_100, "DGP-8")
+  
+  stop("Simulations Done!")
+  
 } else if (sim_bool == 2) {
   ## Simulate using mclapply
   
