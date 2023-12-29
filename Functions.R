@@ -1176,8 +1176,10 @@ load_sim_results <- function(file_name = "test", periods) {
 }
 
 # function to load all results and trim to 500 iterations
-load_all_results <- function(){
+load_all_results <- function() {
   writeLines("Loading saved results for 100 periods")
+  
+  # Load and assign results for 100 periods
   sim1_100 <<- keep_iterations(load_sim_results("DGP-1", periods = 100), 500)
   sim2_100 <<- keep_iterations(load_sim_results("DGP-2", periods = 100), 500)
   sim3_100 <<- keep_iterations(load_sim_results("DGP-3", periods = 100), 500)
@@ -1186,7 +1188,10 @@ load_all_results <- function(){
   sim6_100 <<- keep_iterations(load_sim_results("DGP-6", periods = 100), 500)
   sim7_100 <<- keep_iterations(load_sim_results("DGP-7", periods = 100), 500)
   sim8_100 <<- keep_iterations(load_sim_results("DGP-8", periods = 100), 500)
+  
   writeLines("Loading saved results for 55 periods")
+  
+  # Load and assign results for 55 periods
   sim1_55 <<- keep_iterations(load_sim_results("DGP-1", periods = 55), 500)
   sim2_55 <<- keep_iterations(load_sim_results("DGP-2", periods = 55), 500)
   sim3_55 <<- keep_iterations(load_sim_results("DGP-3", periods = 55), 500)
@@ -1195,9 +1200,14 @@ load_all_results <- function(){
   sim6_55 <<- keep_iterations(load_sim_results("DGP-6", periods = 55), 500)
   sim7_55 <<- keep_iterations(load_sim_results("DGP-7", periods = 55), 500)
   sim8_55 <<- keep_iterations(load_sim_results("DGP-8", periods = 55), 500)
-  writeLines("All Results loaded succesfully")
   
+  writeLines("All Results loaded successfully")
+  
+  # Return the names of the loaded results
+  resultlist <<-list(sim1_100, sim2_100, sim3_100, sim4_100, sim5_100, sim6_100, sim7_100, sim8_100,
+           sim1_55, sim2_55, sim3_55, sim4_55, sim5_55, sim6_55, sim7_55, sim8_55)
 }
+
 
 
 # function to trim excess iterations
@@ -1698,40 +1708,20 @@ plot_est_dens <- function(df) {
 }
 
 ## function to combine dgp plot and densities and save
-plot_combined <- function(dgp_number, save = F) {
-  # Generate the DGP plot based on the number argument
-  dgp_data = switch(dgp_number,
-                    dgp_1_sim(),
-                    dgp_2_sim(),
-                    dgp_3_sim(),
-                    dgp_4_sim(),
-                    dgp_5_sim(),
-                    dgp_6_sim(),
-                    dgp_7_sim(),
-                    dgp_8_sim())
-  dgp_plot = dgp_plot(dgp_data, "",  sim_num = dgp_number)
-  
-  # Generate the density plot based on the number argument
-  sim_data = switch(dgp_number,
-                    sim1,
-                    sim2,
-                    sim3,
-                    sim4,
-                    sim5,
-                    sim6,
-                    sim7,
-                    sim8)
+plot_combined <- function(sim_data, save = F) {
+  # Generate the density plot and deviation plot
   plot_est_dens = plot_est_dens(sim_data)
+  plot_est_dev = plot_est_dev(sim_data)
   
   # combine and arrange plots
-  plot_combined <- grid.arrange(dgp_plot, plot_est_dens, ncol = 1)
+  plot_combined <- grid.arrange(plot_est_dev, plot_est_dens, ncol = 1)
  
   if (save ==T & Sys.info()[7] == "ts") {
-    fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/Thesis/Figures"
+    fp = "/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/MC Paper/Figures"
     filename = paste0("Sim_", dgp_number, ".png")
     ggsave(filename, plot = plot_combined, path = fp,
            width = 18, height = 20, units = "cm")
   }
 }
 
-writeLines("Done!")
+writeLines("Ready")
