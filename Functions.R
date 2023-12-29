@@ -1500,7 +1500,7 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
     # Add vertical lines for each treatment group
     vlines <- data.frame(xintercept = treat_times, group = treat_times)
     p = p + geom_vline(data = vlines, aes(xintercept=xintercept, color=factor(group)), 
-                        size = 0.5, linetype = "dashed", show.legend = FALSE)
+                        linewidth = 0.5, linetype = "dashed", show.legend = FALSE)
     
     # Set color scale and replace treatment group 100 with "Control" in legend
     p = p + scale_color_manual(values = my_palette,
@@ -1508,6 +1508,11 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
     
     p
   })
+}
+
+# Function to plot deviations from true Effect
+plot_st_dev <- function(df) {
+  
 }
 
 # function to plot densities of estimates of each estimator
