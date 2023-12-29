@@ -1513,6 +1513,7 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
 
 # Function to plot deviations from true Effect
 plot_est_dev <- function(df) {
+  nperiods = df$nperiods[1]
   dynamic <- names(df)[3] == "rel_att_0"
   
   if (dynamic) {
@@ -1536,7 +1537,9 @@ plot_est_dev <- function(df) {
       summarise(value = mean(value, na.rm = TRUE), .groups = 'drop')
     
     title = "Deviation from True Treatment Effect"
-    cap = "Upper Panel shows all observations from one draw of the simulation with group means. \nLower panel shows for each estimator the mean of point estimates of the Treatment Effect in\nRelative Periods -10 to 10. Missing Points mean that an Estimate is not produced for that relative period."
+    plot_title = paste0(title, ", ", nperiods, " Periods")
+    cap = paste0("Mean of point estimates of the Treatment Effect for each estimator in Relative Periods -10 to 10 over ", max(df$iter), " iterations ", 
+                 ". Missing Points mean that an Estimate is not produced for that relative period.")
     
     # Build plot
     p <- event_study_df %>%
@@ -1550,7 +1553,7 @@ plot_est_dev <- function(df) {
       labs(x = "Relative Time Period", y = "Estimated Effect - True Effect", color = "Estimator",
            caption = cap) +
       scale_x_continuous(breaks = -10:10) +
-      ggtitle(title) +
+      ggtitle(plot_title) +
       theme(plot.title = element_text(hjust = 0.5),
             legend.position = "bottom") +
       guides(color = guide_legend(override.aes = list(size=3)), 
@@ -1561,7 +1564,35 @@ plot_est_dev <- function(df) {
     my_palette = c("MC-NNM" = "#4E79A7", "TWFE" = "#F28E2B", "CS" = "#E15759", 
                    "SA" = "#B07AA1", "dCdH" = "#EDC948", "BJS" = "#59A14F") 
     
-  }
+    # Extract the true value
+    true_atet <- df %>% filter(estimator == "TRUE") %>% summarize(ATET = mean(ATET)) %>% pull(ATET)
+    
+    # Calculate bias for each estimator
+    box <- df %>%
+      filter(estimator %in% estimators) %>%
+      mutate(bias = ATET - true_atet, 
+             estimator = factor(estimator, levels = estimators))
+    
+    title = "Deviation from True Treatment Effect"
+    plot_title = paste0(title, ", ", nperiods, " Periods")
+    cap = paste0("Distribution of the bias of each estimator over ", 
+                 max(box$iter), " iterations")
+    
+    # Plot
+    p <- ggplot(box, aes(x = estimator, y = bias, fill = estimator)) +
+      geom_boxplot() +
+      scale_fill_manual(values = my_palette) +
+      theme_minimal() +
+      ggtitle(plot_title) +
+      labs(x = "Estimator", y = "Bias (Estimated ATET - True ATET)", 
+           fill = "Estimator", caption = cap) +
+      theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5))
+    
+    # Display the plot
+    p
+    }
+  
+  return(p)
 }
 
 # function to plot densities of estimates of each estimator
