@@ -1127,12 +1127,13 @@ save_sim_results <- function(input_tibble, file_name = "test") {
 }
 
 # function to load most recently saved version of each DGP results
-load_sim_results <- function(file_name = "test", number_periods = 100) {
+load_sim_results <- function(file_name = "test", number_periods) { 
   # specify directory 
   directory <- 'SimResults'
   
   # use a pattern match to filter 
-  pattern <- paste0('^', file_name, '.*\\.rds$')
+  # pattern <- paste0('^', file_name, '.*\\.rds$')
+  pattern <- paste0('^', file_name, '-', number_periods, '-periods_.*\\.rds$') 
   
   # list all files in dir that match the pattern
   files <- list.files(path = directory, pattern = pattern)
@@ -1158,11 +1159,14 @@ load_sim_results <- function(file_name = "test", number_periods = 100) {
   loaded_data = readRDS(most_recent_file) # load most recent file
   
   # make sure numeric values are numeric
-  loaded_data$iteration = as.numeric(loaded_data$iteration)
-  loaded_data$est = as.numeric(loaded_data$est)
-  loaded_data$se = as.numeric(loaded_data$se)
-  loaded_data$cum_est = as.numeric(loaded_data$cum_est)
-  loaded_data$cum_se = as.numeric(loaded_data$cum_se)
+  results_static <- names(loaded_data)[3] == "ATET"
+  if (results_static) {
+    loaded_data = loaded_data %>% mutate(ATET = as.numeric(ATET),
+                           nperiods = as.numeric(nperiods))
+  } else {
+    loaded_data = loaded_data %>%
+      mutate_if(~ names(.x) != "estimator", as.numeric)
+    }
   
   cat("Loaded file:", sorted_files[1], "\n") # print confirmation
   
