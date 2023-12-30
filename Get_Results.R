@@ -184,15 +184,10 @@ if (sim_bool == 0) {
   
   sim_all()
 
-  # Push new results
-  push_sim_results()
   stop("Simulations Done!")
   
 } else if (sim_bool == 2) {
   sim_all()
-  
-  # Push new results
-  push_sim_results()
   
   # load results for further analysis
   load_all_results()
