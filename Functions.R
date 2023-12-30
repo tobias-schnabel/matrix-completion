@@ -741,7 +741,8 @@ est_cs <- function(data, true_rel_att, iteration = 0){
                                        xformla = ~ 0 + nuisance,
                                        bstrap = F,
                                        data = data,
-                                       print_details = F))
+                                       print_details = F,
+                                       est_method = "ipw"))
   } else {
     mod = did::att_gt(yname = "y",
                       tname = "period",
@@ -749,7 +750,8 @@ est_cs <- function(data, true_rel_att, iteration = 0){
                       gname = "group",
                       bstrap = F,
                       data = data,
-                      print_details = F)
+                      print_details = F,
+                      est_method = "ipw")
   }
   
   ## Check whether to use static ATET or relative periods
