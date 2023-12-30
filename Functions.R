@@ -406,10 +406,20 @@ dgp_7_sim <- function(nobs = 500,
     period_fe = rnorm(nperiods, 0, 0.5)
   )
   
+  # Set values of nuisance term that is constant for the first treatment group 
+  # before treatment starts. 
+  # This fixed value violates the parallel trends assumption but does not 
+  # introduce a time-dependent structure in the error term
+  nuisance_value_fixed = 0.1 # 0.01
+  nuisance_sigma = 4 # 0.05
+  
   # interact unit, period, and nuisance parameter that breaks common trends
   crossing(unit, period) %>%
     mutate(
-      nuisance = 0.005 * period * group + rnorm(n(), 0, 0.02),
+      # Assign fixed nuisance value only for the first treatment group before treatment
+      nuisance = ifelse(group == treatgroups[1] & period < treatgroups[1], 
+                        nuisance_value_fixed + rnorm(n(), 0, nuisance_sigma), 
+                        0),
       error = rnorm(n(), 0, 0.5),
       treat = ifelse(period >= group, 1, 0),
       t.eff = ifelse(treat == 1, te, 0),
