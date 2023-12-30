@@ -1177,17 +1177,6 @@ load_sim_results <- function(file_name = "test", periods) {
   most_recent_file = file.path(directory, sorted_files[1])
   
   loaded_data = readRDS(most_recent_file) # load most recent file
-  
-  # make sure numeric values are numeric
-  results_static <- names(loaded_data)[3] == "ATET"
-  if (results_static) {
-    loaded_data = loaded_data %>% mutate(ATET = as.numeric(ATET),
-                           nperiods = as.numeric(nperiods))
-  } else {
-    loaded_data = loaded_data %>%
-      mutate_if(~ names(.x) != "estimator", as.numeric)
-    }
-  
   cat("Loaded file:", sorted_files[1], "\n") # print confirmation
   
   # return the loaded data
