@@ -10,6 +10,7 @@ writeLines("Seed set : 1234")
 dgp_1_sim <- function(nobs = 500, 
                       nperiods = 100,
                       nobsgroups = 50,
+                      treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5)),
                       treated.period = floor(nperiods / 2)) {
   unit <- tibble(
     unit = 1:nobs,
@@ -70,6 +71,7 @@ dgp_1_sim <- function(nobs = 500,
 dgp_2_sim <- function(nobs = 500, 
                   nperiods = 100,
                   nobsgroups = 50,
+                  treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5)),
                   treated.period = floor(nperiods / 2)) {
   
   # Unit Fixed Effects
@@ -992,14 +994,17 @@ timer <- function(func, ...){
 }
 
 ## Function to compare estimators in an iteration
-run_sim <- function(i, fun, n = 500, t = 100, quiet = T) {
+run_sim <- function(i, fun, n = 500, t = 100, 
+                    treatgroups = c(t/5, 2*(t/5), 3*(t/5), 4*(t/5)),
+                    quiet = T) {
   # print progress
   if (quiet == F) {
     cat(" ", i, "...")
   }
   # make data from function
   # use with_seed to ensure reproducibility
-  dt = withr::with_seed(i, fun(nobs = n, nperiods = t))
+  dt = withr::with_seed(i, fun(nobs = n, nperiods = t, 
+                               treatgroups = treatgroups))
   
   ## compute true relative period ATTs
   # check whether to use static ATET or relative periods
@@ -1035,7 +1040,8 @@ run_sim <- function(i, fun, n = 500, t = 100, quiet = T) {
 }
 
 ## Function to execute simulations, parallelized with progress bar
-run_sim_parallel <- function(iterations, sim_function, n = 500, t = 100) {
+run_sim_parallel <- function(iterations, sim_function, n = 500, t = 100,
+                             treatgroups = c(t/5, 2*(t/5), 3*(t/5), 4*(t/5))) {
   cat("Simulating ", deparse(substitute(sim_function)), ", ", 
       paste0("N = ", n , ", T = ", t, " "),
       length(iterations), "Iterations:\n")
@@ -1045,7 +1051,8 @@ run_sim_parallel <- function(iterations, sim_function, n = 500, t = 100) {
   # Use pbmclapply() for parallel execution with a progress bar
     out = suppressWarnings(
       pbmcapply::pbmclapply(iterations, 
-                 function(i) run_sim(i, sim_function, n = n, t = t),
+                 function(i) run_sim(i, sim_function, n = n, t = t,
+                                     treatgroups = treatgroups),
                  mc.cores = globalcores)
     )  
   
@@ -1059,6 +1066,7 @@ run_sim_parallel <- function(iterations, sim_function, n = 500, t = 100) {
   
   return(tibble(out_df))
 }
+
 ## Function to execute the simulation, not parallelized
 run_sim_map <- function(iterations, sim_function, n = 500, t = 100) {
   cat("Simulating ", deparse(substitute(sim_function)), ", ",
