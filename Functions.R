@@ -1067,27 +1067,6 @@ run_sim_parallel <- function(iterations, sim_function, n = 500, t = 100,
   return(tibble(out_df))
 }
 
-## Function to execute the simulation, not parallelized
-run_sim_map <- function(iterations, sim_function, n = 500, t = 100) {
-  cat("Simulating ", deparse(substitute(sim_function)), ", ",
-      length(iterations), "Iterations\n", "Iteration: ")
-  # Use purrr:map() to run simulations 
-  start_time = Sys.time()
-  out_list <- purrr::map(iterations, ~run_sim(.x, sim_function, 
-                                              n = n, t = t, quiet = F))
-  
-  # Combine the list of data frames into a single data frame
-  out_df <- dplyr::bind_rows(out_list)
-  end_time = Sys.time()
-  cat("\nElapsed time: ", round(end_time - start_time, digits = 1), "\n")
-  cat("Simulation of  ", deparse(substitute(sim_function)), " complete \n")
-  
-  # Return the combined data frame
-  return(out_df)
-}
-
-
-
 #### Utility functions for simulating ####
 # parallelization leads to errors, which leads to entire iterations missing
 # this helper counts and removes those rows
