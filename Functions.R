@@ -11,7 +11,7 @@ dgp_1_sim <- function(nobs = 500,
                       nperiods = 100,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5)),
-                      treated.period = floor(nperiods / 2)) {
+                      treated.period = treatgroups[1]) {
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
@@ -72,7 +72,7 @@ dgp_2_sim <- function(nobs = 500,
                   nperiods = 100,
                   nobsgroups = 50,
                   treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5)),
-                  treated.period = floor(nperiods / 2)) {
+                  treated.period = treatgroups[1]) {
   
   # Unit Fixed Effects
   unit <- tibble(
@@ -1196,23 +1196,36 @@ load_all_results <- function() {
   sim7_100 <<- keep_iterations(load_sim_results("DGP-7", periods = 100), 500)
   sim8_100 <<- keep_iterations(load_sim_results("DGP-8", periods = 100), 500)
   
-  writeLines("Loading saved results for 55 periods")
+  writeLines("Loading saved results for 50 periods")
   
   # Load and assign results for 55 periods
-  sim1_55 <<- keep_iterations(load_sim_results("DGP-1", periods = 55), 500)
-  sim2_55 <<- keep_iterations(load_sim_results("DGP-2", periods = 55), 500)
-  sim3_55 <<- keep_iterations(load_sim_results("DGP-3", periods = 55), 500)
-  sim4_55 <<- keep_iterations(load_sim_results("DGP-4", periods = 55), 500)
-  sim5_55 <<- keep_iterations(load_sim_results("DGP-5", periods = 55), 500)
-  sim6_55 <<- keep_iterations(load_sim_results("DGP-6", periods = 55), 500)
-  sim7_55 <<- keep_iterations(load_sim_results("DGP-7", periods = 55), 500)
-  sim8_55 <<- keep_iterations(load_sim_results("DGP-8", periods = 55), 500)
+  sim1_50 <<- keep_iterations(load_sim_results("DGP-1", periods = 50), 500)
+  sim2_50 <<- keep_iterations(load_sim_results("DGP-2", periods = 50), 500)
+  sim3_50 <<- keep_iterations(load_sim_results("DGP-3", periods = 50), 500)
+  sim4_50 <<- keep_iterations(load_sim_results("DGP-4", periods = 50), 500)
+  sim5_50 <<- keep_iterations(load_sim_results("DGP-5", periods = 50), 500)
+  sim6_50 <<- keep_iterations(load_sim_results("DGP-6", periods = 50), 500)
+  sim7_50 <<- keep_iterations(load_sim_results("DGP-7", periods = 50), 500)
+  sim8_50 <<- keep_iterations(load_sim_results("DGP-8", periods = 50), 500)
+  
+  writeLines("Loading saved results for 20 periods")
+  
+  # Load and assign results for 20 periods
+  sim1_20 <<- keep_iterations(load_sim_results("DGP-1", periods = 20), 500)
+  sim2_20 <<- keep_iterations(load_sim_results("DGP-2", periods = 20), 500)
+  sim3_20 <<- keep_iterations(load_sim_results("DGP-3", periods = 20), 500)
+  sim4_20 <<- keep_iterations(load_sim_results("DGP-4", periods = 20), 500)
+  sim5_20 <<- keep_iterations(load_sim_results("DGP-5", periods = 20), 500)
+  sim6_20 <<- keep_iterations(load_sim_results("DGP-6", periods = 20), 500)
+  sim7_20 <<- keep_iterations(load_sim_results("DGP-7", periods = 20), 500)
+  sim8_20 <<- keep_iterations(load_sim_results("DGP-8", periods = 20), 500)
   
   writeLines("All Results loaded successfully")
   
   # Return the names of the loaded results
-  resultlist <<-list(sim1_100, sim2_100, sim3_100, sim4_100, sim5_100, sim6_100, sim7_100, sim8_100,
-           sim1_55, sim2_55, sim3_55, sim4_55, sim5_55, sim6_55, sim7_55, sim8_55)
+  resultlist <<-list(sim1_20, sim2_20, sim3_20, sim4_20, sim5_20, sim6_20, sim7_20, sim8_20,
+    sim1_50, sim2_50, sim3_50, sim4_50, sim5_50, sim6_50, sim7_50, sim8_50,
+    sim1_100, sim2_100, sim3_100, sim4_100, sim5_100, sim6_100, sim7_100, sim8_100)
 }
 
 
