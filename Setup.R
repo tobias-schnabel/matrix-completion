@@ -6,7 +6,7 @@ source("packages.R") ## load packages
 source("Functions.R") ## load functions
 
 source("Get_Results.R") ## get results
-names(resultlist) <- c("sim1_20", "sim2_20", "sim3_20", "sim4_20", "sim5_20", "sim6_20", "sim7_20", "sim8_20",
+names(resultlist) <- c("sim1_21", "sim2_21", "sim3_21", "sim4_21", "sim5_21", "sim6_21", "sim7_21", "sim8_21",
   "sim1_50", "sim2_50", "sim3_50", "sim4_50", "sim5_50", "sim6_50", "sim7_50", "sim8_50",
   "sim1_100", "sim2_100", "sim3_100", "sim4_100", "sim5_100", 
                        "sim6_100", "sim7_100", "sim8_100", )

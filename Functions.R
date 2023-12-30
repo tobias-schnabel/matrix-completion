@@ -1210,20 +1210,20 @@ load_all_results <- function() {
   
   writeLines("Loading saved results for 20 periods")
   
-  # Load and assign results for 20 periods
-  sim1_20 <<- keep_iterations(load_sim_results("DGP-1", periods = 20), 500)
-  sim2_20 <<- keep_iterations(load_sim_results("DGP-2", periods = 20), 500)
-  sim3_20 <<- keep_iterations(load_sim_results("DGP-3", periods = 20), 500)
-  sim4_20 <<- keep_iterations(load_sim_results("DGP-4", periods = 20), 500)
-  sim5_20 <<- keep_iterations(load_sim_results("DGP-5", periods = 20), 500)
-  sim6_20 <<- keep_iterations(load_sim_results("DGP-6", periods = 20), 500)
-  sim7_20 <<- keep_iterations(load_sim_results("DGP-7", periods = 20), 500)
-  sim8_20 <<- keep_iterations(load_sim_results("DGP-8", periods = 20), 500)
+  # Load and assign results for 21 periods
+  sim1_21 <<- keep_iterations(load_sim_results("DGP-1", periods = 21), 500)
+  sim2_21 <<- keep_iterations(load_sim_results("DGP-2", periods = 21), 500)
+  sim3_21 <<- keep_iterations(load_sim_results("DGP-3", periods = 21), 500)
+  sim4_21 <<- keep_iterations(load_sim_results("DGP-4", periods = 21), 500)
+  sim5_21 <<- keep_iterations(load_sim_results("DGP-5", periods = 21), 500)
+  sim6_21 <<- keep_iterations(load_sim_results("DGP-6", periods = 21), 500)
+  sim7_21 <<- keep_iterations(load_sim_results("DGP-7", periods = 21), 500)
+  sim8_21 <<- keep_iterations(load_sim_results("DGP-8", periods = 21), 500)
   
   writeLines("All Results loaded successfully")
   
   # Return the names of the loaded results
-  resultlist <<-list(sim1_20, sim2_20, sim3_20, sim4_20, sim5_20, sim6_20, sim7_20, sim8_20,
+  resultlist <<-list(sim1_21, sim2_21, sim3_21, sim4_21, sim5_21, sim6_21, sim7_21, sim8_21,
     sim1_50, sim2_50, sim3_50, sim4_50, sim5_50, sim6_50, sim7_50, sim8_50,
     sim1_100, sim2_100, sim3_100, sim4_100, sim5_100, sim6_100, sim7_100, sim8_100)
 }

@@ -2,116 +2,116 @@
 
 # Function that sets all sim parameters not matter which action user chooses
 sim_all <- function() {
-  ## 20 periods, treatment times treatgroups = c(11,14,16,18) ##
+  ## 21 periods, treatment times treatgroups = c(11,14,16,18) ##
   # DGP 1
-  sim1_20_out = run_sim_parallel(1:505, dgp_1_sim, n = 500, t = 20,
+  sim1_21_out = run_sim_parallel(1:505, dgp_1_sim, n = 500, t = 21,
                                  treatgroups = c(11,14,16,18))
-  sim1_20 = verify_sim_results(sim1_20_out)
-  verify_iteration_counts(sim1_20)
-  save_sim_results(sim1_20, "DGP-1")
+  sim1_21 = verify_sim_results(sim1_21_out)
+  verify_iteration_counts(sim1_21)
+  save_sim_results(sim1_21, "DGP-1")
   
   # DGP 2
-  sim2_20_out = run_sim_parallel(1:505, dgp_2_sim, n = 500, t = 20,
+  sim2_21_out = run_sim_parallel(1:505, dgp_2_sim, n = 500, t = 21,
                                  treatgroups = c(11,14,16,18))
-  sim2_20 = verify_sim_results(sim2_20_out)
-  verify_iteration_counts(sim2_20)
-  save_sim_results(sim2_20, "DGP-2")
+  sim2_21 = verify_sim_results(sim2_21_out)
+  verify_iteration_counts(sim2_21)
+  save_sim_results(sim2_21, "DGP-2")
   
   # DGP 3
-  sim3_20_out = run_sim_parallel(1:505, dgp_3_sim, n = 500, t = 5,
+  sim3_21_out = run_sim_parallel(1:505, dgp_3_sim, n = 500, t = 21,
                                  treatgroups = c(11,14,16,18))
-  sim3_20 = verify_sim_results(sim3_20_out)
-  verify_iteration_counts(sim3_20)
-  save_sim_results(sim3_20, "DGP-3")
+  sim3_21 = verify_sim_results(sim3_21_out)
+  verify_iteration_counts(sim3_21)
+  save_sim_results(sim3_21, "DGP-3")
   
   # DGP 4
-  sim4_20_out = run_sim_parallel(1:505, dgp_4_sim, n = 500, t = 20,
+  sim4_21_out = run_sim_parallel(1:505, dgp_4_sim, n = 500, t = 21,
                                  treatgroups = c(11,14,16,18))
-  sim4_20 = verify_sim_results(sim4_20_out)
-  verify_iteration_counts(sim4_20)
-  save_sim_results(sim4_20, "DGP-4")
+  sim4_21 = verify_sim_results(sim4_21_out)
+  verify_iteration_counts(sim4_21)
+  save_sim_results(sim4_21, "DGP-4")
   
   # DGP 5
-  sim5_20_out = run_sim_parallel(1:505, dgp_5_sim, n = 500, t = 20,
+  sim5_21_out = run_sim_parallel(1:505, dgp_5_sim, n = 500, t = 21,
                                  treatgroups = c(11,14,16,18))
-  sim5_20 = verify_sim_results(sim5_20_out)
-  verify_iteration_counts(sim5_20)
-  save_sim_results(sim5_20, "DGP-5")
+  sim5_21 = verify_sim_results(sim5_21_out)
+  verify_iteration_counts(sim5_21)
+  save_sim_results(sim5_21, "DGP-5")
   
   # DGP 6
-  sim6_20_out = run_sim_parallel(1:505, dgp_6_sim, n = 500, t = 20,
+  sim6_21_out = run_sim_parallel(1:505, dgp_6_sim, n = 500, t = 21,
                                  treatgroups = c(11,14,16,18))
-  sim6_20 = verify_sim_results(sim6_20_out)
-  verify_iteration_counts(sim6_20)
-  save_sim_results(sim6_20, "DGP-6")
+  sim6_21 = verify_sim_results(sim6_21_out)
+  verify_iteration_counts(sim6_21)
+  save_sim_results(sim6_21, "DGP-6")
   
   # DGP 7
-  sim7_20_out = run_sim_parallel(1:505, dgp_7_sim, n = 500, t = 20,
+  sim7_21_out = run_sim_parallel(1:505, dgp_7_sim, n = 500, t = 21,
                                  treatgroups = c(11,14,16,18))
-  sim7_20 = verify_sim_results(sim7_20_out)
-  verify_iteration_counts(sim7_20)
-  save_sim_results(sim7_20, "DGP-7")
+  sim7_21 = verify_sim_results(sim7_21_out)
+  verify_iteration_counts(sim7_21)
+  save_sim_results(sim7_21, "DGP-7")
   
   # DGP 8
-  sim8_20_out = run_sim_parallel(1:505, dgp_8_sim, n = 500, t = 20,
+  sim8_21_out = run_sim_parallel(1:505, dgp_8_sim, n = 500, t = 21,
                                  treatgroups = c(11,14,16,18))
-  sim8_20 = verify_sim_results(sim8_20_out)
-  verify_iteration_counts(sim8_20)
-  save_sim_results(sim8_20, "DGP-8")
+  sim8_21 = verify_sim_results(sim8_21_out)
+  verify_iteration_counts(sim8_21)
+  save_sim_results(sim8_21, "DGP-8")
   
-  ## 50 periods, treatment times treatgroups = c(11,20,30,40) ##
+  ## 50 periods, treatment times treatgroups = c(11,21,30,40) ##
   # DGP 1
   sim1_50_out = run_sim_parallel(1:505, dgp_1_sim, n = 500, t = 50,
-                                 treatgroups = c(11,20,30,40))
+                                 treatgroups = c(11,21,30,40))
   sim1_50 = verify_sim_results(sim1_50_out)
   verify_iteration_counts(sim1_50)
   save_sim_results(sim1_50, "DGP-1")
   
   # DGP 2
   sim2_50_out = run_sim_parallel(1:505, dgp_2_sim, n = 500, t = 50,
-                                 treatgroups = c(11,20,30,40))
+                                 treatgroups = c(11,21,30,40))
   sim2_50 = verify_sim_results(sim2_50_out)
   verify_iteration_counts(sim2_50)
   save_sim_results(sim2_50, "DGP-2")
   
   # DGP 3
   sim3_50_out = run_sim_parallel(1:505, dgp_3_sim, n = 500, t = 5,
-                                 treatgroups = c(11,20,30,40))
+                                 treatgroups = c(11,21,30,40))
   sim3_50 = verify_sim_results(sim3_50_out)
   verify_iteration_counts(sim3_50)
   save_sim_results(sim3_50, "DGP-3")
   
   # DGP 4
   sim4_50_out = run_sim_parallel(1:505, dgp_4_sim, n = 500, t = 50,
-                                 treatgroups = c(11,20,30,40))
+                                 treatgroups = c(11,21,30,40))
   sim4_50 = verify_sim_results(sim4_50_out)
   verify_iteration_counts(sim4_50)
   save_sim_results(sim4_50, "DGP-4")
   
   # DGP 5
   sim5_50_out = run_sim_parallel(1:505, dgp_5_sim, n = 500, t = 50,
-                                 treatgroups = c(11,20,30,40))
+                                 treatgroups = c(11,21,30,40))
   sim5_50 = verify_sim_results(sim5_50_out)
   verify_iteration_counts(sim5_50)
   save_sim_results(sim5_50, "DGP-5")
   
   # DGP 6
   sim6_50_out = run_sim_parallel(1:505, dgp_6_sim, n = 500, t = 50,
-                                 treatgroups = c(11,20,30,40))
+                                 treatgroups = c(11,21,30,40))
   sim6_50 = verify_sim_results(sim6_50_out)
   verify_iteration_counts(sim6_50)
   save_sim_results(sim6_50, "DGP-6")
   
   # DGP 7
   sim7_50_out = run_sim_parallel(1:505, dgp_7_sim, n = 500, t = 50,
-                                 treatgroups = c(11,20,30,40))
+                                 treatgroups = c(11,21,30,40))
   sim7_50 = verify_sim_results(sim7_50_out)
   verify_iteration_counts(sim7_50)
   save_sim_results(sim7_50, "DGP-7")
   
   # DGP 8
   sim8_50_out = run_sim_parallel(1:505, dgp_8_sim, n = 500, t = 50,
-                                 treatgroups = c(11,20,30,40))
+                                 treatgroups = c(11,21,30,40))
   sim8_50 = verify_sim_results(sim8_50_out)
   verify_iteration_counts(sim8_50)
   save_sim_results(sim8_50, "DGP-8")
