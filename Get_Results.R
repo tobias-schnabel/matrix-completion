@@ -5,16 +5,14 @@ sim_all <- function() {
   ## 20 periods, treatment times treatgroups = c(11,14,16,18) ##
   # DGP 1
   sim1_20_out = run_sim_parallel(1:505, dgp_1_sim, n = 500, t = 20,
-                                 treatgroups = c(11,14,16,18),
-                                 treated.period = 11)
+                                 treatgroups = c(11,14,16,18))
   sim1_20 = verify_sim_results(sim1_20_out)
   verify_iteration_counts(sim1_20)
   save_sim_results(sim1_20, "DGP-1")
   
   # DGP 2
   sim2_20_out = run_sim_parallel(1:505, dgp_2_sim, n = 500, t = 20,
-                                 treatgroups = c(11,14,16,18),
-                                 treated.period = 11)
+                                 treatgroups = c(11,14,16,18))
   sim2_20 = verify_sim_results(sim2_20_out)
   verify_iteration_counts(sim2_20)
   save_sim_results(sim2_20, "DGP-2")
