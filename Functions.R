@@ -1132,7 +1132,7 @@ save_sim_results <- function(input_tibble, file_name = "test") {
 
 # function to git -add, -commit, and -push sim results
 push_sim_results <- function() {
-  if (Sys.info()[7] == "ts") {
+  if (Sys.info()[7] == "ts" || Sys.info()[7] == "tobiasschnabel") {
     current_date <- Sys.Date() # Get the current date in YYYY-MM-DD format
     
     system("git add SimResults/*.rds") # Add files in the SimResults folder
