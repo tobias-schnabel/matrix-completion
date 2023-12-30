@@ -27,7 +27,7 @@ table th {
 
 # Full thesis can be found [here](https://github.com/tobias-schnabel/matrix-completion/blob/main/Thesis_Schnabel.pdf)
 
-# DGP 1: One treatment group, TE is unit-and time- homogeneous, 
+# DGP 1: One treatment group, TE is unit-and time- homogeneous,
 
 ## 100 periods
 
@@ -180,7 +180,7 @@ results_html(sim8_100)
 
 ## 55 periods
 
-```{r Sim3, 55}
+```{r Sim8, 55}
 dgp_plot(dgp_8_sim(nperiods = 55))
 plot_est_dev(sim8_55)
 plot_est_dens(sim8_55)
