@@ -1572,8 +1572,8 @@ plot_est_dev <- function(df) {
     
     title = "Deviation from True Treatment Effect"
     plot_title = paste0(title, ", ", nperiods, " Periods")
-    cap = paste0("Mean of point estimates of the Treatment Effect for each estimator in Relative Periods -10 to 10 over ", max(df$iter), " iterations ", 
-                 ". Missing Points mean that an Estimate is not produced for that relative period.")
+    cap = paste0("Mean of point estimates of the Treatment Effect for each estimator in Relative Periods \n-10 to 10 over ", max(df$iter), " iterations ", 
+                 ". \nMissing Points mean that an Estimate is not produced for that relative period.")
     
     # Build plot
     p <- event_study_df %>%
