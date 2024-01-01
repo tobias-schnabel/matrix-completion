@@ -75,7 +75,7 @@ sim_all <- function() {
   save_sim_results(sim2_50, "DGP-2")
   
   # DGP 3
-  sim3_50_out = run_sim_parallel(1:505, dgp_3_sim, n = 500, t = 5,
+  sim3_50_out = run_sim_parallel(1:505, dgp_3_sim, n = 500, t = 50,
                                  treatgroups = c(11,21,30,40))
   sim3_50 = verify_sim_results(sim3_50_out)
   verify_iteration_counts(sim3_50)
