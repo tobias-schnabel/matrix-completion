@@ -1333,6 +1333,41 @@ analyze_sim_results <- function(sim_results) { #, type = "static"
   return(final_summary)
 }
 
+# Function to summarize all simulation results
+summarize_all_simulations <- function(resultlist) {
+  
+  # List to store individual summaries
+  all_summaries <- list()
+  
+  # Iterate over each simulation result in the list
+  for (i in seq_along(resultlist)) {
+    summary <- analyze_sim_results(resultlist[[i]])
+    # Store the summary
+    all_summaries[[i]] <- summary
+  }
+  
+  # Determine if static or dynamic and summarize accordingly
+  static_summaries <- list()
+  dynamic_summaries <- list()
+  
+  for (i in seq_along(all_summaries)) {
+    summary <- all_summaries[[i]]
+    if ("ATET" %in% names(summary)) {
+      # Static result processing
+      static_summaries[[length(static_summaries) + 1]] <- summary
+    } else {
+      # Dynamic result processing
+      dynamic_summaries[[length(dynamic_summaries) + 1]] <- summary
+    }
+  }
+  
+  # Calculate overall summaries for static and dynamic results
+  overall_static_summary <- ... # process static_summaries
+  overall_dynamic_summary <- ... # process dynamic_summaries
+  
+  return(list(static = overall_static_summary, dynamic = overall_dynamic_summary))
+}
+
 # variant of same function to output nice-looking HTML table
 results_html <- function(sim_results, type = "static") {
   
