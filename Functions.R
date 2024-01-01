@@ -437,8 +437,10 @@ dgp_7_sim <- function(nobs = 500,
 
 ## DGP 8  Multiple Treatment Groups, Time-Varying Heterogeneous TE, 
 # NO PARALLEL TRENDS
-dgp_8_sim <- function(nobs = 500, nperiods = 100){
-  data = dgp_7_sim(nobs = nobs, nperiods = nperiods)
+dgp_8_sim <- function(nobs = 500, nperiods = 100,
+                      treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5))){
+  data = dgp_7_sim(nobs = nobs, nperiods = nperiods,
+                   treatgroups = treatgroups)
   # set flag to false so that estimators do not use nuisance covariate
   data$use_cov = F 
   
