@@ -1681,7 +1681,7 @@ plot_est_dens <- function(df) {
     
     title = "Distributions of Relative Period 0 Effect Estimates"
     plot_title = paste0(title, ", ", nperiods, " Periods")
-    cap = "Density of point estimates of the treatment effect in relative period 0 for each estimator. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value."
+    cap = "Density of point estimates of the treatment effect in relative period 0 for each estimator. \nVertical Red Lines indicate minimum, mean, and maximum of true parameter value."
     
     # filter data
     df = df %>% filter(estimator %in% estimators)
@@ -1727,7 +1727,7 @@ plot_est_dens <- function(df) {
     
     title = "Distributions of ATET Estimates"
     plot_title = paste0(title, ", ", nperiods, " Periods")
-    cap = "Density of point estimates of the ATET for each estimator. Vertical Red Lines indicate minimum, mean, and maximum of true parameter value, if only one is visible, the true value does not vary."
+    cap = "Density of point estimates of the ATET for each estimator. Vertical Red Lines indicate\nminimum, mean, and maximum of true parameter value, if only one is visible, the true value does not vary."
     
     # filter data
     df = df %>% filter(estimator %in% estimators)
