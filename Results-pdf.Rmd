@@ -1,0 +1,261 @@
+---
+title: "Simulation Results"
+author: Tobias Schnabel
+date: "Last compiled on `r format(Sys.Date(), '%B %d, %Y')`"
+output: 
+  pdf_document:
+    toc: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+source("packages.R")
+source("Functions.R")
+library(DT)
+load_all_results()
+```
+
+```{=html}
+<style type="text/css">
+table th {
+    text-align: left !important;
+}
+</style>
+```
+# Instructions to replicate can be found [here](https://github.com/tobias-schnabel/matrix-completion/blob/main/Replication.md)
+
+# Full thesis can be found [here](https://github.com/tobias-schnabel/matrix-completion/blob/main/Thesis_Schnabel.pdf)
+
+# DGP 1: One treatment group, TE is unit-and time- homogeneous,
+
+## 100 periods
+
+```{r Sim1, 100}
+dgp_plot(dgp_1_sim())
+plot_est_dev(sim1_100)
+plot_est_dens(sim1_100)
+results_html(sim1_100)
+```
+
+## 50 periods
+
+```{r Sim1, 50}
+dgp_plot(dgp_1_sim(nperiods = 50, treatgroups = c(11,20,30,40)))
+plot_est_dev(sim1_50)
+plot_est_dens(sim1_50)
+results_html(sim1_50)
+```
+
+## 21 periods
+
+```{r Sim1, 21}
+dgp_plot(dgp_1_sim(nperiods = 21, treatgroups = c(11,14,16,18), treated.period = 11))
+plot_est_dev(sim1_21)
+plot_est_dens(sim1_21)
+results_html(sim1_21)
+```
+
+# DGP 2: One treatment group, TE is unit-homogeneous, time-varying
+
+## 100 periods
+
+```{r Sim2, 100}
+dgp_plot(dgp_2_sim())
+plot_est_dev(sim2_100)
+plot_est_dens(sim2_100)
+results_html(sim2_100)
+```
+
+## 50 periods
+
+```{r Sim2, 50}
+dgp_plot(dgp_2_sim(nperiods = 50))
+plot_est_dev(sim2_50)
+plot_est_dens(sim2_50)
+results_html(sim2_50)
+```
+
+## 21 periods
+
+```{r Sim2, 21}
+dgp_plot(dgp_2_sim(nperiods = 21, treatgroups = c(11,14,16,18), treated.period = 11))
+plot_est_dev(sim2_21)
+plot_est_dens(sim2_21)
+results_html(sim2_21)
+```
+
+# DGP 3: Multiple Treatment Groups, Time-Invariant Homogeneous TE
+
+## 100 periods
+
+```{r Sim3, 100}
+dgp_plot(dgp_3_sim())
+plot_est_dev(sim3_100)
+plot_est_dens(sim3_100)
+results_html(sim3_100)
+```
+
+## 50 periods
+
+```{r Sim3, 50}
+dgp_plot(dgp_3_sim(nperiods = 50))
+plot_est_dev(sim3_50)
+plot_est_dens(sim3_50)
+results_html(sim3_50)
+```
+
+## 21 periods
+
+```{r Sim3, 21}
+dgp_plot(dgp_3_sim(nperiods = 21, treatgroups = c(11,14,16,18)))
+plot_est_dev(sim3_21)
+plot_est_dens(sim3_21)
+results_html(sim3_21)
+```
+
+# 
+
+# DGP 4: Multiple Treatment Groups,Time-Invariant Heterogeneous TE
+
+## 100 periods
+
+```{r Sim4, 100}
+dgp_plot(dgp_4_sim())
+plot_est_dev(sim4_100)
+plot_est_dens(sim4_100)
+results_html(sim4_100)
+```
+
+## 50 periods
+
+```{r Sim4, 50}
+dgp_plot(dgp_4_sim(nperiods = 50))
+plot_est_dev(sim4_50)
+plot_est_dens(sim4_50)
+results_html(sim4_50)
+```
+
+## 21 periods
+
+```{r Sim4, 21}
+dgp_plot(dgp_4_sim(nperiods = 21, treatgroups = c(11,14,16,18)))
+plot_est_dev(sim4_21)
+plot_est_dens(sim4_21)
+results_html(sim4_21)
+```
+
+# DGP 5: Multiple Treatment Groups, Time-Varying Homogeneous TE
+
+## 100 periods
+
+```{r Sim5, 100}
+dgp_plot(dgp_5_sim())
+plot_est_dev(sim5_100)
+plot_est_dens(sim5_100)
+results_html(sim5_100)
+```
+
+## 50 periods
+
+```{r Sim5, 50}
+dgp_plot(dgp_5_sim(nperiods = 50))
+plot_est_dev(sim5_50)
+plot_est_dens(sim5_50)
+results_html(sim5_50)
+```
+
+## 21 periods
+
+```{r Sim5, 21}
+dgp_plot(dgp_5_sim(nperiods = 21, treatgroups = c(11,14,16,18)))
+plot_est_dev(sim5_21)
+plot_est_dens(sim5_21)
+results_html(sim5_21)
+```
+
+# DGP 6: Multiple Treatment Groups, Time-Varying Heterogeneous TE
+
+## 100 periods
+
+```{r Sim6, 100}
+dgp_plot(dgp_6_sim())
+plot_est_dev(sim6_100)
+plot_est_dens(sim6_100)
+results_html(sim6_100)
+```
+
+## 50 periods
+
+```{r Sim6, 50}
+dgp_plot(dgp_6_sim(nperiods = 50))
+plot_est_dev(sim6_50)
+plot_est_dens(sim6_50)
+results_html(sim6_50)
+```
+
+## 21 periods
+
+```{r Sim6, 21}
+dgp_plot(dgp_6_sim(nperiods = 21, treatgroups = c(11,14,16,18)))
+plot_est_dev(sim6_21)
+plot_est_dens(sim6_21)
+results_html(sim6_21)
+```
+
+# DGP 7: Multiple Treatment Groups, Time-Varying Heterogeneous TE, **Unconditional** Parallel Trends Violated
+
+## 100 periods
+
+```{r Sim7, 100}
+dgp_plot(dgp_7_sim())
+plot_est_dev(sim7_100)
+plot_est_dens(sim7_100)
+results_html(sim7_100)
+```
+
+## 50 periods
+
+```{r Sim7, 50}
+dgp_plot(dgp_7_sim(nperiods = 50))
+plot_est_dev(sim7_50)
+plot_est_dens(sim7_50)
+results_html(sim7_50)
+```
+
+## 21 periods
+
+```{r Sim7, 21}
+dgp_plot(dgp_7_sim(nperiods = 21, treatgroups = c(11,14,16,18)))
+plot_est_dev(sim7_21)
+plot_est_dens(sim7_21)
+results_html(sim7_21)
+```
+
+# DGP 8: Multiple Treatment Groups, Time-Varying Heterogeneous TE, **Parallel Trends Violated**
+
+## 100 periods
+
+```{r Sim8, 100}
+dgp_plot(dgp_8_sim())
+plot_est_dev(sim8_100)
+plot_est_dens(sim8_100)
+results_html(sim8_100)
+```
+
+## 50 periods
+
+```{r Sim8, 50}
+dgp_plot(dgp_8_sim(nperiods = 50))
+plot_est_dev(sim8_50)
+plot_est_dens(sim8_50)
+results_html(sim8_50)
+```
+
+## 21 periods
+
+```{r Sim8, 21}
+dgp_plot(dgp_8_sim(nperiods = 21, treatgroups = c(11,14,16,18)))
+plot_est_dev(sim8_21)
+plot_est_dens(sim8_21)
+results_html(sim8_21)
+```
