@@ -22,9 +22,6 @@ table th {
 }
 </style>
 ```
-# Instructions to replicate can be found [here](https://github.com/tobias-schnabel/matrix-completion/blob/main/Replication.md)
-
-# Full thesis can be found [here](https://github.com/tobias-schnabel/matrix-completion/blob/main/Thesis_Schnabel.pdf)
 
 # DGP 1: One treatment group, TE is unit-and time- homogeneous,
 
