@@ -12,6 +12,10 @@ dgp_1_sim <- function(nobs = 500,
                       nobsgroups = 50,
                       treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5)),
                       treated.period = treatgroups[1]) {
+  if (nperiods >= 40) {
+    treated.period = floor(nperiods / 2)
+  }
+  
   unit <- tibble(
     unit = 1:nobs,
     # create observation groups similar to US states
@@ -73,6 +77,10 @@ dgp_2_sim <- function(nobs = 500,
                   nobsgroups = 50,
                   treatgroups = c(nperiods/5, 2*(nperiods/5), 3*(nperiods/5), 4*(nperiods/5)),
                   treated.period = treatgroups[1]) {
+  
+  if (nperiods >= 40) {
+    treated.period = floor(nperiods / 2)
+  }
   
   # Unit Fixed Effects
   unit <- tibble(
