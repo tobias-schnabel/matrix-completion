@@ -1459,7 +1459,7 @@ results_html <- function(sim_results, type = "static") {
   
   # round numeric columns to 3 digits
   numeric_columns <- sapply(final_summary, is.numeric)
-  final_summary <- datatable(final_summary, options = list(autoWidth = TRUE, scrollX = TRUE, dom = 't')) %>% 
+  final_summary <- datatable(final_summary, options = list(autoWidth = F, scrollX = TRUE, dom = 't')) %>% 
     DT::formatRound(columns = which(numeric_columns), digits = 3)
   
   return(final_summary)
@@ -1551,7 +1551,7 @@ dgp_plot <- function(df, subtitle = "", sim_num = NULL){
     # set as plot title
     plot_title = paste0("Outcome Data from One Draw of Simulation ", sim_num, " with ",
                         get_num_periods(df), " Periods")
-    cap = "All observations from one draw of the simulation, colored lines represent group means for each treatment group."
+    cap = "All observations from one draw of the simulation.\nColored lines represent group means for each treatment group."
     
     p = df %>% 
       ggplot(aes(x = period, y = y, group = unit)) + 
@@ -1735,7 +1735,7 @@ plot_est_dens <- function(df) {
     
     title = "Distributions of ATET Estimates"
     plot_title = paste0(title, ", ", nperiods, " Periods")
-    cap = "Density of point estimates of the ATET for each estimator. Vertical Red Lines indicate\nminimum, mean, and maximum of true parameter value, if only one is visible, the true value does not vary."
+    cap = "Density of point estimates of the ATET for each estimator. Vertical Red Lines indicate minimum,\nmean, and maximum of true parameter value, if only one is visible, the true value does not vary."
     
     # filter data
     df = df %>% filter(estimator %in% estimators)
