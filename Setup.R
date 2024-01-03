@@ -11,7 +11,8 @@ names(resultlist) <- c("sim1_21", "sim2_21", "sim3_21", "sim4_21", "sim5_21", "s
   "sim1_100", "sim2_100", "sim3_100", "sim4_100", "sim5_100", 
                        "sim6_100", "sim7_100", "sim8_100", )
 
-rmarkdown::render("Results.Rmd") # make results notebook
+rmarkdown::render("Results-html.Rmd") # make results notebook
+
 
 ## Make Figures and Tables
 numbers_of_periods = c(55, 100) # define analysis types
