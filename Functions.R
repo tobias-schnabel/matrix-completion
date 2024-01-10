@@ -420,7 +420,7 @@ dgp_7_sim <- function(nobs = 500,
   # before treatment starts. 
   # This fixed value violates the parallel trends assumption but does not 
   # introduce a time-dependent structure in the error term
-  nuisance_value_fixed = 0.1 # 0.01
+  nuisance_value_fixed = 0 # 0.01
   nuisance_sigma = 4 # 0.05
   
   # interact unit, period, and nuisance parameter that breaks common trends
