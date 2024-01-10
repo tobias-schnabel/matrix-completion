@@ -33,7 +33,7 @@ for (name in names(table_objects)) {
 #### Figures ####
 setwd("/Users/ts/Library/CloudStorage/Dropbox/Apps/Overleaf/MC Paper/Figures")
 # simulate one of each DGP used for DGP plots
-periods <- c(55, 100)
+periods <- c(21, 50, 100)
 dgp_functions <- list(dgp_1_sim = dgp_1_sim, 
                       dgp_2_sim = dgp_2_sim, 
                       dgp_3_sim = dgp_3_sim, 
